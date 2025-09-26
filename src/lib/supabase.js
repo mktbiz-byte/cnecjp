@@ -1,13 +1,21 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Supabase 설정
-const supabaseUrl = 'https://psfwmzlnaboattocyupu.supabase.co'
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzZndtemxuYWJvYXR0b2N5dXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2MTU2NzgsImV4cCI6MjA3NDE5MTY3OH0.59A4QPRwv8YjfasHu_NTTv0fH6YhG8L_mBkOZypfgwg'
+// Supabase 설정 - 환경변수 사용
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://psfwmzlnaboattocyupu.supabase.co'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzZndtemxuYWJvYXR0b2N5dXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2MTU2NzgsImV4cCI6MjA3NDE5MTY3OH0.59A4QPRwv8YjfasHu_NTTv0fH6YhG8L_mBkOZypfgwg'
+
+// 현재 사이트 URL 감지
+const getCurrentSiteUrl = () => {
+  if (typeof window !== 'undefined') {
+    return window.location.origin
+  }
+  return 'http://localhost:5173'
+}
 
 // Supabase 클라이언트 생성
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    redirectTo: 'https://cnec-cmp-9ur4ub.manus.space/auth/callback',
+    redirectTo: `${getCurrentSiteUrl()}/auth/callback`,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
@@ -36,7 +44,7 @@ export const auth = {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: 'https://cnec-cmp-9ur4ub.manus.space/auth/callback'
+        redirectTo: `${getCurrentSiteUrl()}/auth/callback`
       }
     })
     if (error) throw error
