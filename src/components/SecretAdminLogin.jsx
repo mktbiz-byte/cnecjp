@@ -65,10 +65,13 @@ const SecretAdminLogin = () => {
       setIsLoading(true)
       setError('')
       
-      await signInWithEmail(formData.email, formData.password)
+      const result = await signInWithEmail(formData.email, formData.password)
+      console.log('로그인 결과:', result)
       
-      // 로그인 성공 시 관리자 페이지로 이동
-      navigate('/admin')
+      // 로그인 성공 시 잠시 대기 후 관리자 페이지로 이동
+      setTimeout(() => {
+        navigate('/admin')
+      }, 1000)
       
     } catch (error) {
       console.error('Admin login error:', error)

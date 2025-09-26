@@ -1,0 +1,8 @@
+# SPA fallback
+/*    /index.html   200
+
+# API redirects (if needed)
+/api/*  https://psfwmzlnaboattocyupu.supabase.co/rest/v1/:splat  200
+
+# Auth redirects
+/auth/callback  /auth/callback  200
