@@ -20,7 +20,10 @@ import AdminCampaignsEnhanced from './components/admin/AdminCampaignsEnhanced'
 import AdminApplications from './components/admin/AdminApplications'
 import AdminWithdrawals from './components/admin/AdminWithdrawals'
 import AdminCompanyAccess from './components/admin/AdminCompanyAccess'
+import AdminEmailManagement from './components/admin/AdminEmailManagement'
 import AuthCallback from './components/AuthCallback'
+import CampaignApplicationWithEmail from './components/CampaignApplicationWithEmail'
+import EmailScheduler from './components/EmailScheduler'
 
 // 컨텍스트
 import { AuthProvider } from './contexts/AuthContext'
@@ -71,9 +74,11 @@ function App() {
               
               {/* 사용자 페이지 */}
               <Route path="/mypage" element={<MyPageWorkflow />} />
-              <Route path="/campaign-application" element={<CampaignApplicationEnhanced />} />
+              <Route path="/campaign-application" element={<CampaignApplicationWithEmail />} />
+              <Route path="/campaign-application-basic" element={<CampaignApplicationEnhanced />} />
               <Route path="/withdrawal" element={<WithdrawalRequest />} />
               <Route path="/japan-bank-transfer" element={<JapanBankTransfer />} />
+              <Route path="/email-scheduler" element={<EmailScheduler />} />
               
               {/* 캠페인 보고서 */}
               <Route path="/campaign-report/:campaignId" element={<CampaignReport />} />
@@ -88,6 +93,7 @@ function App() {
               <Route path="/admin/applications" element={<AdminApplications />} />
               <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
               <Route path="/admin/company-access" element={<AdminCompanyAccess />} />
+              <Route path="/admin/emails" element={<AdminEmailManagement />} />
               
               {/* 404 페이지 */}
               <Route path="*" element={
