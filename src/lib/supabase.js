@@ -158,7 +158,9 @@ export const database = {
           campaigns (
             title,
             brand,
-            reward_amount
+            reward_amount,
+            google_drive_url,
+            google_slides_url
           )
         `)
         .order('created_at', { ascending: false })
@@ -176,7 +178,9 @@ export const database = {
             title,
             brand,
             reward_amount,
-            status
+            status,
+            google_drive_url,
+            google_slides_url
           )
         `)
         .eq('user_id', userId)
@@ -217,6 +221,37 @@ export const database = {
         .single()
       if (error) throw error
       return data
+    },
+
+    // SNS URL 업데이트
+    async updateSnsUrls(id, snsUrls) {
+      const { data, error } = await supabase
+        .from('applications')
+        .update({ 
+          sns_urls: snsUrls,
+          status: 'sns_uploaded',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    },
+
+    // 포인트 요청
+    async requestPoints(id) {
+      const { data, error } = await supabase
+        .from('applications')
+        .update({ 
+          status: 'points_requested',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single()
+      if (error) throw error
+      return data
     }
   },
 
@@ -242,6 +277,201 @@ export const database = {
         .single()
       if (error) throw error
       return data
+    }
+  },
+
+  // 포인트 관련
+  points: {
+    // 사용자 포인트 잔액 가져오기
+    async getBalance(userId) {
+      const { data, error } = await supabase
+        .from('user_points')
+        .select('balance')
+        .eq('user_id', userId)
+        .single()
+      
+      if (error && error.code === 'PGRST116') {
+        // 포인트 레코드가 없으면 0 반환
+        return 0
+      }
+      if (error) throw error
+      return data?.balance || 0
+    },
+
+    // 포인트 추가
+    async add(userId, amount, description = '') {
+      // 현재 잔액 가져오기
+      const currentBalance = await this.getBalance(userId)
+      const newBalance = currentBalance + amount
+
+      // 포인트 잔액 업데이트
+      const { data: balanceData, error: balanceError } = await supabase
+        .from('user_points')
+        .upsert([{
+          user_id: userId,
+          balance: newBalance,
+          updated_at: new Date().toISOString()
+        }])
+        .select()
+        .single()
+
+      if (balanceError) throw balanceError
+
+      // 포인트 히스토리 추가
+      const { data: historyData, error: historyError } = await supabase
+        .from('point_history')
+        .insert([{
+          user_id: userId,
+          amount: amount,
+          type: 'earned',
+          description: description,
+          created_at: new Date().toISOString()
+        }])
+        .select()
+        .single()
+
+      if (historyError) throw historyError
+
+      return { balance: balanceData, history: historyData }
+    },
+
+    // 포인트 차감
+    async subtract(userId, amount, description = '') {
+      const currentBalance = await this.getBalance(userId)
+      
+      if (currentBalance < amount) {
+        throw new Error('Insufficient points')
+      }
+
+      const newBalance = currentBalance - amount
+
+      // 포인트 잔액 업데이트
+      const { data: balanceData, error: balanceError } = await supabase
+        .from('user_points')
+        .update({
+          balance: newBalance,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', userId)
+        .select()
+        .single()
+
+      if (balanceError) throw balanceError
+
+      // 포인트 히스토리 추가
+      const { data: historyData, error: historyError } = await supabase
+        .from('point_history')
+        .insert([{
+          user_id: userId,
+          amount: -amount,
+          type: 'spent',
+          description: description,
+          created_at: new Date().toISOString()
+        }])
+        .select()
+        .single()
+
+      if (historyError) throw historyError
+
+      return { balance: balanceData, history: historyData }
+    },
+
+    // 포인트 히스토리 가져오기
+    async getHistory(userId) {
+      const { data, error } = await supabase
+        .from('point_history')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      return data
+    }
+  },
+
+  // 출금 관련
+  withdrawals: {
+    // 사용자별 출금 내역 가져오기
+    async getByUser(userId) {
+      const { data, error } = await supabase
+        .from('withdrawals')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      return data
+    },
+
+    // 모든 출금 내역 가져오기 (관리자용)
+    async getAll() {
+      const { data, error } = await supabase
+        .from('withdrawals')
+        .select(`
+          *,
+          user_profiles (
+            name,
+            phone
+          )
+        `)
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      return data
+    },
+
+    // 출금 요청 생성
+    async create(withdrawalData) {
+      const { data, error } = await supabase
+        .from('withdrawals')
+        .insert([{
+          ...withdrawalData,
+          created_at: new Date().toISOString()
+        }])
+        .select()
+        .single()
+      
+      if (error) throw error
+      return data
+    },
+
+    // 출금 상태 업데이트
+    async updateStatus(id, status, notes = '') {
+      const { data, error } = await supabase
+        .from('withdrawals')
+        .update({
+          status,
+          admin_notes: notes,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single()
+      
+      if (error) throw error
+      return data
+    },
+
+    // 출금 승인 처리
+    async approve(id, adminNotes = '') {
+      // 출금 정보 가져오기
+      const { data: withdrawal, error: withdrawalError } = await supabase
+        .from('withdrawals')
+        .select('*')
+        .eq('id', id)
+        .single()
+      
+      if (withdrawalError) throw withdrawalError
+
+      // 사용자 포인트에서 차감
+      await database.points.subtract(
+        withdrawal.user_id, 
+        withdrawal.amount, 
+        `출금 승인 - ${id}`
+      )
+
+      // 출금 상태를 승인으로 변경
+      return await this.updateStatus(id, 'approved', adminNotes)
     }
   },
 

@@ -11,7 +11,7 @@ import { Loader2, Mail, Lock, ArrowLeft } from 'lucide-react'
 
 const LoginPage = () => {
   const { signInWithEmail, signInWithGoogle, loading } = useAuth()
-  const { language, changeLanguage, t } = useLanguage()
+  const { language } = useLanguage()
   const navigate = useNavigate()
   const location = useLocation()
   
@@ -106,38 +106,15 @@ const LoginPage = () => {
           <CardHeader className="text-center">
             <div className="text-4xl mb-4">🎬</div>
             <CardTitle className="text-2xl font-bold">
-              {language === 'ko' ? '로그인' : 'ログイン'}
+              ログイン
             </CardTitle>
             <CardDescription>
-              {language === 'ko' 
-                ? 'CNEC Japan 계정으로 로그인하세요'
-                : 'CNEC Japanアカウントでログインしてください'
-              }
+              CNEC Japanアカウントでログインしてください
             </CardDescription>
           </CardHeader>
           
           <CardContent className="space-y-6">
-            {/* 언어 전환 */}
-            <div className="flex justify-center">
-              <div className="flex bg-gray-100 rounded-lg p-1">
-                <button
-                  onClick={() => changeLanguage('ko')}
-                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                    language === 'ko' ? 'bg-purple-600 text-white' : 'text-gray-600 hover:text-purple-600'
-                  }`}
-                >
-                  한국어
-                </button>
-                <button
-                  onClick={() => changeLanguage('ja')}
-                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                    language === 'ja' ? 'bg-purple-600 text-white' : 'text-gray-600 hover:text-purple-600'
-                  }`}
-                >
-                  日本語
-                </button>
-              </div>
-            </div>
+
 
             {/* 구글 로그인 */}
             <Button

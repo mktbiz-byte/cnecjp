@@ -7,13 +7,19 @@ import './App.css'
 import HomePage from './components/HomePage'
 import LoginPage from './components/LoginPage'
 import SignupPage from './components/SignupPage'
-import MyPageEnhanced from './components/MyPageEnhanced'
+import MyPageComplete from './components/MyPageComplete'
 import CampaignApplicationPage from './components/CampaignApplicationPage'
 import WithdrawalRequest from './components/WithdrawalRequest'
 import CampaignReport from './components/CampaignReport'
+import CompanyReport from './components/CompanyReport'
+import JapanBankTransfer from './components/JapanBankTransfer'
+
+// 관리자 컴포넌트들
 import AdminDashboard from './components/admin/AdminDashboard'
-import AdminCampaigns from './components/admin/AdminCampaigns'
+import AdminCampaignsEnhanced from './components/admin/AdminCampaignsEnhanced'
 import AdminApplications from './components/admin/AdminApplications'
+import AdminWithdrawals from './components/admin/AdminWithdrawals'
+import AdminCompanyAccess from './components/admin/AdminCompanyAccess'
 import AuthCallback from './components/AuthCallback'
 
 // 컨텍스트
@@ -40,10 +46,10 @@ function App() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">로딩 중...</p>
+          <p className="text-gray-600">読み込み中...</p>
         </div>
       </div>
     )
@@ -53,7 +59,7 @@ function App() {
     <AuthProvider>
       <LanguageProvider>
         <Router>
-          <div className="min-h-screen bg-gray-50">
+          <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
             <Routes>
               {/* 메인 페이지 */}
               <Route path="/" element={<HomePage />} />
@@ -64,28 +70,39 @@ function App() {
               <Route path="/auth/callback" element={<AuthCallback />} />
               
               {/* 사용자 페이지 */}
-              <Route path="/mypage" element={<MyPageEnhanced />} />
+              <Route path="/mypage" element={<MyPageComplete />} />
               <Route path="/campaign-application" element={<CampaignApplicationPage />} />
               <Route path="/withdrawal" element={<WithdrawalRequest />} />
+              <Route path="/japan-bank-transfer" element={<JapanBankTransfer />} />
               
               {/* 캠페인 보고서 */}
               <Route path="/campaign-report/:campaignId" element={<CampaignReport />} />
               
+              {/* 회사별 리포트 (토큰 기반 액세스) */}
+              <Route path="/company-report/:companyId" element={<CompanyReport />} />
+              
               {/* 관리자 페이지 */}
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              <Route path="/admin/campaigns" element={<AdminCampaigns />} />
+              <Route path="/admin/campaigns" element={<AdminCampaignsEnhanced />} />
               <Route path="/admin/applications" element={<AdminApplications />} />
+              <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
+              <Route path="/admin/company-access" element={<AdminCompanyAccess />} />
               
               {/* 404 페이지 */}
               <Route path="*" element={
-                <div className="min-h-screen flex items-center justify-center">
+                <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
                   <div className="text-center">
-                    <h1 className="text-4xl font-bold text-gray-800 mb-4">404</h1>
-                    <p className="text-gray-600 mb-4">페이지를 찾을 수 없습니다.</p>
-                    <a href="/" className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
-                      홈으로 돌아가기
-                    </a>
+                    <div className="bg-white rounded-lg shadow-lg p-8 max-w-md mx-auto">
+                      <h1 className="text-4xl font-bold text-gray-800 mb-4">404</h1>
+                      <p className="text-gray-600 mb-6">ページが見つかりません。</p>
+                      <a 
+                        href="/" 
+                        className="inline-block bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                      >
+                        ホームに戻る
+                      </a>
+                    </div>
                   </div>
                 </div>
               } />

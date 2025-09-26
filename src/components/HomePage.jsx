@@ -78,60 +78,40 @@ const HomePage = () => {
             
             <nav className="hidden md:flex items-center space-x-6">
               <a href="#campaigns" className="text-gray-600 hover:text-purple-600 transition-colors">
-                {language === 'ko' ? '캠페인' : 'キャンペーン'}
+                キャンペーン
               </a>
               <a href="#about" className="text-gray-600 hover:text-purple-600 transition-colors">
-                {language === 'ko' ? '서비스 소개' : 'サービス紹介'}
+                サービス紹介
               </a>
               <a href="#contact" className="text-gray-600 hover:text-purple-600 transition-colors">
-                {language === 'ko' ? '문의하기' : 'お問い合わせ'}
+                お問い合わせ
               </a>
             </nav>
             
             <div className="flex items-center space-x-4">
-              {/* 언어 전환 */}
-              <div className="flex bg-gray-100 rounded-lg p-1">
-                <button
-                  onClick={() => changeLanguage('ko')}
-                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                    language === 'ko' ? 'bg-purple-600 text-white' : 'text-gray-600 hover:text-purple-600'
-                  }`}
-                >
-                  한국어
-                </button>
-                <button
-                  onClick={() => changeLanguage('ja')}
-                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                    language === 'ja' ? 'bg-purple-600 text-white' : 'text-gray-600 hover:text-purple-600'
-                  }`}
-                >
-                  日本語
-                </button>
-              </div>
-              
               {/* 사용자 메뉴 */}
               {user ? (
                 <div className="flex items-center space-x-3">
                   <span className="text-sm text-gray-600">{user.email}</span>
                   <Link to="/mypage">
                     <Button variant="outline" size="sm">
-                      {t('mypage')}
+                      マイページ
                     </Button>
                   </Link>
                   <Button variant="outline" size="sm" onClick={signOut}>
-                    {t('logout')}
+                    ログアウト
                   </Button>
                 </div>
               ) : (
                 <div className="flex items-center space-x-2">
                   <Link to="/login">
                     <Button variant="outline" size="sm">
-                      {t('login')}
+                      ログイン
                     </Button>
                   </Link>
-                  <Link to="/register">
+                  <Link to="/signup">
                     <Button size="sm">
-                      {t('register')}
+                      新規登録
                     </Button>
                   </Link>
                 </div>
