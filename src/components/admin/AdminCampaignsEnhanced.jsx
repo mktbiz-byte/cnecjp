@@ -55,8 +55,6 @@ const AdminCampaignsEnhanced = () => {
     status: 'draft',
     category: '',
     target_audience: '',
-    google_drive_url: '',
-    google_slides_url: '',
     campaign_materials: '',
     special_instructions: ''
   })
@@ -912,27 +910,7 @@ const AdminCampaignsEnhanced = () => {
               />
             </div>
             
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="google_drive_url">Google Drive URL</Label>
-                <Input
-                  id="google_drive_url"
-                  value={campaignForm.google_drive_url}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, google_drive_url: e.target.value }))}
-                  placeholder="https://drive.google.com/..."
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="google_slides_url">Google Slides URL</Label>
-                <Input
-                  id="google_slides_url"
-                  value={campaignForm.google_slides_url}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, google_slides_url: e.target.value }))}
-                  placeholder="https://docs.google.com/presentation/..."
-                />
-              </div>
-            </div>
+
             
             <div className="space-y-2">
               <Label htmlFor="special_instructions">{language === 'ko' ? '특별 지시사항' : '特別指示事項'}</Label>
