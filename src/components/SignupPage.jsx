@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Mail, Lock, User, ArrowLeft } from 'lucide-react'
 
 const SignupPage = () => {
-  const { signUp, signInWithGoogle } = useAuth()
+  const { signUpWithEmail, signInWithGoogle } = useAuth()
   const { language, t } = useLanguage()
   const navigate = useNavigate()
   
@@ -75,7 +75,7 @@ const SignupPage = () => {
       setLoading(true)
       setError('')
 
-      await signUp(formData.email, formData.password, {
+      await signUpWithEmail(formData.email, formData.password, {
         name: formData.name
       })
       
