@@ -4,11 +4,11 @@ import { auth } from './lib/supabase'
 import './App.css'
 
 // 페이지 컴포넌트들
-import HomePage from './components/HomePage'
+import HomePageEnhanced from './components/HomePageEnhanced'
 import LoginPage from './components/LoginPage'
 import SignupPage from './components/SignupPage'
-import MyPageComplete from './components/MyPageComplete'
-import CampaignApplicationPage from './components/CampaignApplicationPage'
+import MyPageWorkflow from './components/MyPageWorkflow'
+import CampaignApplicationEnhanced from './components/CampaignApplicationEnhanced'
 import WithdrawalRequest from './components/WithdrawalRequest'
 import CampaignReport from './components/CampaignReport'
 import CompanyReport from './components/CompanyReport'
@@ -62,7 +62,7 @@ function App() {
           <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
             <Routes>
               {/* 메인 페이지 */}
-              <Route path="/" element={<HomePage />} />
+              <Route path="/" element={<HomePageEnhanced />} />
               
               {/* 인증 관련 */}
               <Route path="/login" element={<LoginPage />} />
@@ -70,8 +70,8 @@ function App() {
               <Route path="/auth/callback" element={<AuthCallback />} />
               
               {/* 사용자 페이지 */}
-              <Route path="/mypage" element={<MyPageComplete />} />
-              <Route path="/campaign-application" element={<CampaignApplicationPage />} />
+              <Route path="/mypage" element={<MyPageWorkflow />} />
+              <Route path="/campaign-application" element={<CampaignApplicationEnhanced />} />
               <Route path="/withdrawal" element={<WithdrawalRequest />} />
               <Route path="/japan-bank-transfer" element={<JapanBankTransfer />} />
               
