@@ -21,6 +21,7 @@ import AdminApplications from './components/admin/AdminApplications'
 import AdminWithdrawals from './components/admin/AdminWithdrawals'
 import AdminCompanyAccess from './components/admin/AdminCompanyAccess'
 import AdminEmailManagement from './components/admin/AdminEmailManagement'
+import AdminTestSetup from './components/AdminTestSetup'
 import AuthCallback from './components/AuthCallback'
 import CampaignApplicationWithEmail from './components/CampaignApplicationWithEmail'
 import EmailScheduler from './components/EmailScheduler'
@@ -94,6 +95,7 @@ function App() {
               <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
               <Route path="/admin/company-access" element={<AdminCompanyAccess />} />
               <Route path="/admin/emails" element={<AdminEmailManagement />} />
+              <Route path="/admin/test-setup" element={<AdminTestSetup />} />
               
               {/* 404 페이지 */}
               <Route path="*" element={

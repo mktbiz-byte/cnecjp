@@ -7,7 +7,7 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 // Supabase 클라이언트 생성
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    redirectTo: window.location.origin,
+    redirectTo: 'https://cnec-cmp-9ur4ub.manus.space/auth/callback',
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
@@ -36,7 +36,7 @@ export const auth = {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`
+        redirectTo: 'https://cnec-cmp-9ur4ub.manus.space/auth/callback'
       }
     })
     if (error) throw error
