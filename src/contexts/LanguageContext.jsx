@@ -129,7 +129,7 @@ const translations = {
 }
 
 export const LanguageProvider = ({ children }) => {
-  const [language, setLanguage] = useState('ko') // 기본값을 한국어로 설정
+  const [language, setLanguage] = useState('ja') // 기본값을 일본어로 설정
 
   useEffect(() => {
     // 로컬 스토리지에서 언어 설정 불러오기
