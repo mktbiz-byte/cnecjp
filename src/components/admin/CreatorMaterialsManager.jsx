@@ -314,43 +314,108 @@ const CreatorMaterialsManager = ({ campaignId, applications }) => {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="google_drive_url">
-                <Folder className="h-4 w-4 inline mr-2" />
-                Google Drive URL
-              </Label>
-              <Input
-                id="google_drive_url"
-                value={materialForm.google_drive_url}
-                onChange={(e) => setMaterialForm(prev => ({ ...prev, google_drive_url: e.target.value }))}
-                placeholder="https://drive.google.com/drive/folders/..."
-              />
+          <div className="space-y-6">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {language === 'ko' 
+                  ? '각 크리에이터마다 고유한 Google Drive 폴더와 Slides 가이드를 제공하세요. 캠페인별, 크리에이터별로 모두 다른 자료가 필요합니다.'
+                  : '各クリエイターに固有のGoogle DriveフォルダーとSlidesガイドを提供してください。キャンペーン別、クリエイター別にすべて異なる資料が必要です。'
+                }
+              </AlertDescription>
+            </Alert>
+            
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-medium mb-2">
+                {language === 'ko' ? '크리에이터 정보' : 'クリエイター情報'}
+              </h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-600">{language === 'ko' ? '이름:' : '名前:'}</span>
+                  <span className="ml-2 font-medium">{selectedCreator?.name}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">{language === 'ko' ? '이메일:' : 'メール:'}</span>
+                  <span className="ml-2 font-medium">{selectedCreator?.email}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">{language === 'ko' ? 'Instagram:' : 'Instagram:'}</span>
+                  <span className="ml-2 font-medium">{selectedCreator?.instagram_handle || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">{language === 'ko' ? 'TikTok:' : 'TikTok:'}</span>
+                  <span className="ml-2 font-medium">{selectedCreator?.tiktok_handle || 'N/A'}</span>
+                </div>
+              </div>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="google_slides_url">
-                <FileText className="h-4 w-4 inline mr-2" />
-                Google Slides URL
-              </Label>
-              <Input
-                id="google_slides_url"
-                value={materialForm.google_slides_url}
-                onChange={(e) => setMaterialForm(prev => ({ ...prev, google_slides_url: e.target.value }))}
-                placeholder="https://docs.google.com/presentation/..."
-              />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="google_drive_url" className="text-base font-medium">
+                  <Folder className="h-5 w-5 inline mr-2 text-blue-600" />
+                  {language === 'ko' ? '전용 Google Drive 업로드 폴더' : '専用Google Driveアップロードフォルダー'}
+                </Label>
+                <Input
+                  id="google_drive_url"
+                  value={materialForm.google_drive_url}
+                  onChange={(e) => setMaterialForm(prev => ({ ...prev, google_drive_url: e.target.value }))}
+                  placeholder="https://drive.google.com/drive/folders/..."
+                  className="h-12"
+                />
+                <p className="text-xs text-gray-600">
+                  {language === 'ko' 
+                    ? '이 크리에이터가 촬영한 영상과 이미지를 업로드할 전용 폴더 링크'
+                    : 'このクリエイターが撮影した動画と画像をアップロードする専用フォルダーリンク'
+                  }
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="google_slides_url" className="text-base font-medium">
+                  <FileText className="h-5 w-5 inline mr-2 text-orange-600" />
+                  {language === 'ko' ? '개별 맞춤 가이드라인 (Google Slides)' : '個別カスタムガイドライン (Google Slides)'}
+                </Label>
+                <Input
+                  id="google_slides_url"
+                  value={materialForm.google_slides_url}
+                  onChange={(e) => setMaterialForm(prev => ({ ...prev, google_slides_url: e.target.value }))}
+                  placeholder="https://docs.google.com/presentation/..."
+                  className="h-12"
+                />
+                <p className="text-xs text-gray-600">
+                  {language === 'ko' 
+                    ? '이 크리에이터만을 위한 맞춤형 촬영 가이드라인 및 지시사항'
+                    : 'このクリエイター専用のカスタム撮影ガイドラインと指示事項'
+                  }
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="additional_notes" className="text-base font-medium">
+                  {language === 'ko' ? '개별 특별 지시사항' : '個別特別指示事項'}
+                </Label>
+                <textarea
+                  id="additional_notes"
+                  value={materialForm.additional_notes}
+                  onChange={(e) => setMaterialForm(prev => ({ ...prev, additional_notes: e.target.value }))}
+                  placeholder={language === 'ko' 
+                    ? '이 크리에이터에게만 적용되는 특별한 요청사항이나 주의사항을 입력하세요...'
+                    : 'このクリエイターにのみ適用される特別なリクエストや注意事項を入力してください...'
+                  }
+                  className="w-full h-24 p-3 border rounded-md resize-none"
+                />
+              </div>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="additional_notes">
-                {language === 'ko' ? '추가 메모' : '追加メモ'}
-              </Label>
-              <Input
-                id="additional_notes"
-                value={materialForm.additional_notes}
-                onChange={(e) => setMaterialForm(prev => ({ ...prev, additional_notes: e.target.value }))}
-                placeholder={language === 'ko' ? '크리에이터에게 전달할 추가 정보' : 'クリエイターに伝える追加情報'}
-              />
+            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+              <h5 className="font-medium text-yellow-800 mb-2">
+                {language === 'ko' ? '⚠️ 중요 안내' : '⚠️ 重要なお知らせ'}
+              </h5>
+              <ul className="text-sm text-yellow-700 space-y-1">
+                <li>• {language === 'ko' ? '각 크리에이터마다 고유한 Drive 폴더를 생성하세요' : '各クリエイターに固有のDriveフォルダーを作成してください'}</li>
+                <li>• {language === 'ko' ? '가이드라인은 크리에이터의 SNS 특성에 맞게 개별 작성하세요' : 'ガイドラインはクリエイターのSNS特性に合わせて個別に作成してください'}</li>
+                <li>• {language === 'ko' ? '링크는 해당 크리에이터만 접근 가능하도록 권한을 설정하세요' : 'リンクは該当クリエイターのみアクセス可能になるよう権限を設定してください'}</li>
+              </ul>
             </div>
             
             <div className="flex space-x-2">
