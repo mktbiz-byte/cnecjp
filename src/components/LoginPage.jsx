@@ -216,12 +216,7 @@ const LoginPage = () => {
               </Link>
             </div>
 
-            {/* 관리자 로그인 링크 */}
-            <div className="text-center">
-              <Link to="/admin" className="text-sm text-gray-500 hover:text-gray-700">
-                {language === 'ko' ? '관리자 로그인' : '管理者ログイン'}
-              </Link>
-            </div>
+
           </CardContent>
         </Card>
       </div>

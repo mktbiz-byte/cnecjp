@@ -22,6 +22,7 @@ import AdminWithdrawals from './components/admin/AdminWithdrawals'
 import AdminCompanyAccess from './components/admin/AdminCompanyAccess'
 import AdminEmailManagement from './components/admin/AdminEmailManagement'
 import AdminTestSetup from './components/AdminTestSetup'
+import SecretAdminLogin from './components/SecretAdminLogin'
 import AuthCallback from './components/AuthCallback'
 import CampaignApplicationWithEmail from './components/CampaignApplicationWithEmail'
 import EmailScheduler from './components/EmailScheduler'
@@ -96,6 +97,9 @@ function App() {
               <Route path="/admin/company-access" element={<AdminCompanyAccess />} />
               <Route path="/admin/emails" element={<AdminEmailManagement />} />
               <Route path="/admin/test-setup" element={<AdminTestSetup />} />
+              
+              {/* 숨겨진 관리자 로그인 */}
+              <Route path="/secret-admin-portal-cnec-2024" element={<SecretAdminLogin />} />
               
               {/* 404 페이지 */}
               <Route path="*" element={

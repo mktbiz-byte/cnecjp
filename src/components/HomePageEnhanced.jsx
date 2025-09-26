@@ -208,7 +208,7 @@ const HomePageEnhanced = () => {
                 クリエイター登録
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-purple-600">
+            <Button size="lg" variant="outline" className="border-white text-white bg-purple-600/20 hover:bg-white hover:text-purple-600 backdrop-blur-sm">
               <a href="#campaigns" className="flex items-center">
                 <Eye className="h-5 w-5 mr-2" />
                 キャンペーンを見る
@@ -559,22 +559,19 @@ const HomePageEnhanced = () => {
               <div className="space-y-2 text-sm text-gray-400">
                 <div className="flex items-center space-x-2">
                   <Mail className="h-4 w-4" />
-                  <span>info@cnec-japan.com</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Phone className="h-4 w-4" />
-                  <span>03-1234-5678</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <MapPin className="h-4 w-4" />
-                  <span>東京都渋谷区</span>
+                  <span>mkt@howlab.co.kr</span>
                 </div>
               </div>
             </div>
           </div>
           
-          <div className="border-t border-gray-700 mt-8 pt-8 text-center text-sm text-gray-400">
-            <p>&copy; 2025 CNEC Japan. All rights reserved.</p>
+          <div className="border-t border-gray-700 mt-8 pt-8 text-sm text-gray-400">
+            <div className="space-y-2">
+              <p>대표자 : 박현용 | 상호 : 하우파파주식회사</p>
+              <p>사업자등록번호 : 575-81-02253 | 통신판매업신고 : 제 2022-서울마포-3903호</p>
+              <p>주소 : 04147 서울 마포구 백범로31길 21 (공덕동) 312호 | 개인정보보호책임자 : 이지훈(mkt@howlab.co.kr)</p>
+              <p className="text-center mt-4">&copy; 2025 CNEC Japan. All rights reserved.</p>
+            </div>
           </div>
         </div>
       </footer>
