@@ -33,7 +33,7 @@ import JapanWithdrawalRequest from './components/JapanWithdrawalRequest'
 import ProfileManagement from './components/ProfileManagement'
 import EmailTemplateManager from './components/admin/EmailTemplateManager'
 import UserApprovalManager from './components/admin/UserApprovalManager'
-import AuthCallback from './components/AuthCallback'
+import AuthCallbackSafe from './components/AuthCallbackSafe'
 import CampaignApplicationWithEmail from './components/CampaignApplicationWithEmail'
 import EmailScheduler from './components/EmailScheduler'
 
@@ -82,7 +82,7 @@ function App() {
               {/* 인증 관련 */}
               <Route path="/login" element={<LoginPageExactReplica />} />
               <Route path="/signup" element={<SignupPageExactReplica />} />
-              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/auth/callback" element={<AuthCallbackSafe />} />
               
               {/* 사용자 페이지 */}
               <Route path="/mypage" element={<MyPageWithPointSystem />} />

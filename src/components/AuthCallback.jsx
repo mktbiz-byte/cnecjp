@@ -16,10 +16,10 @@ const AuthCallback = () => {
     const handleAuthCallback = async () => {
       try {
         // URL에서 인증 정보 처리
-        const { data, error } = await auth.getSession()
+        const result = await auth.getSession()
         
-        if (error) {
-          console.error('Auth callback error:', error)
+        if (!result || result.error) {
+          console.error('Auth callback error:', result?.error)
           setStatus('error')
           setMessage(language === 'ko' 
             ? '로그인 처리 중 오류가 발생했습니다.'
@@ -28,7 +28,9 @@ const AuthCallback = () => {
           return
         }
 
-        if (data.session) {
+        const { data } = result
+
+        if (data && data.session) {
           setStatus('success')
           setMessage(language === 'ko' 
             ? '로그인이 완료되었습니다. 잠시 후 홈페이지로 이동합니다.'
