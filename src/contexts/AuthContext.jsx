@@ -70,8 +70,8 @@ export const AuthProvider = ({ children }) => {
     // 관리자 이메일 목록
     const adminEmails = [
       'mkt_biz@cnec.co.kr',
-      'admin@cnec.co.kr',
-      'test@cnec.co.kr' // 테스트용
+      'admin@cnec.test',
+      'test@cnec.test' // 테스트용
     ]
     
     const isAdminUser = adminEmails.includes(email)
