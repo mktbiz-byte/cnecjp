@@ -1,16 +1,19 @@
 [build]
-  publish = "dist"
-  command = "npm run build"
+# pnpm으로 설치 후 빌드
+command = "pnpm install --frozen-lockfile && pnpm run build"
+publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "18"
-  NPM_FLAGS = "--legacy-peer-deps"
+# Netlify 기본 Node가 낮아 에러가 나기 쉬워서 20으로 고정
+NODE_VERSION = "20"
 
+# --- SPA 라우팅 (리프레시/딥링크 404 방지) ---
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
+# --- 캐시 및 보안 헤더(원하시면 유지) ---
 [[headers]]
   for = "/*"
   [headers.values]
