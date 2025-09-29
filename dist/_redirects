@@ -1,0 +1,24 @@
+# Netlify redirects for React Router
+/*    /index.html   200
+
+# Admin routes
+/admin/*    /index.html   200
+
+# API routes (if any)
+/api/*    /api/:splat   200
+
+# Auth routes
+/auth/*    /index.html   200
+
+# User routes
+/mypage    /index.html   200
+/profile    /index.html   200
+/profile-settings    /index.html   200
+/withdrawal    /index.html   200
+/campaign-application    /index.html   200
+
+# Login/Signup routes
+/login    /index.html   200
+/signup    /index.html   200
+/secret-admin-login    /index.html   200
+/test-admin-login    /index.html   200
