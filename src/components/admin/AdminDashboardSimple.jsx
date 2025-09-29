@@ -42,7 +42,17 @@ const AdminDashboardSimple = () => {
 
   useEffect(() => {
     // 관리자 권한 확인 - 테스트 계정 포함
-    if (!user || (!user.email?.includes('mkt_biz@cnec.co.kr') && !user.email?.includes('admin@cnec.test'))) {
+    if (!user) {
+      console.log('사용자 로그인 필요')
+      navigate('/secret-admin-login')
+      return
+    }
+    
+    // 관리자 이메일 확인 (더 유연한 체크)
+    const adminEmails = ['mkt_biz@cnec.co.kr', 'admin@cnec.test']
+    const isAdmin = adminEmails.some(email => user.email?.includes(email))
+    
+    if (!isAdmin) {
       console.log('관리자 권한 없음:', user?.email)
       navigate('/')
       return

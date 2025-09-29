@@ -644,22 +644,33 @@ export const database = {
   stats: {
     // 전체 통계 가져오기
     async getOverall() {
-      const [campaigns, applications, users] = await Promise.all([
-        supabase.from('campaigns').select('id, reward_amount'),
-        supabase.from('applications').select('id'),
-        supabase.from('users').select('id')
-      ])
+      try {
+        const [campaigns, applications, userProfiles] = await Promise.all([
+          supabase.from('campaigns').select('id, reward_amount, status'),
+          supabase.from('applications').select('id, status'),
+          supabase.from('user_profiles').select('id')
+        ])
 
-      const totalCampaigns = campaigns.data?.length || 0
-      const totalApplications = applications.data?.length || 0
-      const totalUsers = users.data?.length || 0
-      const totalRewards = campaigns.data?.reduce((sum, campaign) => sum + (campaign.reward_amount || 0), 0) || 0
+        const totalCampaigns = campaigns.data?.length || 0
+        const totalApplications = applications.data?.length || 0
+        const totalUsers = userProfiles.data?.length || 0
+        const totalRewards = campaigns.data?.reduce((sum, campaign) => sum + (campaign.reward_amount || 0), 0) || 0
 
-      return {
-        totalCampaigns,
-        totalApplications,
-        totalUsers,
-        totalRewards
+        return {
+          totalCampaigns,
+          totalApplications,
+          totalUsers,
+          totalRewards
+        }
+      } catch (error) {
+        console.error('Stats loading error:', error)
+        // 오류 발생 시 기본값 반환
+        return {
+          totalCampaigns: 0,
+          totalApplications: 0,
+          totalUsers: 0,
+          totalRewards: 0
+        }
       }
     }
   }

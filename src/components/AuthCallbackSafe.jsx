@@ -45,9 +45,16 @@ const AuthCallbackSafe = () => {
             setStatus('success')
             setMessage('ログインが完了しました。ホームページに移動します。')
             
-            // 2초 후 홈페이지로 리다이렉트
+            // 관리자인지 확인하고 적절한 페이지로 리다이렉트
+            const userEmail = sessionData.session.user.email
+            const isAdmin = userEmail?.includes('mkt_biz@cnec.co.kr') || userEmail?.includes('admin@cnec.test')
+            
             setTimeout(() => {
-              navigate('/', { replace: true })
+              if (isAdmin) {
+                navigate('/admin', { replace: true })
+              } else {
+                navigate('/', { replace: true })
+              }
             }, 2000)
           } else {
             console.log('No session found, checking URL hash')
@@ -61,8 +68,22 @@ const AuthCallbackSafe = () => {
               setStatus('success')
               setMessage('ログインが完了しました。ホームページに移動します。')
               
-              setTimeout(() => {
-                navigate('/', { replace: true })
+              // 관리자 여부 확인을 위해 세션 재확인
+              setTimeout(async () => {
+                try {
+                  const { data: newSession } = await supabase.auth.getSession()
+                  const userEmail = newSession?.session?.user?.email
+                  const isAdmin = userEmail?.includes('mkt_biz@cnec.co.kr') || userEmail?.includes('admin@cnec.test')
+                  
+                  if (isAdmin) {
+                    navigate('/admin', { replace: true })
+                  } else {
+                    navigate('/', { replace: true })
+                  }
+                } catch (error) {
+                  console.error('Session recheck error:', error)
+                  navigate('/', { replace: true })
+                }
               }, 2000)
             } else {
               console.log('No authentication data found')

@@ -1,8 +1,8 @@
-# SPA fallback
-/*    /index.html   200
+# Auth redirects - 인증 콜백을 React 앱으로 처리
+/auth/callback  /index.html  200
 
 # API redirects (if needed)
 /api/*  https://psfwmzlnaboattocyupu.supabase.co/rest/v1/:splat  200
 
-# Auth redirects
-/auth/callback  /auth/callback  200
+# SPA fallback - 모든 경로를 React 앱으로 처리
+/*    /index.html   200

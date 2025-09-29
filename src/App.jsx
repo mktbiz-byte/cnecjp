@@ -24,6 +24,7 @@ import EmailTemplateManager from './components/admin/EmailTemplateManager';
 import UserApprovalManager from './components/admin/UserApprovalManager';
 import AdminWithdrawals from './components/admin/AdminWithdrawals';
 import SecretAdminLogin from './components/SecretAdminLogin';
+import TestAdminLogin from './components/TestAdminLogin';
 
 function App() {
   return (
@@ -70,6 +71,7 @@ const MainContent = () => {
         
         {/* 관리자 페이지 */}
         <Route path="/secret-admin-login" element={<SecretAdminLogin />} />
+        <Route path="/test-admin-login" element={<TestAdminLogin />} />
         <Route path="/admin" element={<AdminDashboardSimple />} />
         <Route path="/admin/campaigns" element={<AdminCampaignsWithQuestions />} />
         <Route path="/admin/applications" element={<ApplicationsReportSimple />} />
