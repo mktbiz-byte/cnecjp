@@ -34,33 +34,36 @@ export const AuthProvider = ({ children }) => {
       if (event === 'SIGNED_IN' && session?.user) {
         setUser(session.user);
         
-        // 사용자 프로필 확인/생성
-        try {
-          const { data: profile, error: profileError } = await supabase
-            .from('user_profiles')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .single();
-
-          if (profileError && profileError.code === 'PGRST116') {
-            // 프로필이 없으면 생성
-            const { error: insertError } = await supabase
+        // 사용자 프로필 확인/생성 (비동기로 처리하여 로딩 차단 방지)
+        setTimeout(async () => {
+          try {
+            const { data: profile, error: profileError } = await supabase
               .from('user_profiles')
-              .insert({
-                user_id: session.user.id,
-                email: session.user.email,
-                name: session.user.user_metadata?.full_name || session.user.email,
-              });
-            
-            if (insertError) {
-              console.error("Error creating profile:", insertError);
-            } else {
-              console.log("Profile created successfully");
+              .select('*')
+              .eq('user_id', session.user.id)
+              .single();
+
+            if (profileError && profileError.code === 'PGRST116') {
+              // 프로필이 없으면 생성
+              const { error: insertError } = await supabase
+                .from('user_profiles')
+                .insert({
+                  user_id: session.user.id,
+                  email: session.user.email,
+                  name: session.user.user_metadata?.full_name || session.user.email,
+                });
+              
+              if (insertError) {
+                console.error("Error creating profile:", insertError);
+              } else {
+                console.log("Profile created successfully");
+              }
             }
+          } catch (error) {
+            console.error("Error handling user profile:", error);
           }
-        } catch (error) {
-          console.error("Error handling user profile:", error);
-        }
+        }, 0);
+        
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
       } else {
@@ -115,6 +118,7 @@ export const AuthProvider = ({ children }) => {
     signOut,
   };
 
+  // 로딩 상태와 관계없이 children을 렌더링
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
