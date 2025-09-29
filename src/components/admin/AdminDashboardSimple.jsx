@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
@@ -109,26 +108,51 @@ const AdminDashboardSimple = () => {
       setError('')
       console.log('관리자 대시보드 데이터 로딩 시작...')
 
-      // 여러 데이터를 병렬로 가져오기
-      const [campaigns, applications, users] = await Promise.all([
-        database.campaigns.getAll(),
-        database.applications.getAll(),
-        database.users.getAll() // users.getAll() 함수가 supabase.js에 있다고 가정
-      ]);
+      // 각 데이터를 개별적으로 가져와서 어디서 오류가 발생하는지 확인
+      let campaigns = []
+      let applications = []
+      let users = []
 
-      console.log(`캠페인: ${campaigns.length}개, 신청서: ${applications.length}개, 사용자: ${users.length}개 로드됨`);
+      try {
+        console.log('캠페인 데이터 로딩 중...')
+        campaigns = await database.campaigns.getAll()
+        console.log(`캠페인 데이터 로드 성공: ${campaigns.length}개`)
+      } catch (err) {
+        console.error('캠페인 데이터 로딩 실패:', err)
+        throw new Error(`캠페인 데이터 로딩 실패: ${err.message}`)
+      }
+
+      try {
+        console.log('신청서 데이터 로딩 중...')
+        applications = await database.applications.getAll()
+        console.log(`신청서 데이터 로드 성공: ${applications.length}개`)
+      } catch (err) {
+        console.error('신청서 데이터 로딩 실패:', err)
+        throw new Error(`신청서 데이터 로딩 실패: ${err.message}`)
+      }
+
+      try {
+        console.log('사용자 데이터 로딩 중...')
+        users = await database.users.getAll()
+        console.log(`사용자 데이터 로드 성공: ${users.length}개`)
+      } catch (err) {
+        console.error('사용자 데이터 로딩 실패:', err)
+        // 사용자 데이터 로딩이 실패해도 다른 데이터는 표시하도록 함
+        console.log('사용자 데이터 없이 계속 진행...')
+        users = []
+      }
 
       // 통계 계산
-      const totalCampaigns = campaigns.length;
-      const activeCampaigns = campaigns.filter(c => c.status === 'active').length;
-      const totalApplications = applications.length;
-      const pendingApplications = applications.filter(a => a.status === 'pending').length;
-      const totalUsers = users.length;
+      const totalCampaigns = campaigns.length
+      const activeCampaigns = campaigns.filter(c => c.status === 'active').length
+      const totalApplications = applications.length
+      const pendingApplications = applications.filter(a => a.status === 'pending').length
+      const totalUsers = users.length
       
       // 총 보상금 계산 (승인된 신청 건 기준)
       const totalRewards = applications
         .filter(a => a.status === 'approved' || a.status === 'completed' || a.status === 'paid')
-        .reduce((sum, a) => sum + (a.campaigns?.reward_amount || 0), 0);
+        .reduce((sum, a) => sum + (a.campaigns?.reward_amount || 0), 0)
 
       setStats({
         totalCampaigns,
@@ -137,14 +161,23 @@ const AdminDashboardSimple = () => {
         totalRewards,
         totalUsers,
         pendingApplications
-      });
+      })
+
+      console.log('통계 계산 완료:', {
+        totalCampaigns,
+        activeCampaigns,
+        totalApplications,
+        totalRewards,
+        totalUsers,
+        pendingApplications
+      })
       
     } catch (err) {
       console.error('대시보드 데이터 로딩 중 오류 발생:', err)
-      setError(t.error + (err instanceof Error ? ` (${err.message})` : ''))
+      setError(`${t.error} ${err.message}`)
     } finally {
       setLoading(false)
-      console.log('데이터 로딩 완료.');
+      console.log('데이터 로딩 완료.')
     }
   }
 
@@ -290,7 +323,7 @@ const AdminDashboardSimple = () => {
             <CardContent>
               <Link to="/admin/withdrawals">
                 <Button className="w-full" variant="outline">
-                  {language === 'ko' ? '출금 처리하기' : '出金処理'}
+                  {language === 'ko' ? '출금 처리하기' : '出금処리'}
                 </Button>
               </Link>
             </CardContent>
@@ -416,4 +449,3 @@ const AdminDashboardSimple = () => {
 }
 
 export default AdminDashboardSimple
-
