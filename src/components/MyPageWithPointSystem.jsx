@@ -52,31 +52,53 @@ const MyPageWithPointSystem = () => {
       setLoading(true)
       setError('')
       
+      console.log('Loading user data for user:', user.id)
+      
       // 사용자 프로필 로드
-      const profile = await database.userProfiles.get(user.id)
-      setUserProfile(profile)
+      try {
+        const profile = await database.userProfiles.get(user.id)
+        console.log('User profile loaded:', profile)
+        setUserProfile(profile)
+      } catch (profileError) {
+        console.error('Profile loading error:', profileError)
+        // 프로필이 없어도 계속 진행
+        setUserProfile(null)
+      }
       
       // 사용자의 신청서들 로드
-      const userApplications = await database.applications.getByUser(user.id)
-      setApplications(userApplications || [])
-      
-      // 포인트 잔액 계산
-      const completedApps = userApplications?.filter(app => app.status === 'completed') || []
-      const totalPoints = completedApps.reduce((sum, app) => {
-        return sum + (app.campaign?.reward_amount || 0)
-      }, 0)
-      
-      // 출금 요청된 포인트 차감
-      const withdrawalRequests = await database.withdrawals.getByUser(user.id)
-      const withdrawnPoints = withdrawalRequests?.reduce((sum, withdrawal) => {
-        return sum + (withdrawal.status === 'completed' ? withdrawal.amount : 0)
-      }, 0) || 0
-      
-      setPointBalance(totalPoints - withdrawnPoints)
+      try {
+        const userApplications = await database.applications.getByUser(user.id)
+        console.log('User applications loaded:', userApplications)
+        setApplications(userApplications || [])
+        
+        // 포인트 잔액 계산
+        const completedApps = userApplications?.filter(app => app.status === 'completed') || []
+        const totalPoints = completedApps.reduce((sum, app) => {
+          return sum + (app.campaigns?.reward_amount || app.campaign?.reward_amount || 0)
+        }, 0)
+        
+        // 출금 요청된 포인트 차감
+        try {
+          const withdrawalRequests = await database.withdrawals.getByUser(user.id)
+          const withdrawnPoints = withdrawalRequests?.reduce((sum, withdrawal) => {
+            return sum + (withdrawal.status === 'completed' ? withdrawal.amount : 0)
+          }, 0) || 0
+          
+          setPointBalance(totalPoints - withdrawnPoints)
+        } catch (withdrawalError) {
+          console.error('Withdrawal loading error:', withdrawalError)
+          setPointBalance(totalPoints) // 출금 정보 없이도 포인트 표시
+        }
+        
+      } catch (applicationError) {
+        console.error('Applications loading error:', applicationError)
+        setApplications([])
+        setPointBalance(0)
+      }
       
     } catch (error) {
       console.error('Load user data error:', error)
-      setError('データの読み込みに失敗しました。')
+      setError(`データの読み込みに失敗しました: ${error.message}`)
     } finally {
       setLoading(false)
     }

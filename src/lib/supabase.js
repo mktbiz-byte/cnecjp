@@ -190,7 +190,8 @@ export const database = {
         .from('applications')
         .select(`
           *,
-          campaigns (
+          campaigns!inner (
+            id,
             title,
             brand,
             reward_amount,
@@ -213,6 +214,18 @@ export const database = {
         .eq('campaign_id', campaignId)
         .order('created_at', { ascending: false })
       if (error) throw error
+      return data
+    },
+
+    // 특정 사용자의 특정 캠페인 신청 확인
+    async getByUserAndCampaign(userId, campaignId) {
+      const { data, error } = await supabase
+        .from('applications')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('campaign_id', campaignId)
+        .single()
+      if (error && error.code !== 'PGRST116') throw error
       return data
     },
 
@@ -288,12 +301,23 @@ export const database = {
 
   // 사용자 프로필 관련
   userProfiles: {
-    // 프로필 가져오기
+    // 프로필 가져오기 (user_id로 검색)
     async get(userId) {
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('user_id', userId)
+        .single()
+      if (error && error.code !== 'PGRST116') throw error
+      return data
+    },
+
+    // 프로필 가져오기 (id로 검색)
+    async getById(id) {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', id)
         .single()
       if (error && error.code !== 'PGRST116') throw error
       return data
