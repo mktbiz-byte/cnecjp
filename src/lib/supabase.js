@@ -614,6 +614,97 @@ export const database = {
       // 실제로는 userProfiles.getAll()을 호출합니다.
       return database.userProfiles.getAll()
     }
+  },
+
+  // 이메일 템플릿 관련
+  emailTemplates: {
+    // 모든 템플릿 가져오기
+    async getAll() {
+      return safeQuery(async () => {
+        const { data, error } = await supabase
+          .from('email_templates')
+          .select('*')
+          .order('category', { ascending: true })
+        if (error) throw error
+        return data || []
+      })
+    },
+
+    // 특정 템플릿 가져오기
+    async getById(id) {
+      return safeQuery(async () => {
+        const { data, error } = await supabase
+          .from('email_templates')
+          .select('*')
+          .eq('id', id)
+          .single()
+        if (error) throw error
+        return data
+      })
+    },
+
+    // 템플릿 생성
+    async create(templateData) {
+      return safeQuery(async () => {
+        const { data, error } = await supabase
+          .from('email_templates')
+          .insert([templateData])
+          .select()
+          .single()
+        if (error) throw error
+        return data
+      })
+    },
+
+    // 템플릿 업데이트 또는 생성 (upsert)
+    async upsert(templateData) {
+      return safeQuery(async () => {
+        const { data, error } = await supabase
+          .from('email_templates')
+          .upsert([templateData])
+          .select()
+          .single()
+        if (error) throw error
+        return data
+      })
+    },
+
+    // 템플릿 업데이트
+    async update(id, updates) {
+      return safeQuery(async () => {
+        const { data, error } = await supabase
+          .from('email_templates')
+          .update(updates)
+          .eq('id', id)
+          .select()
+          .single()
+        if (error) throw error
+        return data
+      })
+    },
+
+    // 템플릿 삭제
+    async delete(id) {
+      return safeQuery(async () => {
+        const { error } = await supabase
+          .from('email_templates')
+          .delete()
+          .eq('id', id)
+        if (error) throw error
+      })
+    },
+
+    // 카테고리별 템플릿 가져오기
+    async getByCategory(category) {
+      return safeQuery(async () => {
+        const { data, error } = await supabase
+          .from('email_templates')
+          .select('*')
+          .eq('category', category)
+        if (error) throw error
+        return data || []
+      })
+    }
   }
 }
 
