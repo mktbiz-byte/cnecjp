@@ -601,7 +601,7 @@ const ApplicationsReportSimple = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
                         <div className="flex-shrink-0">
-                          <Users className="h-10 w-10 text-gray-400" />
+                          <User className="h-10 w-10 text-gray-400" />
                         </div>
                         <div className="ml-4">
                           <div className="flex items-center">
