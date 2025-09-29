@@ -85,10 +85,9 @@ const AdminNavigation = () => {
       disabled: true
     },
     {
-      path: '/admin/settings',
+      path: '/admin/system-settings',
       label: t.settings,
-      icon: Settings,
-      disabled: true
+      icon: Settings
     }
   ]
 

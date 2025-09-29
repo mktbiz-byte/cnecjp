@@ -1,5 +1,5 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import './App.css';
@@ -24,6 +24,7 @@ import SNSUploadFinalReport from './components/admin/SNSUploadFinalReport';
 import EmailTemplateManager from './components/admin/EmailTemplateManager';
 import UserApprovalManager from './components/admin/UserApprovalManager';
 import AdminWithdrawals from './components/admin/AdminWithdrawals';
+import SystemSettings from './components/admin/SystemSettings';
 import SecretAdminLogin from './components/SecretAdminLogin';
 import TestAdminLogin from './components/TestAdminLogin';
 
@@ -82,6 +83,7 @@ const MainContent = () => {
         <Route path="/admin/email-templates" element={<EmailTemplateManager />} />
         <Route path="/admin/user-approval" element={<UserApprovalManager />} />
         <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
+        <Route path="/admin/system-settings" element={<SystemSettings />} />
       </Routes>
     </div>
   );
