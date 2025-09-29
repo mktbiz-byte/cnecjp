@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { database } from '../../lib/supabase'
+import AdminHeader from './AdminHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -111,22 +112,28 @@ const AdminDashboardSimple = () => {
       setLoading(true)
       setError('')
       
+      console.log('관리자 대시보드 데이터 로딩 시작...')
+      
       // 실제 데이터베이스에서 통계 데이터 로드
       const statsData = await database.stats.getOverall()
+      console.log('통계 데이터:', statsData)
       
       // 추가 통계 계산
-      const campaigns = await database.campaigns.getAll()
-      const applications = await database.applications.getAll()
+      const campaigns = await database.campaigns.getAll() || []
+      const applications = await database.applications.getAll() || []
+      
+      console.log('캠페인 데이터:', campaigns.length, '개')
+      console.log('신청서 데이터:', applications.length, '개')
       
       const activeCampaigns = campaigns.filter(c => c.status === 'active').length
       const pendingApplications = applications.filter(a => a.status === 'pending').length
       
       setStats({
-        totalCampaigns: statsData.totalCampaigns,
+        totalCampaigns: statsData.totalCampaigns || 0,
         activeCampaigns: activeCampaigns,
-        totalApplications: statsData.totalApplications,
-        totalRewards: statsData.totalRewards,
-        totalUsers: statsData.totalUsers,
+        totalApplications: statsData.totalApplications || 0,
+        totalRewards: statsData.totalRewards || 0,
+        totalUsers: statsData.totalUsers || 0,
         pendingApplications: pendingApplications
       })
       
@@ -160,30 +167,7 @@ const AdminDashboardSimple = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* 헤더 */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">{t.title}</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-                {t.admin}: {user?.email}
-              </Badge>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleSignOut}
-                className="flex items-center space-x-2"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>{t.logout}</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <AdminHeader title={t.title} />
 
       {/* 메인 콘텐츠 */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
