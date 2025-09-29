@@ -160,12 +160,25 @@ const HomePageExactReplica = () => {
               <Badge className="bg-purple-500 text-white hover:bg-purple-600 cursor-pointer">
                 <a href="#guide">参加方法</a>
               </Badge>
-              <Badge className="bg-teal-500 text-white hover:bg-teal-600 cursor-pointer">
-                <Link to="/login">ログイン</Link>
-              </Badge>
-              <Badge className="bg-purple-600 text-white hover:bg-purple-700 cursor-pointer">
-                <Link to="/signup">新規登録</Link>
-              </Badge>
+              {user ? (
+                <>
+                  <Badge className="bg-indigo-500 text-white hover:bg-indigo-600 cursor-pointer">
+                    <Link to="/mypage">マイページ</Link>
+                  </Badge>
+                  <Badge className="bg-gray-500 text-white hover:bg-gray-600 cursor-pointer">
+                    <button onClick={signOut}>ログアウト</button>
+                  </Badge>
+                </>
+              ) : (
+                <>
+                  <Badge className="bg-teal-500 text-white hover:bg-teal-600 cursor-pointer">
+                    <Link to="/login">ログイン</Link>
+                  </Badge>
+                  <Badge className="bg-purple-600 text-white hover:bg-purple-700 cursor-pointer">
+                    <Link to="/signup">新規登録</Link>
+                  </Badge>
+                </>
+              )}
             </nav>
           </div>
         </div>
