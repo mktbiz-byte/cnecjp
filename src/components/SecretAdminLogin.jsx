@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { supabase } from '../lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -20,11 +21,29 @@ const SecretAdminLogin = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
-  // 이미 로그인된 사용자는 관리자 페이지로 리다이렉트
+  // 관리자 권한이 있는 사용자만 관리자 페이지로 리다이렉트
   useEffect(() => {
-    if (user) {
-      navigate('/admin')
+    const checkAdminAccess = async () => {
+      if (user) {
+        try {
+          // 사용자 프로필에서 관리자 권한 확인
+          const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('user_role')
+            .eq('user_id', user.id)
+            .single()
+          
+          // 관리자 또는 매니저 권한이 있는 경우에만 리다이렉트
+          if (profile?.user_role === 'admin' || profile?.user_role === 'manager') {
+            navigate('/admin')
+          }
+        } catch (error) {
+          console.error('Admin access check error:', error)
+        }
+      }
     }
+    
+    checkAdminAccess()
   }, [user, navigate])
 
   const handleInputChange = (e) => {

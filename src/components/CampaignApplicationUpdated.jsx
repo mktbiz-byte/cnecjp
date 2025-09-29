@@ -32,6 +32,10 @@ const CampaignApplicationUpdated = () => {
     answer_4: '',
     additional_info: '',
     
+    // 개인정보 (수정 가능)
+    age: '',
+    skin_type: '',
+    
     // 새로운 필수 정보
     postal_code: '',
     address: '',
@@ -218,6 +222,8 @@ const CampaignApplicationUpdated = () => {
           answer_3: existingApp.answer_3 || '',
           answer_4: existingApp.answer_4 || '',
           additional_info: existingApp.additional_info || '',
+          age: existingApp.age || profileData?.age || '',
+          skin_type: existingApp.skin_type || profileData?.skin_type || '',
           postal_code: existingApp.postal_code || '',
           address: existingApp.address || '',
           phone_number: existingApp.phone_number || '',
@@ -238,7 +244,15 @@ const CampaignApplicationUpdated = () => {
   const validateForm = () => {
     const errors = []
 
-    // 필수 필드 검증
+    // 개인정보 필수 필드 검증
+    if (!applicationData.age || applicationData.age < 1) {
+      errors.push('나이를 올바르게 입력해주세요')
+    }
+    if (!applicationData.skin_type.trim()) {
+      errors.push('피부타입을 선택해주세요')
+    }
+
+    // 연락처 및 배송 정보 필수 필드 검증
     if (!applicationData.postal_code.trim()) {
       errors.push(t.postalCodeRequired)
     }
@@ -560,9 +574,11 @@ const CampaignApplicationUpdated = () => {
                     </label>
                     <input
                       type="number"
-                      value={userProfile?.age || ''}
-                      disabled
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
+                      value={applicationData.age || userProfile?.age || ''}
+                      onChange={(e) => setApplicationData(prev => ({ ...prev, age: e.target.value }))}
+                      placeholder="나이를 입력하세요"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                      required
                     />
                   </div>
 
@@ -570,12 +586,19 @@ const CampaignApplicationUpdated = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       {t.skinType} <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="text"
-                      value={userProfile?.skin_type || ''}
-                      disabled
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
-                    />
+                    <select
+                      value={applicationData.skin_type || userProfile?.skin_type || ''}
+                      onChange={(e) => setApplicationData(prev => ({ ...prev, skin_type: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                      required
+                    >
+                      <option value="">피부타입을 선택하세요</option>
+                      <option value="dry">건성</option>
+                      <option value="oily">지성</option>
+                      <option value="combination">복합성</option>
+                      <option value="sensitive">민감성</option>
+                      <option value="normal">보통</option>
+                    </select>
                   </div>
                 </div>
               </div>
