@@ -759,12 +759,7 @@ export const database = {
         }
       }
     }
-  }
-}
-
-export default supabase
-
-
+  },
 
   // 사용자 관련 (userProfiles 별칭)
   users: {
@@ -774,4 +769,6 @@ export default supabase
       return database.userProfiles.getAll();
     }
   }
-};
+}
+
+export default supabase
