@@ -45,6 +45,12 @@ const AdminCampaignsWithQuestions = () => {
     start_date: '',
     end_date: '',
     status: 'active',
+    // SNS 플랫폼 선택
+    target_platforms: {
+      instagram: false,
+      youtube: false,
+      tiktok: false
+    },
     question_1: '',
     question_1_required: false,
     question_2: '',
@@ -99,7 +105,14 @@ const AdminCampaignsWithQuestions = () => {
       food: '음식',
       lifestyle: '라이프스타일',
       tech: '기술',
-      other: '기타'
+      other: '기타',
+      // SNS 플랫폼 관련
+      targetPlatforms: '대상 SNS 플랫폼',
+      selectPlatforms: '모집할 SNS 플랫폼을 선택하세요',
+      instagram: '인스타그램',
+      youtube: '유튜브',
+      tiktok: '틱톡',
+      platformsRequired: '최소 하나의 플랫폼을 선택해야 합니다'
     },
     ja: {
       title: 'キャンペーン管理',
@@ -143,7 +156,14 @@ const AdminCampaignsWithQuestions = () => {
       food: 'フード',
       lifestyle: 'ライフスタイル',
       tech: 'テクノロジー',
-      other: 'その他'
+      other: 'その他',
+      // SNS プラットフォーム関連
+      targetPlatforms: '対象SNSプラットフォーム',
+      selectPlatforms: '募集するSNSプラットフォームを選択してください',
+      instagram: 'Instagram',
+      youtube: 'YouTube',
+      tiktok: 'TikTok',
+      platformsRequired: '最低1つのプラットフォームを選択する必要があります'
     }
   }
 
@@ -193,6 +213,12 @@ const AdminCampaignsWithQuestions = () => {
       start_date: '',
       end_date: '',
       status: 'active',
+      // SNS 플랫폼 선택
+      target_platforms: {
+        instagram: false,
+        youtube: false,
+        tiktok: false
+      },
       question_1: '',
       question_1_required: false,
       question_2: '',
@@ -226,6 +252,13 @@ const AdminCampaignsWithQuestions = () => {
         return
       }
 
+      // SNS 플랫폼 선택 검증
+      const selectedPlatforms = Object.values(campaignForm.target_platforms).some(selected => selected)
+      if (!selectedPlatforms) {
+        setError(t.platformsRequired)
+        return
+      }
+
       // 날짜 형식 변환
       const formatDate = (dateStr) => {
         if (!dateStr) return null
@@ -246,6 +279,8 @@ const AdminCampaignsWithQuestions = () => {
         start_date: formatDate(campaignForm.start_date),
         end_date: formatDate(campaignForm.end_date),
         status: campaignForm.status || 'active',
+        // SNS 플랫폼 정보
+        target_platforms: campaignForm.target_platforms,
         question_1: campaignForm.question_1.trim() || null,
         question_1_required: campaignForm.question_1_required || false,
         question_2: campaignForm.question_2.trim() || null,
@@ -307,6 +342,13 @@ const AdminCampaignsWithQuestions = () => {
       }
       if (!campaignForm.requirements.trim()) {
         setError('참여 조건을 입력해주세요.')
+        return
+      }
+
+      // SNS 플랫폼 선택 검증
+      const selectedPlatforms = Object.values(campaignForm.target_platforms).some(selected => selected)
+      if (!selectedPlatforms) {
+        setError(t.platformsRequired)
         return
       }
 
@@ -771,6 +813,60 @@ const AdminCampaignsWithQuestions = () => {
                     <SelectItem value="completed">{t.completed}</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* SNS 플랫폼 선택 */}
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-base font-semibold">{t.targetPlatforms} *</Label>
+                  <p className="text-sm text-gray-600 mt-1">{t.selectPlatforms}</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="platform_instagram"
+                      checked={campaignForm.target_platforms.instagram}
+                      onCheckedChange={(checked) => setCampaignForm(prev => ({
+                        ...prev,
+                        target_platforms: { ...prev.target_platforms, instagram: checked }
+                      }))}
+                    />
+                    <Label htmlFor="platform_instagram" className="flex items-center space-x-2">
+                      <span className="text-pink-600">📷</span>
+                      <span>{t.instagram}</span>
+                    </Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="platform_youtube"
+                      checked={campaignForm.target_platforms.youtube}
+                      onCheckedChange={(checked) => setCampaignForm(prev => ({
+                        ...prev,
+                        target_platforms: { ...prev.target_platforms, youtube: checked }
+                      }))}
+                    />
+                    <Label htmlFor="platform_youtube" className="flex items-center space-x-2">
+                      <span className="text-red-600">🎥</span>
+                      <span>{t.youtube}</span>
+                    </Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="platform_tiktok"
+                      checked={campaignForm.target_platforms.tiktok}
+                      onCheckedChange={(checked) => setCampaignForm(prev => ({
+                        ...prev,
+                        target_platforms: { ...prev.target_platforms, tiktok: checked }
+                      }))}
+                    />
+                    <Label htmlFor="platform_tiktok" className="flex items-center space-x-2">
+                      <span className="text-black">🎵</span>
+                      <span>{t.tiktok}</span>
+                    </Label>
+                  </div>
+                </div>
               </div>
 
               {/* 질문 설정 */}

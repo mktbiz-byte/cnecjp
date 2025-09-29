@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
+import emailScheduler from './lib/emailScheduler';
 import './App.css';
 
 // 모든 페이지 컴포넌트 import
@@ -29,6 +30,16 @@ import SecretAdminLogin from './components/SecretAdminLogin';
 import TestAdminLogin from './components/TestAdminLogin';
 
 function App() {
+  useEffect(() => {
+    // 이메일 스케줄러 시작
+    emailScheduler.start();
+    
+    // 컴포넌트 언마운트 시 스케줄러 중지
+    return () => {
+      emailScheduler.stop();
+    };
+  }, []);
+
   return (
     <Router>
       <AuthProvider>

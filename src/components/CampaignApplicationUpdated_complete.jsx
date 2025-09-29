@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
-import { database } from '../lib/supabase'
-import VideoSubmissionTracker from './VideoSubmissionTracker'
+import database from '../lib/supabase'
 
 const CampaignApplicationUpdated = () => {
   const { id } = useParams()
@@ -465,34 +464,6 @@ const CampaignApplicationUpdated = () => {
                   </div>
                 </div>
 
-                {/* 대상 SNS 플랫폼 */}
-                {campaign.target_platforms && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">대상 SNS 플랫폼</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {(() => {
-                        // target_platforms가 객체인 경우 처리
-                        if (typeof campaign.target_platforms === 'object') {
-                          const platforms = []
-                          if (campaign.target_platforms.instagram) platforms.push('Instagram')
-                          if (campaign.target_platforms.youtube) platforms.push('YouTube')
-                          if (campaign.target_platforms.tiktok) platforms.push('TikTok')
-                          return platforms
-                        }
-                        // 배열인 경우
-                        return campaign.target_platforms || []
-                      })().map((platform) => (
-                        <span 
-                          key={platform} 
-                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                        >
-                          {platform}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 {/* 참여 조건 */}
                 {campaign.requirements && (
                   <div>
@@ -746,16 +717,6 @@ const CampaignApplicationUpdated = () => {
               </div>
             </form>
           </div>
-
-          {/* 영상 제출 섹션 - 신청이 승인된 경우에만 표시 */}
-          {existingApplication && existingApplication.status === 'approved' && (
-            <div className="bg-white rounded-lg shadow-md p-6 mt-6">
-              <VideoSubmissionTracker 
-                campaignId={campaignId}
-                applicationId={existingApplication.id}
-              />
-            </div>
-          )}
         </div>
       </div>
     </div>

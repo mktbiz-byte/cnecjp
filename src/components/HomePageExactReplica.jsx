@@ -171,7 +171,7 @@ const HomePageExactReplica = () => {
                 <a href="#about">サービス紹介</a>
               </Badge>
               <Badge className="bg-orange-500 text-white hover:bg-orange-600 cursor-pointer">
-                <a href="#portfolio">ポートフォリオ</a>
+                <a href="https://www.youtube.com/@CNEC_JP" target="_blank" rel="noopener noreferrer">ポートフォリオ</a>
               </Badge>
               <Badge className="bg-purple-500 text-white hover:bg-purple-600 cursor-pointer">
                 <a href="#guide">参加方法</a>
@@ -319,7 +319,18 @@ const HomePageExactReplica = () => {
                     <div className="mb-4">
                       <div className="text-sm text-gray-500 mb-2">対象プラットフォーム:</div>
                       <div className="flex flex-wrap gap-2">
-                        {(campaign.target_platforms || ['Instagram', 'TikTok']).map((platform) => (
+                        {(() => {
+                          // target_platforms가 객체인 경우 처리
+                          if (campaign.target_platforms && typeof campaign.target_platforms === 'object') {
+                            const platforms = []
+                            if (campaign.target_platforms.instagram) platforms.push('Instagram')
+                            if (campaign.target_platforms.youtube) platforms.push('YouTube')
+                            if (campaign.target_platforms.tiktok) platforms.push('TikTok')
+                            return platforms.length > 0 ? platforms : ['Instagram', 'TikTok']
+                          }
+                          // 배열인 경우 또는 기본값
+                          return campaign.target_platforms || ['Instagram', 'TikTok']
+                        })().map((platform) => (
                           <Badge 
                             key={platform} 
                             className={`${getPlatformColor(platform)} flex items-center space-x-1 text-xs`}
@@ -440,7 +451,10 @@ const HomePageExactReplica = () => {
                       </div>
                     </div>
                     
-                    <Button className="bg-red-600 text-white hover:bg-red-700 mb-6">
+                    <Button 
+                      className="bg-red-600 text-white hover:bg-red-700 mb-6"
+                      onClick={() => window.open('https://www.youtube.com/@CNEC_JP', '_blank')}
+                    >
                       <ExternalLink className="h-4 w-4 mr-2" />
                       ポートフォリオを見る
                     </Button>
@@ -623,7 +637,18 @@ const HomePageExactReplica = () => {
               <div>
                 <h4 className="font-semibold text-gray-800 mb-2">対象プラットフォーム</h4>
                 <div className="flex flex-wrap gap-2">
-                  {(selectedCampaign.target_platforms || ['Instagram', 'TikTok']).map((platform) => (
+                  {(() => {
+                    // target_platforms가 객체인 경우 처리
+                    if (selectedCampaign.target_platforms && typeof selectedCampaign.target_platforms === 'object') {
+                      const platforms = []
+                      if (selectedCampaign.target_platforms.instagram) platforms.push('Instagram')
+                      if (selectedCampaign.target_platforms.youtube) platforms.push('YouTube')
+                      if (selectedCampaign.target_platforms.tiktok) platforms.push('TikTok')
+                      return platforms.length > 0 ? platforms : ['Instagram', 'TikTok']
+                    }
+                    // 배열인 경우 또는 기본값
+                    return selectedCampaign.target_platforms || ['Instagram', 'TikTok']
+                  })().map((platform) => (
                     <Badge 
                       key={platform} 
                       className={`${getPlatformColor(platform)} flex items-center space-x-1`}
