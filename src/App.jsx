@@ -12,6 +12,7 @@ import CampaignApplicationUpdated from './components/CampaignApplicationUpdated'
 import MyPageWithPointSystem from './components/MyPageWithPointSystem';
 import JapanWithdrawalRequest from './components/JapanWithdrawalRequest';
 import ProfileManagement from './components/ProfileManagement';
+import ProfileSettings from './components/ProfileSettings';
 import AuthCallbackSafe from './components/AuthCallbackSafe';
 
 // 관리자 컴포넌트
@@ -68,6 +69,7 @@ const MainContent = () => {
         <Route path="/mypage" element={<MyPageWithPointSystem />} />
         <Route path="/withdrawal" element={<JapanWithdrawalRequest />} />
         <Route path="/profile" element={<ProfileManagement />} />
+        <Route path="/profile-settings" element={<ProfileSettings />} />
         
         {/* 관리자 페이지 */}
         <Route path="/secret-admin-login" element={<SecretAdminLogin />} />

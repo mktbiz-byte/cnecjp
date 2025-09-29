@@ -16,8 +16,9 @@ import {
   AlertCircle, CheckCircle, Clock, DollarSign, 
   Calendar, FileText, ExternalLink, Play, Coins,
   Instagram, Youtube, Hash, Globe, AlertTriangle,
-  CreditCard, Banknote, TrendingUp
+  CreditCard, Banknote, TrendingUp, Home, Settings, User
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 const MyPageWithPointSystem = () => {
   const { user } = useAuth()
@@ -221,8 +222,26 @@ const MyPageWithPointSystem = () => {
       <div className="max-w-6xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">マイページ</h1>
-          <p className="text-gray-600">キャンペーン参加状況とポイント管理</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">マイページ</h1>
+              <p className="text-gray-600">キャンペーン参加状況とポイント管理</p>
+            </div>
+            <div className="flex space-x-3">
+              <Link to="/">
+                <Button variant="outline" className="flex items-center space-x-2">
+                  <Home className="h-4 w-4" />
+                  <span>メイン画面</span>
+                </Button>
+              </Link>
+              <Link to="/profile-settings">
+                <Button variant="outline" className="flex items-center space-x-2">
+                  <Settings className="h-4 w-4" />
+                  <span>プロフィール設定</span>
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
 
         {/* Point Balance Card */}

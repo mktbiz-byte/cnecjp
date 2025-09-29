@@ -59,22 +59,38 @@ const HomePageExactReplica = () => {
 
   const loadStats = async () => {
     try {
-      const [campaignsData, applicationsData] = await Promise.all([
+      const [campaignsData, applicationsData, usersData] = await Promise.all([
         database.campaigns.getAll(),
-        database.applications.getAll()
+        database.applications.getAll(),
+        database.userProfiles.getAll()
       ])
       
       const allCampaigns = campaignsData || []
       const applications = applicationsData || []
+      const users = usersData || []
+      
+      console.log('Stats data:', {
+        campaigns: allCampaigns.length,
+        applications: applications.length,
+        users: users.length,
+        rewards: allCampaigns.reduce((sum, campaign) => sum + (campaign.reward_amount || 0), 0)
+      })
       
       setStats({
         totalCampaigns: allCampaigns.length,
-        totalCreators: 5000,
+        totalCreators: users.length,
         totalApplications: applications.length,
         totalRewards: allCampaigns.reduce((sum, campaign) => sum + (campaign.reward_amount || 0), 0)
       })
     } catch (error) {
       console.error('Load stats error:', error)
+      // 오류 발생 시 기본값 설정
+      setStats({
+        totalCampaigns: 0,
+        totalCreators: 0,
+        totalApplications: 0,
+        totalRewards: 0
+      })
     }
   }
 
