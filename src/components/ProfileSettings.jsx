@@ -177,25 +177,38 @@ const ProfileSettings = () => {
       setError('')
       setSuccess('')
 
+      console.log('프로필 저장 시작:', user?.id)
+      console.log('저장할 데이터:', profile)
+
+      if (!user?.id) {
+        throw new Error('사용자 ID가 없습니다.')
+      }
+
       const profileData = {
         user_id: user.id,
-        name: profile.name,
+        email: user.email || profile.email || '',
+        name: profile.name || '',
         age: profile.age ? parseInt(profile.age) : null,
-        address: profile.address,
-        skin_type: profile.skin_type,
-        instagram_url: profile.instagram_url,
-        youtube_url: profile.youtube_url,
-        tiktok_url: profile.tiktok_url,
-        group_purchase_available: profile.group_purchase_available,
-        bio: profile.bio,
+        address: profile.address || '',
+        skin_type: profile.skin_type || '',
+        instagram_url: profile.instagram_url || '',
+        youtube_url: profile.youtube_url || '',
+        tiktok_url: profile.tiktok_url || '',
+        group_purchase_available: profile.group_purchase_available || false,
+        bio: profile.bio || '',
         updated_at: new Date().toISOString()
       }
 
-      await database.userProfiles.upsert(profileData)
+      console.log('Supabase에 저장할 데이터:', profileData)
+
+      const result = await database.userProfiles.upsert(profileData)
+      console.log('저장 결과:', result)
+      
       setSuccess(t.profileUpdated)
     } catch (error) {
       console.error('Profile save error:', error)
-      setError(t.error)
+      console.error('Error details:', error.message)
+      setError(`${t.error}: ${error.message}`)
     } finally {
       setSaving(false)
     }

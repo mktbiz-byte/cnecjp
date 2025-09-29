@@ -335,13 +335,47 @@ export const database = {
 
     // 프로필 생성 또는 업데이트
     async upsert(profileData) {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .upsert([profileData])
-        .select()
-        .single()
-      if (error) throw error
-      return data
+      try {
+        console.log('Upsert 시작:', profileData)
+        
+        // 먼저 기존 프로필이 있는지 확인
+        const { data: existingProfile } = await supabase
+          .from('user_profiles')
+          .select('id')
+          .eq('user_id', profileData.user_id)
+          .single()
+        
+        if (existingProfile) {
+          // 기존 프로필이 있으면 업데이트
+          console.log('기존 프로필 업데이트:', existingProfile.id)
+          const { data, error } = await supabase
+            .from('user_profiles')
+            .update(profileData)
+            .eq('user_id', profileData.user_id)
+            .select()
+            .single()
+          
+          if (error) throw error
+          return data
+        } else {
+          // 새 프로필 생성
+          console.log('새 프로필 생성')
+          const { data, error } = await supabase
+            .from('user_profiles')
+            .insert([{
+              ...profileData,
+              email: profileData.email || 'unknown@example.com' // 이메일이 필수인 경우
+            }])
+            .select()
+            .single()
+          
+          if (error) throw error
+          return data
+        }
+      } catch (error) {
+        console.error('Upsert error:', error)
+        throw error
+      }
     },
 
     // 프로필 업데이트
