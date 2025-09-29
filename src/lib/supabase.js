@@ -92,12 +92,24 @@ export const database = {
   campaigns: {
     // 모든 캠페인 가져오기
     async getAll() {
-      const { data, error } = await supabase
-        .from('campaigns')
-        .select('*')
-        .order('created_at', { ascending: false })
-      if (error) throw error
-      return data
+      try {
+        console.log('Supabase campaigns.getAll() 호출')
+        const { data, error } = await supabase
+          .from('campaigns')
+          .select('*')
+          .order('created_at', { ascending: false })
+        
+        if (error) {
+          console.error('Campaigns getAll error:', error)
+          throw error
+        }
+        
+        console.log('Campaigns 데이터 로드 성공:', data?.length || 0, '개')
+        return data || []
+      } catch (error) {
+        console.error('Campaigns getAll 함수 오류:', error)
+        throw error
+      }
     },
 
     // 활성 캠페인만 가져오기

@@ -80,20 +80,34 @@ const AdminCampaignsWithQuestions = () => {
       setLoading(true)
       setError('')
       
+      console.log('관리자 캠페인 데이터 로딩 시작...')
+      
+      // 현재 사용자 확인
+      const { data: { user } } = await supabase.auth.getUser()
+      console.log('현재 사용자:', user?.email)
+      
       // 캠페인 로드
+      console.log('캠페인 데이터 로딩 중...')
       const campaignsData = await database.campaigns.getAll()
+      console.log('로드된 캠페인:', campaignsData?.length || 0, '개')
       setCampaigns(campaignsData || [])
       
       // 신청 내역 로드
+      console.log('신청서 데이터 로딩 중...')
       const applicationsData = await database.applications.getAll()
+      console.log('로드된 신청서:', applicationsData?.length || 0, '개')
       setApplications(applicationsData || [])
+      
+      console.log('데이터 로딩 완료')
       
     } catch (error) {
       console.error('Load data error:', error)
-      setError(language === 'ko' 
-        ? '데이터를 불러올 수 없습니다.'
-        : 'データを読み込めません。'
-      )
+      console.error('Error details:', error.message)
+      console.error('Error code:', error.code)
+      
+      setError(`${language === 'ko' 
+        ? '데이터를 불러올 수 없습니다'
+        : 'データを読み込めません'}: ${error.message}`)
     } finally {
       setLoading(false)
     }
