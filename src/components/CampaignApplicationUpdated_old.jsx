@@ -105,66 +105,38 @@ const CampaignApplicationUpdated = () => {
 
       console.log('데이터 로드 시작 - 캠페인 ID:', id, '사용자 ID:', user?.id)
 
-      // 타임아웃 설정 (10초)
-      const timeout = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('데이터 로드 타임아웃')), 10000)
-      )
+      // 병렬로 데이터 로드
+      const [campaignResult, profileResult, applicationResult] = await Promise.allSettled([
+        database.campaigns.getById(id),
+        database.userProfiles.get(user.id),
+        database.applications.getByUserAndCampaign(user.id, id)
+      ])
 
-      // 캠페인 데이터 먼저 로드 (가장 중요)
-      let campaignData = null
-      try {
-        console.log('캠페인 데이터 로드 시작...')
-        const campaignPromise = database.campaigns.getById(id)
-        campaignData = await Promise.race([campaignPromise, timeout])
-        
-        if (campaignData) {
-          setCampaign(campaignData)
-          console.log('캠페인 데이터 로드 성공:', campaignData)
-        } else {
-          throw new Error('캠페인 데이터를 찾을 수 없습니다')
-        }
-      } catch (error) {
-        console.error('캠페인 로드 실패:', error)
+      // 캠페인 데이터 처리
+      if (campaignResult.status === 'fulfilled' && campaignResult.value) {
+        setCampaign(campaignResult.value)
+        console.log('캠페인 데이터 로드 성공:', campaignResult.value)
+      } else {
+        console.error('캠페인 로드 실패:', campaignResult.reason)
         setError('캠페인 정보를 불러올 수 없습니다.')
         return
       }
 
-      // 프로필 데이터 로드 (선택적)
-      try {
-        console.log('프로필 데이터 로드 시작...')
-        const profilePromise = database.userProfiles.get(user.id)
-        const profileData = await Promise.race([profilePromise, timeout])
-        
-        if (profileData) {
-          setUserProfile(profileData)
-          console.log('프로필 데이터 로드 성공:', profileData)
-        } else {
-          console.log('프로필 데이터 없음 - 기본값 사용')
-          setUserProfile({ name: '', email: user.email || '' })
-        }
-      } catch (error) {
-        console.warn('프로필 로드 실패:', error)
-        // 프로필 로드 실패해도 계속 진행
-        setUserProfile({ name: '', email: user.email || '' })
+      // 프로필 데이터 처리
+      if (profileResult.status === 'fulfilled' && profileResult.value) {
+        setUserProfile(profileResult.value)
+        console.log('프로필 데이터 로드 성공:', profileResult.value)
+      } else {
+        console.warn('프로필 로드 실패 또는 프로필 없음:', profileResult.reason)
+        // 프로필이 없어도 계속 진행 (기본값 사용)
       }
 
-      // 기존 신청서 확인 (선택적)
-      try {
-        console.log('기존 신청서 확인 시작...')
-        const applicationPromise = database.applications.getByUserAndCampaign(user.id, id)
-        const applicationData = await Promise.race([applicationPromise, timeout])
-        
-        if (applicationData) {
-          setExistingApplication(applicationData)
-          console.log('기존 신청서 발견:', applicationData)
-        } else {
-          console.log('기존 신청서 없음 - 새로 신청 가능')
-          setExistingApplication(null)
-        }
-      } catch (error) {
-        console.warn('기존 신청서 확인 실패:', error)
-        // 신청서 확인 실패해도 계속 진행 (새로 신청 가능으로 처리)
-        setExistingApplication(null)
+      // 기존 신청서 확인
+      if (applicationResult.status === 'fulfilled' && applicationResult.value) {
+        setExistingApplication(applicationResult.value)
+        console.log('기존 신청서 발견:', applicationResult.value)
+      } else {
+        console.log('기존 신청서 없음 - 새로 신청 가능')
       }
 
     } catch (error) {
@@ -172,7 +144,6 @@ const CampaignApplicationUpdated = () => {
       setError(`데이터를 불러오는데 실패했습니다: ${error.message}`)
     } finally {
       setLoading(false)
-      console.log('데이터 로드 완료')
     }
   }
 
@@ -232,15 +203,8 @@ const CampaignApplicationUpdated = () => {
 
       console.log('제출할 신청서 데이터:', submissionData)
 
-      // 타임아웃 설정 (15초)
-      const timeout = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('신청서 제출 타임아웃')), 15000)
-      )
-
       // 신청서 제출
-      const submitPromise = database.applications.create(submissionData)
-      const result = await Promise.race([submitPromise, timeout])
-      
+      const result = await database.applications.create(submissionData)
       console.log('신청서 제출 결과:', result)
 
       setSuccess('캠페인 신청이 완료되었습니다!')
@@ -252,11 +216,7 @@ const CampaignApplicationUpdated = () => {
 
     } catch (error) {
       console.error('신청서 제출 오류:', error)
-      if (error.message.includes('타임아웃')) {
-        setError('신청서 제출이 지연되고 있습니다. 잠시 후 다시 시도해주세요.')
-      } else {
-        setError(`応募の送信に失敗しました。もう一度お試しください。: ${error.message}`)
-      }
+      setError(`응募の送信に失敗しました。もう一度お試しください。: ${error.message}`)
     } finally {
       setSubmitting(false)
     }
@@ -278,12 +238,9 @@ const CampaignApplicationUpdated = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
-          <div className="text-center">
-            <p className="text-lg font-medium">캠페인 정보를 불러오는 중...</p>
-            <p className="text-sm text-gray-500 mt-1">잠시만 기다려주세요</p>
-          </div>
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>로딩 중...</span>
         </div>
       </div>
     )
@@ -295,7 +252,6 @@ const CampaignApplicationUpdated = () => {
         <div className="text-center">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">캠페인을 찾을 수 없습니다</h2>
-          <p className="text-gray-600 mb-4">요청하신 캠페인이 존재하지 않거나 삭제되었습니다.</p>
           <Button onClick={() => navigate('/')} variant="outline">
             <ArrowLeft className="h-4 w-4 mr-2" />
             홈으로 돌아가기
@@ -463,7 +419,7 @@ const CampaignApplicationUpdated = () => {
                         <strong>이름:</strong> {userProfile?.name || '미설정'}
                       </p>
                       <p className="text-sm">
-                        <strong>이메일:</strong> {userProfile?.email || user?.email || '미설정'}
+                        <strong>이메일:</strong> {user?.email || '미설정'}
                       </p>
                       {!userProfile?.name && (
                         <div className="mt-2">
