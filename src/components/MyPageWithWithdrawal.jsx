@@ -175,16 +175,15 @@ const MyPageWithWithdrawal = () => {
       setLoading(true)
       
       // 프로필 정보 로드
-      const profileData = await database.users.getProfile(user.id)
+      const profileData = await database.userProfiles.get(user.id)
       setProfile(profileData)
       
       // 신청 내역 로드
-      const applicationsData = await database.applications.getByUserId(user.id)
+      const applicationsData = await database.applications.getByUser(user.id)
       setApplications(applicationsData || [])
       
-      // 출금 내역 로드
-      const withdrawalsData = await database.withdrawals?.getByUserId?.(user.id) || []
-      setWithdrawals(withdrawalsData)
+      // 출금 내역 로드 (아직 구현되지 않음)
+      setWithdrawals([])
       
       // 포인트 거래 내역 로드
       const { data: pointData } = await database.supabase
