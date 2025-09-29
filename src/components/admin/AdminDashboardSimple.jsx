@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
@@ -86,24 +87,19 @@ const AdminDashboardSimple = () => {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    // 관리자 권한 확인 - 테스트 계정 포함
     if (!user) {
-      console.log('사용자 로그인 필요')
       navigate('/secret-admin-login')
       return
     }
     
-    // 관리자 이메일 확인 (더 유연한 체크)
     const adminEmails = ['mkt_biz@cnec.co.kr', 'admin@cnec.test']
     const isAdmin = adminEmails.some(email => user.email?.includes(email))
     
     if (!isAdmin) {
-      console.log('관리자 권한 없음:', user?.email)
       navigate('/')
       return
     }
 
-    console.log('관리자 로그인 성공:', user?.email)
     loadDashboardData()
   }, [user, navigate])
 
@@ -111,37 +107,44 @@ const AdminDashboardSimple = () => {
     try {
       setLoading(true)
       setError('')
-      
       console.log('관리자 대시보드 데이터 로딩 시작...')
+
+      // 여러 데이터를 병렬로 가져오기
+      const [campaigns, applications, users] = await Promise.all([
+        database.campaigns.getAll(),
+        database.applications.getAll(),
+        database.users.getAll() // users.getAll() 함수가 supabase.js에 있다고 가정
+      ]);
+
+      console.log(`캠페인: ${campaigns.length}개, 신청서: ${applications.length}개, 사용자: ${users.length}개 로드됨`);
+
+      // 통계 계산
+      const totalCampaigns = campaigns.length;
+      const activeCampaigns = campaigns.filter(c => c.status === 'active').length;
+      const totalApplications = applications.length;
+      const pendingApplications = applications.filter(a => a.status === 'pending').length;
+      const totalUsers = users.length;
       
-      // 실제 데이터베이스에서 통계 데이터 로드
-      const statsData = await database.stats.getOverall()
-      console.log('통계 데이터:', statsData)
-      
-      // 추가 통계 계산
-      const campaigns = await database.campaigns.getAll() || []
-      const applications = await database.applications.getAll() || []
-      
-      console.log('캠페인 데이터:', campaigns.length, '개')
-      console.log('신청서 데이터:', applications.length, '개')
-      
-      const activeCampaigns = campaigns.filter(c => c.status === 'active').length
-      const pendingApplications = applications.filter(a => a.status === 'pending').length
-      
+      // 총 보상금 계산 (승인된 신청 건 기준)
+      const totalRewards = applications
+        .filter(a => a.status === 'approved' || a.status === 'completed' || a.status === 'paid')
+        .reduce((sum, a) => sum + (a.campaigns?.reward_amount || 0), 0);
+
       setStats({
-        totalCampaigns: statsData.totalCampaigns || 0,
-        activeCampaigns: activeCampaigns,
-        totalApplications: statsData.totalApplications || 0,
-        totalRewards: statsData.totalRewards || 0,
-        totalUsers: statsData.totalUsers || 0,
-        pendingApplications: pendingApplications
-      })
+        totalCampaigns,
+        activeCampaigns,
+        totalApplications,
+        totalRewards,
+        totalUsers,
+        pendingApplications
+      });
       
-    } catch (error) {
-      console.error('Dashboard data loading error:', error)
-      setError('데이터를 불러오는데 실패했습니다.')
+    } catch (err) {
+      console.error('대시보드 데이터 로딩 중 오류 발생:', err)
+      setError(t.error + (err instanceof Error ? ` (${err.message})` : ''))
     } finally {
       setLoading(false)
+      console.log('데이터 로딩 완료.');
     }
   }
 
@@ -228,7 +231,7 @@ const AdminDashboardSimple = () => {
             <CardContent>
               <div className="text-2xl font-bold">¥{stats.totalRewards.toLocaleString()}</div>
               <p className="text-xs text-muted-foreground">
-                {language === 'ko' ? '이번 달 지급액' : '今月の支払額'}
+                {language === 'ko' ? '지급 완료/예정' : '支払完了/予定'}
               </p>
             </CardContent>
           </Card>
@@ -413,3 +416,4 @@ const AdminDashboardSimple = () => {
 }
 
 export default AdminDashboardSimple
+

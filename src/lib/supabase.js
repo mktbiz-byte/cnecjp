@@ -763,3 +763,15 @@ export const database = {
 }
 
 export default supabase
+
+
+
+  // 사용자 관련 (userProfiles 별칭)
+  users: {
+    async getAll() {
+      console.log('Supabase users.getAll() 호출 (user_profiles 별칭)');
+      // 실제로는 userProfiles.getAll()을 호출합니다.
+      return database.userProfiles.getAll();
+    }
+  }
+};
