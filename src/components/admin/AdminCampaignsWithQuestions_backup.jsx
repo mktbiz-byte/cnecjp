@@ -54,23 +54,107 @@ const AdminCampaignsWithQuestions = () => {
     requirements: '',
     reward_amount: '',
     max_participants: '',
+    application_deadline: '',
     start_date: '',
     end_date: '',
-    application_deadline: '',
-    status: 'draft',
-    category: '',
-    target_audience: '',
-    campaign_materials: '',
-    special_instructions: '',
-    questions: [
-      { text: '', required: false },
-      { text: '', required: false },
-      { text: '', required: false },
-      { text: '', required: false }
-    ]
+    status: 'active',
+    google_drive_url: '',
+    google_slides_url: '',
+    question_1: '',
+    question_1_required: false,
+    question_2: '',
+    question_2_required: false,
+    question_3: '',
+    question_3_required: false,
+    question_4: '',
+    question_4_required: false
   })
 
-  const [cancelReason, setCancelReason] = useState('')
+  // 다국어 텍스트
+  const texts = {
+    ko: {
+      title: '캠페인 관리',
+      createCampaign: '새 캠페인 생성',
+      editCampaign: '캠페인 수정',
+      deleteCampaign: '캠페인 삭제',
+      viewApplications: '신청자 보기',
+      campaignTitle: '캠페인 제목',
+      brand: '브랜드',
+      description: '설명',
+      requirements: '참여 조건',
+      rewardAmount: '보상금',
+      maxParticipants: '최대 참여자',
+      applicationDeadline: '신청 마감일',
+      startDate: '시작일',
+      endDate: '종료일',
+      status: '상태',
+      active: '활성',
+      inactive: '비활성',
+      completed: '완료',
+      cancelled: '취소',
+      save: '저장',
+      cancel: '취소',
+      delete: '삭제',
+      loading: '로딩 중...',
+      processing: '처리 중...',
+      success: '성공',
+      error: '오류',
+      confirmDelete: '정말로 이 캠페인을 삭제하시겠습니까?',
+      campaignCreated: '캠페인이 성공적으로 생성되었습니다.',
+      campaignUpdated: '캠페인이 성공적으로 수정되었습니다.',
+      campaignDeleted: '캠페인이 성공적으로 삭제되었습니다.',
+      createFailed: '캠페인 생성에 실패했습니다.',
+      updateFailed: '캠페인 수정에 실패했습니다.',
+      deleteFailed: '캠페인 삭제에 실패했습니다.',
+      question: '질문',
+      required: '필수',
+      optional: '선택',
+      googleDriveUrl: 'Google Drive URL',
+      googleSlidesUrl: 'Google Slides URL'
+    },
+    ja: {
+      title: 'キャンペーン管理',
+      createCampaign: '新しいキャンペーン作成',
+      editCampaign: 'キャンペーン編集',
+      deleteCampaign: 'キャンペーン削除',
+      viewApplications: '応募者を見る',
+      campaignTitle: 'キャンペーンタイトル',
+      brand: 'ブランド',
+      description: '説明',
+      requirements: '参加条件',
+      rewardAmount: '報酬金',
+      maxParticipants: '最大参加者',
+      applicationDeadline: '応募締切',
+      startDate: '開始日',
+      endDate: '終了日',
+      status: 'ステータス',
+      active: 'アクティブ',
+      inactive: '非アクティブ',
+      completed: '完了',
+      cancelled: 'キャンセル',
+      save: '保存',
+      cancel: 'キャンセル',
+      delete: '削除',
+      loading: '読み込み中...',
+      processing: '処理中...',
+      success: '成功',
+      error: 'エラー',
+      confirmDelete: '本当にこのキャンペーンを削除しますか？',
+      campaignCreated: 'キャンペーンが正常に作成されました。',
+      campaignUpdated: 'キャンペーンが正常に更新されました。',
+      campaignDeleted: 'キャンペーンが正常に削除されました。',
+      createFailed: 'キャンペーンの作成に失敗しました。',
+      updateFailed: 'キャンペーンの更新に失敗しました。',
+      deleteFailed: 'キャンペーンの削除に失敗しました。',
+      question: '質問',
+      required: '必須',
+      optional: '任意',
+      googleDriveUrl: 'Google Drive URL',
+      googleSlidesUrl: 'Google Slides URL'
+    }
+  }
+
+  const t = texts[language] || texts.ko
 
   useEffect(() => {
     loadData()
@@ -81,34 +165,34 @@ const AdminCampaignsWithQuestions = () => {
       setLoading(true)
       setError('')
       
-      console.log('관리자 캠페인 데이터 로딩 시작...')
+      console.log('캠페인 데이터 로드 시작')
       
-      // 현재 사용자 확인
-      const { data: { user } } = await supabase.auth.getUser()
-      console.log('현재 사용자:', user?.email)
+      // 타임아웃 설정
+      const timeout = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('데이터 로드 타임아웃')), 15000)
+      )
+
+      // 캠페인 데이터 로드
+      const campaignsPromise = database.campaigns.getAll()
+      const campaignsData = await Promise.race([campaignsPromise, timeout])
       
-      // 캠페인 로드
-      console.log('캠페인 데이터 로딩 중...')
-      const campaignsData = await database.campaigns.getAll()
-      console.log('로드된 캠페인:', campaignsData?.length || 0, '개')
+      console.log('로드된 캠페인 데이터:', campaignsData)
       setCampaigns(campaignsData || [])
-      
-      // 신청 내역 로드
-      console.log('신청서 데이터 로딩 중...')
-      const applicationsData = await database.applications.getAll()
-      console.log('로드된 신청서:', applicationsData?.length || 0, '개')
-      setApplications(applicationsData || [])
-      
-      console.log('데이터 로딩 완료')
-      
+
+      // 신청서 데이터 로드 (선택적)
+      try {
+        const applicationsPromise = database.applications.getAll()
+        const applicationsData = await Promise.race([applicationsPromise, timeout])
+        console.log('로드된 신청서 데이터:', applicationsData)
+        setApplications(applicationsData || [])
+      } catch (appError) {
+        console.warn('신청서 데이터 로드 실패:', appError)
+        setApplications([])
+      }
+
     } catch (error) {
-      console.error('Load data error:', error)
-      console.error('Error details:', error.message)
-      console.error('Error code:', error.code)
-      
-      setError(`${language === 'ko' 
-        ? '데이터를 불러올 수 없습니다'
-        : 'データを読み込めません'}: ${error.message}`)
+      console.error('데이터 로드 오류:', error)
+      setError(`데이터를 불러오는데 실패했습니다: ${error.message}`)
     } finally {
       setLoading(false)
     }
@@ -122,66 +206,99 @@ const AdminCampaignsWithQuestions = () => {
       requirements: '',
       reward_amount: '',
       max_participants: '',
+      application_deadline: '',
       start_date: '',
       end_date: '',
-      application_deadline: '',
-      status: 'draft',
-      category: '',
-      target_audience: '',
-      campaign_materials: '',
-      special_instructions: '',
-      questions: [
-        { text: '', required: false },
-        { text: '', required: false },
-        { text: '', required: false },
-        { text: '', required: false }
-      ]
+      status: 'active',
+      google_drive_url: '',
+      google_slides_url: '',
+      question_1: '',
+      question_1_required: false,
+      question_2: '',
+      question_2_required: false,
+      question_3: '',
+      question_3_required: false,
+      question_4: '',
+      question_4_required: false
     })
-  }
-
-  const handleQuestionChange = (index, field, value) => {
-    setCampaignForm(prev => ({
-      ...prev,
-      questions: prev.questions.map((q, i) => 
-        i === index ? { ...q, [field]: value } : q
-      )
-    }))
   }
 
   const handleCreateCampaign = async () => {
     try {
       setProcessing(true)
       setError('')
+      setSuccess('')
       
-      // 빈 질문 제거
-      const filteredQuestions = campaignForm.questions.filter(q => q.text.trim() !== '')
-      
+      console.log('캠페인 생성 시작:', campaignForm)
+
+      // 필수 필드 검증
+      if (!campaignForm.title.trim()) {
+        setError('캠페인 제목을 입력해주세요.')
+        return
+      }
+      if (!campaignForm.brand.trim()) {
+        setError('브랜드명을 입력해주세요.')
+        return
+      }
+
+      // 날짜 형식 변환
+      const formatDate = (dateStr) => {
+        if (!dateStr) return null
+        const date = new Date(dateStr)
+        return date.toISOString()
+      }
+
+      // 캠페인 데이터 준비
       const campaignData = {
-        ...campaignForm,
-        questions: filteredQuestions,
+        title: campaignForm.title.trim(),
+        brand: campaignForm.brand.trim(),
+        description: campaignForm.description.trim() || null,
+        requirements: campaignForm.requirements.trim() || null,
         reward_amount: parseInt(campaignForm.reward_amount) || 0,
         max_participants: parseInt(campaignForm.max_participants) || 0,
+        application_deadline: formatDate(campaignForm.application_deadline),
+        start_date: formatDate(campaignForm.start_date),
+        end_date: formatDate(campaignForm.end_date),
+        status: campaignForm.status || 'active',
+        google_drive_url: campaignForm.google_drive_url.trim() || null,
+        google_slides_url: campaignForm.google_slides_url.trim() || null,
+        question_1: campaignForm.question_1.trim() || null,
+        question_1_required: campaignForm.question_1_required || false,
+        question_2: campaignForm.question_2.trim() || null,
+        question_2_required: campaignForm.question_2_required || false,
+        question_3: campaignForm.question_3.trim() || null,
+        question_3_required: campaignForm.question_3_required || false,
+        question_4: campaignForm.question_4.trim() || null,
+        question_4_required: campaignForm.question_4_required || false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }
       
-      await database.campaigns.create(campaignData)
-      
-      setSuccess(language === 'ko' 
-        ? '캠페인이 성공적으로 생성되었습니다.'
-        : 'キャンペーンが正常に作成されました。'
+      console.log('생성할 캠페인 데이터:', campaignData)
+
+      // 타임아웃 설정
+      const timeout = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('캠페인 생성 타임아웃')), 15000)
       )
+
+      // 캠페인 생성
+      const createPromise = database.campaigns.create(campaignData)
+      const result = await Promise.race([createPromise, timeout])
       
+      console.log('캠페인 생성 결과:', result)
+      
+      setSuccess(t.campaignCreated)
       setCreateModal(false)
       resetForm()
-      loadData()
+      
+      // 데이터 다시 로드
+      setTimeout(() => {
+        loadData()
+      }, 1000)
       
     } catch (error) {
-      console.error('Create campaign error:', error)
-      setError(language === 'ko' 
-        ? '캠페인 생성에 실패했습니다.'
-        : 'キャンペーンの作成に失敗しました。'
-      )
+      console.error('캠페인 생성 오류:', error)
+      setError(`${t.createFailed}: ${error.message}`)
     } finally {
       setProcessing(false)
     }
@@ -191,66 +308,124 @@ const AdminCampaignsWithQuestions = () => {
     try {
       setProcessing(true)
       setError('')
+      setSuccess('')
       
-      // 빈 질문 제거
-      const filteredQuestions = campaignForm.questions.filter(q => q.text.trim() !== '')
-      
-      const campaignData = {
-        ...campaignForm,
-        questions: filteredQuestions,
+      if (!selectedCampaign?.id) {
+        setError('선택된 캠페인이 없습니다.')
+        return
+      }
+
+      console.log('캠페인 수정 시작:', campaignForm)
+
+      // 필수 필드 검증
+      if (!campaignForm.title.trim()) {
+        setError('캠페인 제목을 입력해주세요.')
+        return
+      }
+      if (!campaignForm.brand.trim()) {
+        setError('브랜드명을 입력해주세요.')
+        return
+      }
+
+      // 날짜 형식 변환
+      const formatDate = (dateStr) => {
+        if (!dateStr) return null
+        const date = new Date(dateStr)
+        return date.toISOString()
+      }
+
+      // 수정할 데이터 준비
+      const updateData = {
+        title: campaignForm.title.trim(),
+        brand: campaignForm.brand.trim(),
+        description: campaignForm.description.trim() || null,
+        requirements: campaignForm.requirements.trim() || null,
         reward_amount: parseInt(campaignForm.reward_amount) || 0,
         max_participants: parseInt(campaignForm.max_participants) || 0,
+        application_deadline: formatDate(campaignForm.application_deadline),
+        start_date: formatDate(campaignForm.start_date),
+        end_date: formatDate(campaignForm.end_date),
+        status: campaignForm.status || 'active',
+        google_drive_url: campaignForm.google_drive_url.trim() || null,
+        google_slides_url: campaignForm.google_slides_url.trim() || null,
+        question_1: campaignForm.question_1.trim() || null,
+        question_1_required: campaignForm.question_1_required || false,
+        question_2: campaignForm.question_2.trim() || null,
+        question_2_required: campaignForm.question_2_required || false,
+        question_3: campaignForm.question_3.trim() || null,
+        question_3_required: campaignForm.question_3_required || false,
+        question_4: campaignForm.question_4.trim() || null,
+        question_4_required: campaignForm.question_4_required || false,
         updated_at: new Date().toISOString()
       }
       
-      await database.campaigns.update(selectedCampaign.id, campaignData)
-      
-      setSuccess(language === 'ko' 
-        ? '캠페인이 성공적으로 업데이트되었습니다.'
-        : 'キャンペーンが正常に更新されました。'
+      console.log('수정할 캠페인 데이터:', updateData)
+
+      // 타임아웃 설정
+      const timeout = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('캠페인 수정 타임아웃')), 15000)
       )
+
+      // 캠페인 수정
+      const updatePromise = database.campaigns.update(selectedCampaign.id, updateData)
+      const result = await Promise.race([updatePromise, timeout])
       
+      console.log('캠페인 수정 결과:', result)
+      
+      setSuccess(t.campaignUpdated)
       setEditModal(false)
+      setSelectedCampaign(null)
       resetForm()
-      loadData()
+      
+      // 데이터 다시 로드
+      setTimeout(() => {
+        loadData()
+      }, 1000)
       
     } catch (error) {
-      console.error('Update campaign error:', error)
-      setError(language === 'ko' 
-        ? '캠페인 업데이트에 실패했습니다.'
-        : 'キャンペーンの更新に失敗しました。'
-      )
+      console.error('캠페인 수정 오류:', error)
+      setError(`${t.updateFailed}: ${error.message}`)
     } finally {
       setProcessing(false)
     }
   }
 
-  const handleCancelCampaign = async () => {
+  const handleDeleteCampaign = async () => {
     try {
       setProcessing(true)
       setError('')
+      setSuccess('')
       
-      await database.campaigns.update(selectedCampaign.id, {
-        status: 'cancelled',
-        cancel_reason: cancelReason,
-        cancelled_at: new Date().toISOString()
-      })
-      
-      setSuccess(language === 'ko' 
-        ? '캠페인이 취소되었습니다.'
-        : 'キャンペーンがキャンセルされました。'
+      if (!selectedCampaign?.id) {
+        setError('선택된 캠페인이 없습니다.')
+        return
+      }
+
+      console.log('캠페인 삭제 시작:', selectedCampaign.id)
+
+      // 타임아웃 설정
+      const timeout = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('캠페인 삭제 타임아웃')), 15000)
       )
+
+      // 캠페인 삭제
+      const deletePromise = database.campaigns.delete(selectedCampaign.id)
+      await Promise.race([deletePromise, timeout])
       
+      console.log('캠페인 삭제 완료')
+      
+      setSuccess(t.campaignDeleted)
       setCancelModal(false)
-      setCancelReason('')
-      loadData()
+      setSelectedCampaign(null)
+      
+      // 데이터 다시 로드
+      setTimeout(() => {
+        loadData()
+      }, 1000)
       
     } catch (error) {
-      console.error('Cancel campaign error:', error)
-      setError(language === 'ko' 
-        ? '캠페인 취소에 실패했습니다.'
-        : 'キャンペーンのキャンセルに失敗しました。'
-      )
+      console.error('캠페인 삭제 오류:', error)
+      setError(`${t.deleteFailed}: ${error.message}`)
     } finally {
       setProcessing(false)
     }
@@ -258,6 +433,13 @@ const AdminCampaignsWithQuestions = () => {
 
   const openEditModal = (campaign) => {
     setSelectedCampaign(campaign)
+    
+    // 날짜 형식 변환 (ISO -> YYYY-MM-DD)
+    const formatDateForInput = (isoDate) => {
+      if (!isoDate) return ''
+      return new Date(isoDate).toISOString().split('T')[0]
+    }
+
     setCampaignForm({
       title: campaign.title || '',
       brand: campaign.brand || '',
@@ -265,64 +447,70 @@ const AdminCampaignsWithQuestions = () => {
       requirements: campaign.requirements || '',
       reward_amount: campaign.reward_amount?.toString() || '',
       max_participants: campaign.max_participants?.toString() || '',
-      start_date: campaign.start_date?.split('T')[0] || '',
-      end_date: campaign.end_date?.split('T')[0] || '',
-      application_deadline: campaign.application_deadline?.split('T')[0] || '',
-      status: campaign.status || 'draft',
-      category: campaign.category || '',
-      target_audience: campaign.target_audience || '',
-      campaign_materials: campaign.campaign_materials || '',
-      special_instructions: campaign.special_instructions || '',
-      questions: campaign.questions && campaign.questions.length > 0 
-        ? [
-            ...campaign.questions,
-            ...Array(4 - campaign.questions.length).fill({ text: '', required: false })
-          ].slice(0, 4)
-        : [
-            { text: '', required: false },
-            { text: '', required: false },
-            { text: '', required: false },
-            { text: '', required: false }
-          ]
+      application_deadline: formatDateForInput(campaign.application_deadline),
+      start_date: formatDateForInput(campaign.start_date),
+      end_date: formatDateForInput(campaign.end_date),
+      status: campaign.status || 'active',
+      google_drive_url: campaign.google_drive_url || '',
+      google_slides_url: campaign.google_slides_url || '',
+      question_1: campaign.question_1 || '',
+      question_1_required: campaign.question_1_required || false,
+      question_2: campaign.question_2 || '',
+      question_2_required: campaign.question_2_required || false,
+      question_3: campaign.question_3 || '',
+      question_3_required: campaign.question_3_required || false,
+      question_4: campaign.question_4 || '',
+      question_4_required: campaign.question_4_required || false
     })
+    
     setEditModal(true)
   }
 
-  const getStatusBadge = (status) => {
-    const statusConfig = {
-      draft: { color: 'bg-gray-100 text-gray-800', text: language === 'ko' ? '초안' : '下書き' },
-      active: { color: 'bg-green-100 text-green-800', text: language === 'ko' ? '활성' : 'アクティブ' },
-      paused: { color: 'bg-yellow-100 text-yellow-800', text: language === 'ko' ? '일시정지' : '一時停止' },
-      completed: { color: 'bg-blue-100 text-blue-800', text: language === 'ko' ? '완료' : '完了' },
-      cancelled: { color: 'bg-red-100 text-red-800', text: language === 'ko' ? '취소' : 'キャンセル' }
-    }
-    
-    const config = statusConfig[status] || statusConfig.draft
-    return <Badge className={config.color}>{config.text}</Badge>
+  const openDeleteModal = (campaign) => {
+    setSelectedCampaign(campaign)
+    setCancelModal(true)
+  }
+
+  const formatDate = (dateString) => {
+    if (!dateString) return ''
+    return new Date(dateString).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'ja-JP')
   }
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('ja-JP', {
+    if (!amount) return ''
+    return new Intl.NumberFormat(language === 'ko' ? 'ko-KR' : 'ja-JP', {
       style: 'currency',
-      currency: 'JPY'
-    }).format(amount || 0)
+      currency: language === 'ko' ? 'KRW' : 'JPY'
+    }).format(amount)
   }
 
-  const filteredCampaigns = campaigns.filter(campaign => {
-    if (filters.status !== 'all' && campaign.status !== filters.status) return false
-    if (filters.search && !campaign.title.toLowerCase().includes(filters.search.toLowerCase()) && 
-        !campaign.brand.toLowerCase().includes(filters.search.toLowerCase())) return false
-    return true
-  })
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      active: { variant: 'default', text: t.active },
+      inactive: { variant: 'secondary', text: t.inactive },
+      completed: { variant: 'outline', text: t.completed },
+      cancelled: { variant: 'destructive', text: t.cancelled }
+    }
+    
+    const statusInfo = statusMap[status] || statusMap.active
+    return (
+      <Badge variant={statusInfo.variant}>
+        {statusInfo.text}
+      </Badge>
+    )
+  }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-purple-600 mx-auto mb-4" />
-          <p className="text-gray-600">
-            {language === 'ko' ? '캠페인을 불러오는 중...' : 'キャンペーンを読み込み中...'}
-          </p>
+      <div className="min-h-screen bg-gray-50">
+        <AdminNavigation />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="flex items-center space-x-2">
+              <Loader2 className="h-6 w-6 animate-spin" />
+              <span>{t.loading}</span>
+            </div>
+          </div>
         </div>
       </div>
     )
@@ -331,484 +519,325 @@ const AdminCampaignsWithQuestions = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <AdminNavigation />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800">
-            {language === 'ko' ? '캠페인 관리' : 'キャンペーン管理'}
-          </h2>
-          <p className="text-gray-600">
-            {language === 'ko' 
-              ? '캠페인을 생성하고 관리하세요'
-              : 'キャンペーンを作成・管理してください'
-            }
-          </p>
-        </div>
-        <div className="flex space-x-2">
-          <Button onClick={loadData} variant="outline">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            {language === 'ko' ? '새로고침' : '更新'}
-          </Button>
-          <Dialog open={createModal} onOpenChange={setCreateModal}>
-            <DialogTrigger asChild>
-              <Button className="bg-purple-600 hover:bg-purple-700">
-                <Plus className="h-4 w-4 mr-2" />
-                {language === 'ko' ? '새 캠페인' : '新規キャンペーン'}
-              </Button>
-            </DialogTrigger>
-          </Dialog>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="grid md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <Label>{language === 'ko' ? '상태' : '状態'}</Label>
-              <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{language === 'ko' ? '전체' : '全て'}</SelectItem>
-                  <SelectItem value="draft">{language === 'ko' ? '초안' : '下書き'}</SelectItem>
-                  <SelectItem value="active">{language === 'ko' ? '활성' : 'アクティブ'}</SelectItem>
-                  <SelectItem value="paused">{language === 'ko' ? '일시정지' : '一時停止'}</SelectItem>
-                  <SelectItem value="completed">{language === 'ko' ? '완료' : '完了'}</SelectItem>
-                  <SelectItem value="cancelled">{language === 'ko' ? '취소' : 'キャンセル'}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label>{language === 'ko' ? '검색' : '検索'}</Label>
-              <Input
-                value={filters.search}
-                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                placeholder={language === 'ko' ? '캠페인명 또는 브랜드명' : 'キャンペーン名またはブランド名'}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Success/Error Messages */}
-      {success && (
-        <Alert>
-          <CheckCircle className="h-4 w-4" />
-          <AlertDescription>{success}</AlertDescription>
-        </Alert>
-      )}
       
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">{t.title}</h1>
+              <p className="text-gray-600 mt-2">
+                총 {campaigns.length}개의 캠페인
+              </p>
+            </div>
+            <Button
+              onClick={() => {
+                resetForm()
+                setCreateModal(true)
+              }}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {t.createCampaign}
+            </Button>
+          </div>
+        </div>
 
-      {/* Campaigns List */}
-      <div className="grid gap-6">
-        {filteredCampaigns.map((campaign) => {
-          const campaignApplications = applications.filter(app => app.campaign_id === campaign.id)
-          
-          return (
-            <Card key={campaign.id}>
+        {/* Success/Error Messages */}
+        {error && (
+          <Alert className="mb-6 border-red-200 bg-red-50">
+            <AlertCircle className="h-4 w-4 text-red-600" />
+            <AlertDescription className="text-red-800">
+              {error}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {success && (
+          <Alert className="mb-6 border-green-200 bg-green-50">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              {success}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* 캠페인 목록 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {campaigns.map((campaign) => (
+            <Card key={campaign.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="flex items-center space-x-2">
-                      <span>{campaign.title}</span>
-                      {getStatusBadge(campaign.status)}
-                    </CardTitle>
-                    <CardDescription className="text-purple-600 font-medium">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg">{campaign.title}</CardTitle>
+                    <CardDescription className="mt-1">
                       {campaign.brand}
                     </CardDescription>
                   </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-green-600">
-                      {formatCurrency(campaign.reward_amount)}
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {language === 'ko' ? '보상' : '報酬'}
-                    </div>
-                  </div>
+                  {getStatusBadge(campaign.status)}
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <p className="text-gray-700">{campaign.description}</p>
-                  
-                  <div className="grid md:grid-cols-3 gap-4 text-sm">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="h-4 w-4 text-gray-500" />
-                      <span>
-                        {language === 'ko' ? '신청 마감: ' : '応募締切: '}
-                        {new Date(campaign.application_deadline).toLocaleDateString('ja-JP')}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Users className="h-4 w-4 text-gray-500" />
-                      <span>
-                        {language === 'ko' ? '신청자: ' : '応募者: '}
-                        {campaignApplications.length}/{campaign.max_participants}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Target className="h-4 w-4 text-gray-500" />
-                      <span>
-                        {language === 'ko' ? '카테고리: ' : 'カテゴリー: '}
-                        {campaign.category || 'N/A'}
-                      </span>
-                    </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">보상금:</span>
+                    <span className="font-medium">{formatCurrency(campaign.reward_amount)}</span>
                   </div>
-
-                  {/* 캠페인 질문 표시 */}
-                  {campaign.questions && campaign.questions.length > 0 && (
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <HelpCircle className="h-4 w-4 text-blue-600" />
-                        <span className="font-medium text-blue-800">
-                          {language === 'ko' ? '캠페인 질문' : 'キャンペーン質問'}
-                        </span>
-                      </div>
-                      <div className="space-y-1">
-                        {campaign.questions.map((question, index) => (
-                          <div key={index} className="text-sm text-blue-700">
-                            {index + 1}. {question.text}
-                            {question.required && <span className="text-red-500 ml-1">*</span>}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">모집 인원:</span>
+                    <span className="font-medium">{campaign.max_participants}명</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">마감일:</span>
+                    <span className="font-medium">{formatDate(campaign.application_deadline)}</span>
+                  </div>
+                  
+                  <Separator />
                   
                   <div className="flex space-x-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => openEditModal(campaign)}
+                      className="flex-1"
                     >
-                      <Edit className="h-4 w-4 mr-2" />
-                      {language === 'ko' ? '편집' : '編集'}
+                      <Edit className="h-4 w-4 mr-1" />
+                      수정
                     </Button>
-                    
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        setSelectedCampaign(campaign)
-                        setApplicationsModal(true)
-                      }}
+                      onClick={() => openDeleteModal(campaign)}
+                      className="flex-1 text-red-600 hover:text-red-700"
                     >
-                      <Eye className="h-4 w-4 mr-2" />
-                      {language === 'ko' ? '응모자 관리' : '応募者管理'} ({campaignApplications.length})
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      삭제
                     </Button>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/admin/campaigns/${campaign.id}/applications`)}
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      {language === 'ko' ? '응모자 상세' : '応募者詳細'}
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/admin/campaigns/${campaign.id}/confirmed`)}
-                    >
-                      <Users className="h-4 w-4 mr-2" />
-                      {language === 'ko' ? '확정 크리에이터' : '確定クリエイター'}
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/admin/campaigns/${campaign.id}/report`)}
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      {language === 'ko' ? '최종 보고서' : '最終報告書'}
-                    </Button>
-                    
-                    {campaign.status === 'active' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedCampaign(campaign)
-                          setCancelModal(true)
-                        }}
-                      >
-                        <X className="h-4 w-4 mr-2" />
-                        {language === 'ko' ? '캠페인 취소' : 'キャンペーンキャンセル'}
-                      </Button>
-                    )}
                   </div>
                 </div>
               </CardContent>
             </Card>
-          )
-        })}
-      </div>
+          ))}
+        </div>
 
-      {filteredCampaigns.length === 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-8">
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-600 mb-2">
-                {language === 'ko' ? '캠페인이 없습니다' : 'キャンペーンがありません'}
-              </h3>
-              <p className="text-gray-500">
-                {language === 'ko' 
-                  ? '새 캠페인을 생성하여 시작하세요'
-                  : '新しいキャンペーンを作成して開始してください'
-                }
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        {campaigns.length === 0 && (
+          <div className="text-center py-12">
+            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              캠페인이 없습니다
+            </h3>
+            <p className="text-gray-600 mb-4">
+              첫 번째 캠페인을 생성해보세요.
+            </p>
+            <Button
+              onClick={() => {
+                resetForm()
+                setCreateModal(true)
+              }}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {t.createCampaign}
+            </Button>
+          </div>
+        )}
 
-      {/* 캠페인 생성 모달 */}
-      <Dialog open={createModal} onOpenChange={setCreateModal}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {language === 'ko' ? '새 캠페인 생성' : '新規キャンペーン作成'}
-            </DialogTitle>
-            <DialogDescription>
-              {language === 'ko' 
-                ? '새로운 캠페인을 생성하세요.'
-                : '新しいキャンペーンを作成してください。'
-              }
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">{language === 'ko' ? '캠페인 제목' : 'キャンペーンタイトル'} *</Label>
-                <Input
-                  id="title"
-                  value={campaignForm.title}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder={language === 'ko' ? '캠페인 제목을 입력하세요' : 'キャンペーンタイトルを入力してください'}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="brand">{language === 'ko' ? '브랜드명' : 'ブランド名'} *</Label>
-                <Input
-                  id="brand"
-                  value={campaignForm.brand}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, brand: e.target.value }))}
-                  placeholder={language === 'ko' ? '브랜드명을 입력하세요' : 'ブランド名を入力してください'}
-                />
-              </div>
-            </div>
+        {/* 캠페인 생성 모달 */}
+        <Dialog open={createModal} onOpenChange={setCreateModal}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{t.createCampaign}</DialogTitle>
+              <DialogDescription>
+                새로운 캠페인의 정보를 입력해주세요.
+              </DialogDescription>
+            </DialogHeader>
             
-            <div className="space-y-2">
-              <Label htmlFor="description">{language === 'ko' ? '캠페인 설명' : 'キャンペーン説明'}</Label>
-              <Textarea
-                id="description"
-                value={campaignForm.description}
-                onChange={(e) => setCampaignForm(prev => ({ ...prev, description: e.target.value }))}
-                placeholder={language === 'ko' ? '캠페인에 대한 자세한 설명을 입력하세요' : 'キャンペーンの詳細説明を入力してください'}
-                rows={3}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="requirements">{language === 'ko' ? '참가 요건' : '参加要件'}</Label>
-              <Textarea
-                id="requirements"
-                value={campaignForm.requirements}
-                onChange={(e) => setCampaignForm(prev => ({ ...prev, requirements: e.target.value }))}
-                placeholder={language === 'ko' ? '참가자가 충족해야 할 요건을 입력하세요' : '参加者が満たすべき要件を入力してください'}
-                rows={3}
-              />
-            </div>
-            
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="reward_amount">{language === 'ko' ? '보상 금액 (JPY)' : '報酬金額 (JPY)'}</Label>
-                <Input
-                  id="reward_amount"
-                  type="number"
-                  min="0"
-                  value={campaignForm.reward_amount}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, reward_amount: e.target.value }))}
-                  placeholder="10000"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="max_participants">{language === 'ko' ? '최대 참가자 수' : '最大参加者数'}</Label>
-                <Input
-                  id="max_participants"
-                  type="number"
-                  min="1"
-                  value={campaignForm.max_participants}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, max_participants: e.target.value }))}
-                  placeholder="50"
-                />
-              </div>
-            </div>
-            
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="start_date">{language === 'ko' ? '시작일' : '開始日'}</Label>
-                <Input
-                  id="start_date"
-                  type="date"
-                  value={campaignForm.start_date}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, start_date: e.target.value }))}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="end_date">{language === 'ko' ? '종료일' : '終了日'}</Label>
-                <Input
-                  id="end_date"
-                  type="date"
-                  value={campaignForm.end_date}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, end_date: e.target.value }))}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="application_deadline">{language === 'ko' ? '신청 마감일' : '応募締切日'}</Label>
-                <Input
-                  id="application_deadline"
-                  type="date"
-                  value={campaignForm.application_deadline}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, application_deadline: e.target.value }))}
-                />
-              </div>
-            </div>
-            
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="category">{language === 'ko' ? '카테고리' : 'カテゴリー'}</Label>
-                <Select 
-                  value={campaignForm.category} 
-                  onValueChange={(value) => setCampaignForm(prev => ({ ...prev, category: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={language === 'ko' ? '카테고리 선택' : 'カテゴリーを選択'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="beauty">{language === 'ko' ? '뷰티' : '美容'}</SelectItem>
-                    <SelectItem value="fashion">{language === 'ko' ? '패션' : 'ファッション'}</SelectItem>
-                    <SelectItem value="food">{language === 'ko' ? '음식' : '食品'}</SelectItem>
-                    <SelectItem value="lifestyle">{language === 'ko' ? '라이프스타일' : 'ライフスタイル'}</SelectItem>
-                    <SelectItem value="tech">{language === 'ko' ? '기술' : 'テクノロジー'}</SelectItem>
-                    <SelectItem value="other">{language === 'ko' ? '기타' : 'その他'}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="status">{language === 'ko' ? '상태' : '状態'}</Label>
-                <Select 
-                  value={campaignForm.status} 
-                  onValueChange={(value) => setCampaignForm(prev => ({ ...prev, status: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">{language === 'ko' ? '초안' : '下書き'}</SelectItem>
-                    <SelectItem value="active">{language === 'ko' ? '활성' : 'アクティブ'}</SelectItem>
-                    <SelectItem value="paused">{language === 'ko' ? '일시정지' : '一時停止'}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* 캠페인 질문 섹션 */}
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <HelpCircle className="h-5 w-5 text-purple-600" />
-                <Label className="text-lg font-semibold">
-                  {language === 'ko' ? '캠페인 질문 (최대 4개)' : 'キャンペーン質問 (最大4個)'}
-                </Label>
-              </div>
-              <p className="text-sm text-gray-600">
-                {language === 'ko' 
-                  ? '지원자에게 추가로 묻고 싶은 질문을 설정하세요. 빈 질문은 자동으로 제외됩니다.'
-                  : '応募者に追加で聞きたい質問を設定してください。空の質問は自動的に除外されます。'
-                }
-              </p>
-              
-              {campaignForm.questions.map((question, index) => (
-                <div key={index} className="space-y-2 p-4 border rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor={`question_${index}`}>
-                      {language === 'ko' ? `질문 ${index + 1}` : `質問 ${index + 1}`}
-                    </Label>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`required_${index}`}
-                        checked={question.required}
-                        onCheckedChange={(checked) => handleQuestionChange(index, 'required', checked)}
-                      />
-                      <Label htmlFor={`required_${index}`} className="text-sm">
-                        {language === 'ko' ? '필수' : '必須'}
-                      </Label>
-                    </div>
-                  </div>
-                  <Textarea
-                    id={`question_${index}`}
-                    value={question.text}
-                    onChange={(e) => handleQuestionChange(index, 'text', e.target.value)}
-                    placeholder={language === 'ko' 
-                      ? '지원자에게 묻고 싶은 질문을 입력하세요'
-                      : '応募者に聞きたい質問を入力してください'
-                    }
-                    rows={2}
+            <div className="space-y-6">
+              {/* 기본 정보 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="title">{t.campaignTitle} *</Label>
+                  <Input
+                    id="title"
+                    value={campaignForm.title}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="캠페인 제목을 입력하세요"
                   />
                 </div>
-              ))}
+                <div>
+                  <Label htmlFor="brand">{t.brand} *</Label>
+                  <Input
+                    id="brand"
+                    value={campaignForm.brand}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, brand: e.target.value }))}
+                    placeholder="브랜드명을 입력하세요"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="description">{t.description}</Label>
+                <Textarea
+                  id="description"
+                  value={campaignForm.description}
+                  onChange={(e) => setCampaignForm(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="캠페인 설명을 입력하세요"
+                  rows={4}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="requirements">{t.requirements}</Label>
+                <Textarea
+                  id="requirements"
+                  value={campaignForm.requirements}
+                  onChange={(e) => setCampaignForm(prev => ({ ...prev, requirements: e.target.value }))}
+                  placeholder="참여 조건을 입력하세요"
+                  rows={3}
+                />
+              </div>
+
+              {/* 수치 정보 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="reward_amount">{t.rewardAmount}</Label>
+                  <Input
+                    id="reward_amount"
+                    type="number"
+                    value={campaignForm.reward_amount}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, reward_amount: e.target.value }))}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="max_participants">{t.maxParticipants}</Label>
+                  <Input
+                    id="max_participants"
+                    type="number"
+                    value={campaignForm.max_participants}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, max_participants: e.target.value }))}
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+              {/* 날짜 정보 */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="application_deadline">{t.applicationDeadline}</Label>
+                  <Input
+                    id="application_deadline"
+                    type="date"
+                    value={campaignForm.application_deadline}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, application_deadline: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="start_date">{t.startDate}</Label>
+                  <Input
+                    id="start_date"
+                    type="date"
+                    value={campaignForm.start_date}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, start_date: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="end_date">{t.endDate}</Label>
+                  <Input
+                    id="end_date"
+                    type="date"
+                    value={campaignForm.end_date}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, end_date: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              {/* 상태 및 URL */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="status">{t.status}</Label>
+                  <Select
+                    value={campaignForm.status}
+                    onValueChange={(value) => setCampaignForm(prev => ({ ...prev, status: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">{t.active}</SelectItem>
+                      <SelectItem value="inactive">{t.inactive}</SelectItem>
+                      <SelectItem value="completed">{t.completed}</SelectItem>
+                      <SelectItem value="cancelled">{t.cancelled}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="google_drive_url">{t.googleDriveUrl}</Label>
+                  <Input
+                    id="google_drive_url"
+                    value={campaignForm.google_drive_url}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, google_drive_url: e.target.value }))}
+                    placeholder="https://drive.google.com/..."
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="google_slides_url">{t.googleSlidesUrl}</Label>
+                  <Input
+                    id="google_slides_url"
+                    value={campaignForm.google_slides_url}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, google_slides_url: e.target.value }))}
+                    placeholder="https://docs.google.com/presentation/..."
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* 질문 섹션 */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">신청자 질문</h3>
+                
+                {[1, 2, 3, 4].map((num) => (
+                  <div key={num} className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Label htmlFor={`question_${num}`}>{t.question} {num}</Label>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`question_${num}_required`}
+                          checked={campaignForm[`question_${num}_required`]}
+                          onCheckedChange={(checked) => 
+                            setCampaignForm(prev => ({ ...prev, [`question_${num}_required`]: checked }))
+                          }
+                        />
+                        <Label htmlFor={`question_${num}_required`} className="text-sm">
+                          {t.required}
+                        </Label>
+                      </div>
+                    </div>
+                    <Textarea
+                      id={`question_${num}`}
+                      value={campaignForm[`question_${num}`]}
+                      onChange={(e) => setCampaignForm(prev => ({ ...prev, [`question_${num}`]: e.target.value }))}
+                      placeholder={`질문 ${num}을 입력하세요 (선택사항)`}
+                      rows={2}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="target_audience">{language === 'ko' ? '타겟 오디언스' : 'ターゲットオーディエンス'}</Label>
-              <Input
-                id="target_audience"
-                value={campaignForm.target_audience}
-                onChange={(e) => setCampaignForm(prev => ({ ...prev, target_audience: e.target.value }))}
-                placeholder={language === 'ko' ? '20-30대 여성, 뷰티에 관심 있는 사람 등' : '20-30代女性、美容に興味のある方など'}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="special_instructions">{language === 'ko' ? '특별 지시사항' : '特別指示事項'}</Label>
-              <Textarea
-                id="special_instructions"
-                value={campaignForm.special_instructions}
-                onChange={(e) => setCampaignForm(prev => ({ ...prev, special_instructions: e.target.value }))}
-                placeholder={language === 'ko' ? '크리에이터에게 전달할 특별한 지시사항이 있다면 입력하세요' : 'クリエイターに伝える特別な指示事項があれば入力してください'}
-                rows={3}
-              />
-            </div>
-            
-            <div className="flex space-x-2">
+
+            <div className="flex justify-end space-x-2 pt-4">
               <Button
                 onClick={handleCreateCampaign}
                 disabled={processing || !campaignForm.title || !campaignForm.brand}
-                className="flex-1 bg-purple-600 hover:bg-purple-700"
+                className="bg-purple-600 hover:bg-purple-700"
               >
                 {processing ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : (
                   <Save className="h-4 w-4 mr-2" />
                 )}
-                {language === 'ko' ? '캠페인 생성' : 'キャンペーン作成'}
+                {t.createCampaign}
               </Button>
               <Button
                 variant="outline"
@@ -817,180 +846,267 @@ const AdminCampaignsWithQuestions = () => {
                   resetForm()
                 }}
               >
-                {language === 'ko' ? '취소' : 'キャンセル'}
+                {t.cancel}
               </Button>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
 
-      {/* 캠페인 편집 모달 */}
-      <Dialog open={editModal} onOpenChange={setEditModal}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {language === 'ko' ? '캠페인 편집' : 'キャンペーン編集'}
-            </DialogTitle>
-            <DialogDescription>
-              {language === 'ko' 
-                ? '캠페인 정보를 수정하세요.'
-                : 'キャンペーン情報を編集してください。'
-              }
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-6">
-            {/* 편집 폼 내용은 생성 폼과 동일 */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit_title">{language === 'ko' ? '캠페인 제목' : 'キャンペーンタイトル'} *</Label>
-                <Input
-                  id="edit_title"
-                  value={campaignForm.title}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder={language === 'ko' ? '캠페인 제목을 입력하세요' : 'キャンペーンタイトルを入力してください'}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="edit_brand">{language === 'ko' ? '브랜드명' : 'ブランド名'} *</Label>
-                <Input
-                  id="edit_brand"
-                  value={campaignForm.brand}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, brand: e.target.value }))}
-                  placeholder={language === 'ko' ? '브랜드명을 입력하세요' : 'ブランド名を入力してください'}
-                />
-              </div>
-            </div>
-
-            {/* 캠페인 질문 편집 섹션 */}
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <HelpCircle className="h-5 w-5 text-purple-600" />
-                <Label className="text-lg font-semibold">
-                  {language === 'ko' ? '캠페인 질문 (최대 4개)' : 'キャンペーン質問 (最大4個)'}
-                </Label>
-              </div>
-              
-              {campaignForm.questions.map((question, index) => (
-                <div key={index} className="space-y-2 p-4 border rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor={`edit_question_${index}`}>
-                      {language === 'ko' ? `질문 ${index + 1}` : `質問 ${index + 1}`}
-                    </Label>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`edit_required_${index}`}
-                        checked={question.required}
-                        onCheckedChange={(checked) => handleQuestionChange(index, 'required', checked)}
-                      />
-                      <Label htmlFor={`edit_required_${index}`} className="text-sm">
-                        {language === 'ko' ? '필수' : '必須'}
-                      </Label>
-                    </div>
-                  </div>
-                  <Textarea
-                    id={`edit_question_${index}`}
-                    value={question.text}
-                    onChange={(e) => handleQuestionChange(index, 'text', e.target.value)}
-                    placeholder={language === 'ko' 
-                      ? '지원자에게 묻고 싶은 질문을 입력하세요'
-                      : '応募者に聞きたい質問を入力してください'
-                    }
-                    rows={2}
+        {/* 캠페인 수정 모달 */}
+        <Dialog open={editModal} onOpenChange={setEditModal}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{t.editCampaign}</DialogTitle>
+              <DialogDescription>
+                캠페인 정보를 수정해주세요.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* 기본 정보 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit_title">{t.campaignTitle} *</Label>
+                  <Input
+                    id="edit_title"
+                    value={campaignForm.title}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="캠페인 제목을 입력하세요"
                   />
                 </div>
-              ))}
+                <div>
+                  <Label htmlFor="edit_brand">{t.brand} *</Label>
+                  <Input
+                    id="edit_brand"
+                    value={campaignForm.brand}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, brand: e.target.value }))}
+                    placeholder="브랜드명을 입력하세요"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="edit_description">{t.description}</Label>
+                <Textarea
+                  id="edit_description"
+                  value={campaignForm.description}
+                  onChange={(e) => setCampaignForm(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="캠페인 설명을 입력하세요"
+                  rows={4}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="edit_requirements">{t.requirements}</Label>
+                <Textarea
+                  id="edit_requirements"
+                  value={campaignForm.requirements}
+                  onChange={(e) => setCampaignForm(prev => ({ ...prev, requirements: e.target.value }))}
+                  placeholder="참여 조건을 입력하세요"
+                  rows={3}
+                />
+              </div>
+
+              {/* 수치 정보 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit_reward_amount">{t.rewardAmount}</Label>
+                  <Input
+                    id="edit_reward_amount"
+                    type="number"
+                    value={campaignForm.reward_amount}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, reward_amount: e.target.value }))}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit_max_participants">{t.maxParticipants}</Label>
+                  <Input
+                    id="edit_max_participants"
+                    type="number"
+                    value={campaignForm.max_participants}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, max_participants: e.target.value }))}
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+              {/* 날짜 정보 */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="edit_application_deadline">{t.applicationDeadline}</Label>
+                  <Input
+                    id="edit_application_deadline"
+                    type="date"
+                    value={campaignForm.application_deadline}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, application_deadline: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit_start_date">{t.startDate}</Label>
+                  <Input
+                    id="edit_start_date"
+                    type="date"
+                    value={campaignForm.start_date}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, start_date: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit_end_date">{t.endDate}</Label>
+                  <Input
+                    id="edit_end_date"
+                    type="date"
+                    value={campaignForm.end_date}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, end_date: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              {/* 상태 및 URL */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="edit_status">{t.status}</Label>
+                  <Select
+                    value={campaignForm.status}
+                    onValueChange={(value) => setCampaignForm(prev => ({ ...prev, status: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">{t.active}</SelectItem>
+                      <SelectItem value="inactive">{t.inactive}</SelectItem>
+                      <SelectItem value="completed">{t.completed}</SelectItem>
+                      <SelectItem value="cancelled">{t.cancelled}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="edit_google_drive_url">{t.googleDriveUrl}</Label>
+                  <Input
+                    id="edit_google_drive_url"
+                    value={campaignForm.google_drive_url}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, google_drive_url: e.target.value }))}
+                    placeholder="https://drive.google.com/..."
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit_google_slides_url">{t.googleSlidesUrl}</Label>
+                  <Input
+                    id="edit_google_slides_url"
+                    value={campaignForm.google_slides_url}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, google_slides_url: e.target.value }))}
+                    placeholder="https://docs.google.com/presentation/..."
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* 질문 섹션 */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">신청자 질문</h3>
+                
+                {[1, 2, 3, 4].map((num) => (
+                  <div key={num} className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Label htmlFor={`edit_question_${num}`}>{t.question} {num}</Label>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`edit_question_${num}_required`}
+                          checked={campaignForm[`question_${num}_required`]}
+                          onCheckedChange={(checked) => 
+                            setCampaignForm(prev => ({ ...prev, [`question_${num}_required`]: checked }))
+                          }
+                        />
+                        <Label htmlFor={`edit_question_${num}_required`} className="text-sm">
+                          {t.required}
+                        </Label>
+                      </div>
+                    </div>
+                    <Textarea
+                      id={`edit_question_${num}`}
+                      value={campaignForm[`question_${num}`]}
+                      onChange={(e) => setCampaignForm(prev => ({ ...prev, [`question_${num}`]: e.target.value }))}
+                      placeholder={`질문 ${num}을 입력하세요 (선택사항)`}
+                      rows={2}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
-            
-            <div className="flex space-x-2">
+
+            <div className="flex justify-end space-x-2 pt-4">
               <Button
                 onClick={handleUpdateCampaign}
                 disabled={processing || !campaignForm.title || !campaignForm.brand}
-                className="flex-1 bg-purple-600 hover:bg-purple-700"
+                className="bg-purple-600 hover:bg-purple-700"
               >
                 {processing ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : (
                   <Save className="h-4 w-4 mr-2" />
                 )}
-                {language === 'ko' ? '변경사항 저장' : '変更を保存'}
+                {t.save}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => {
                   setEditModal(false)
+                  setSelectedCampaign(null)
                   resetForm()
                 }}
               >
-                {language === 'ko' ? '취소' : 'キャンセル'}
+                {t.cancel}
               </Button>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
 
-      {/* 캠페인 취소 모달 */}
-      <Dialog open={cancelModal} onOpenChange={setCancelModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {language === 'ko' ? '캠페인 취소' : 'キャンペーンキャンセル'}
-            </DialogTitle>
-            <DialogDescription>
-              {language === 'ko' 
-                ? '캠페인을 취소하시겠습니까? 이 작업은 되돌릴 수 없습니다.'
-                : 'キャンペーンをキャンセルしますか？この操作は元に戻せません。'
-              }
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
+        {/* 삭제 확인 모달 */}
+        <Dialog open={cancelModal} onOpenChange={setCancelModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t.deleteCampaign}</DialogTitle>
+              <DialogDescription>
+                {t.confirmDelete}
+              </DialogDescription>
+            </DialogHeader>
+            
             {selectedCampaign && (
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="font-semibold">{selectedCampaign.title}</p>
-                <p className="text-sm text-gray-600">{selectedCampaign.brand}</p>
+              <div className="py-4">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium">{selectedCampaign.title}</h4>
+                  <p className="text-sm text-gray-600">{selectedCampaign.brand}</p>
+                </div>
               </div>
             )}
-            
-            <div className="space-y-2">
-              <Label htmlFor="cancelReason">
-                {language === 'ko' ? '취소 사유' : 'キャンセル理由'}
-              </Label>
-              <Textarea
-                id="cancelReason"
-                value={cancelReason}
-                onChange={(e) => setCancelReason(e.target.value)}
-                placeholder={language === 'ko' ? '취소 사유를 입력하세요' : 'キャンセル理由を入力してください'}
-                rows={3}
-              />
-            </div>
-            
-            <div className="flex space-x-2">
+
+            <div className="flex justify-end space-x-2">
               <Button
+                onClick={handleDeleteCampaign}
+                disabled={processing}
                 variant="destructive"
-                onClick={handleCancelCampaign}
-                disabled={processing || !cancelReason}
-                className="flex-1"
               >
                 {processing ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : (
-                  <X className="h-4 w-4 mr-2" />
+                  <Trash2 className="h-4 w-4 mr-2" />
                 )}
-                {language === 'ko' ? '캠페인 취소' : 'キャンペーンキャンセル'}
+                {t.delete}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => {
                   setCancelModal(false)
-                  setCancelReason('')
+                  setSelectedCampaign(null)
                 }}
               >
-                {language === 'ko' ? '돌아가기' : '戻る'}
+                {t.cancel}
               </Button>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )
