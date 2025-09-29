@@ -146,12 +146,6 @@ const safeQuery = async (queryFn, retries = 3) => {
     } catch (error) {
       console.warn(`쿼리 시도 ${i + 1}/${retries} 실패:`, error.message)
       
-      // 권한 오류인 경우 즉시 빈 결과 반환
-      if (error.message.includes('permission denied') || error.message.includes('RLS')) {
-        console.warn('권한 오류로 인해 빈 결과 반환')
-        return []
-      }
-      
       if (i === retries - 1) {
         throw error
       }
@@ -250,157 +244,84 @@ export const database = {
     }
   },
 
-  // 신청 관련 - 권한 문제 해결을 위한 수정
+  // 신청 관련
   applications: {
-    // 모든 신청 가져오기 - 권한 문제 해결
+    // 모든 신청 가져오기
     async getAll() {
       return safeQuery(async () => {
         console.log('Applications getAll() 호출')
-        try {
-          // 먼저 기본 applications 데이터만 가져오기
-          const { data, error } = await supabase
-            .from('applications')
-            .select('*')
-            .order('created_at', { ascending: false })
-          
-          if (error) {
-            console.error('Applications getAll error:', error)
-            // 권한 오류인 경우 빈 배열 반환
-            if (error.message.includes('permission denied') || error.message.includes('users')) {
-              console.warn('Applications 테이블 권한 부족으로 빈 배열 반환')
-              return []
-            }
-            throw error
-          }
-          
-          console.log('Applications 데이터 로드 성공:', data?.length || 0, '개')
-          
-          // 캠페인 정보를 별도로 가져와서 매핑
-          if (data && data.length > 0) {
-            try {
-              const campaignIds = [...new Set(data.map(app => app.campaign_id).filter(Boolean))]
-              if (campaignIds.length > 0) {
-                const { data: campaigns } = await supabase
-                  .from('campaigns')
-                  .select('id, title, brand, reward_amount, google_drive_url, google_slides_url')
-                  .in('id', campaignIds)
-                
-                // 캠페인 정보를 applications에 매핑
-                const applicationsWithCampaigns = data.map(app => ({
-                  ...app,
-                  campaigns: campaigns?.find(c => c.id === app.campaign_id) || null
-                }))
-                
-                return applicationsWithCampaigns
-              }
-            } catch (campaignError) {
-              console.warn('캠페인 정보 로드 실패, 기본 데이터만 반환:', campaignError)
-            }
-          }
-          
-          return data || []
-        } catch (error) {
-          console.error('Applications getAll 함수 오류:', error)
-          return []
+        const { data, error } = await supabase
+          .from('applications')
+          .select(`
+            *,
+            campaigns (
+              title,
+              brand,
+              reward_amount,
+              google_drive_url,
+              google_slides_url
+            )
+          `)
+          .order('created_at', { ascending: false })
+        
+        if (error) {
+          console.error('Applications getAll error:', error)
+          throw error
         }
+        
+        console.log('Applications 데이터 로드 성공:', data?.length || 0, '개')
+        return data || []
       })
     },
 
     // 사용자별 신청 가져오기
     async getByUser(userId) {
       return safeQuery(async () => {
-        try {
-          const { data, error } = await supabase
-            .from('applications')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false })
-          
-          if (error) {
-            if (error.message.includes('permission denied')) {
-              return []
-            }
-            throw error
-          }
-          
-          // 캠페인 정보를 별도로 가져와서 매핑
-          if (data && data.length > 0) {
-            try {
-              const campaignIds = [...new Set(data.map(app => app.campaign_id).filter(Boolean))]
-              if (campaignIds.length > 0) {
-                const { data: campaigns } = await supabase
-                  .from('campaigns')
-                  .select('id, title, brand, reward_amount, status, google_drive_url, google_slides_url')
-                  .in('id', campaignIds)
-                
-                const applicationsWithCampaigns = data.map(app => ({
-                  ...app,
-                  campaigns: campaigns?.find(c => c.id === app.campaign_id) || null
-                }))
-                
-                return applicationsWithCampaigns
-              }
-            } catch (campaignError) {
-              console.warn('캠페인 정보 로드 실패:', campaignError)
-            }
-          }
-          
-          return data || []
-        } catch (error) {
-          console.error('getByUser 오류:', error)
-          return []
-        }
+        const { data, error } = await supabase
+          .from('applications')
+          .select(`
+            *,
+            campaigns!inner (
+              id,
+              title,
+              brand,
+              reward_amount,
+              status,
+              google_drive_url,
+              google_slides_url
+            )
+          `)
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+        if (error) throw error
+        return data
       })
     },
 
     // 캠페인별 신청 가져오기
     async getByCampaign(campaignId) {
       return safeQuery(async () => {
-        try {
-          const { data, error } = await supabase
-            .from('applications')
-            .select('*')
-            .eq('campaign_id', campaignId)
-            .order('created_at', { ascending: false })
-          
-          if (error) {
-            if (error.message.includes('permission denied')) {
-              return []
-            }
-            throw error
-          }
-          
-          return data || []
-        } catch (error) {
-          console.error('getByCampaign 오류:', error)
-          return []
-        }
+        const { data, error } = await supabase
+          .from('applications')
+          .select('*')
+          .eq('campaign_id', campaignId)
+          .order('created_at', { ascending: false })
+        if (error) throw error
+        return data
       })
     },
 
     // 특정 사용자의 특정 캠페인 신청 확인
     async getByUserAndCampaign(userId, campaignId) {
       return safeQuery(async () => {
-        try {
-          const { data, error } = await supabase
-            .from('applications')
-            .select('*')
-            .eq('user_id', userId)
-            .eq('campaign_id', campaignId)
-            .single()
-          
-          if (error && error.code !== 'PGRST116') {
-            if (error.message.includes('permission denied')) {
-              return null
-            }
-            throw error
-          }
-          
-          return data
-        } catch (error) {
-          console.error('getByUserAndCampaign 오류:', error)
-          return null
-        }
+        const { data, error } = await supabase
+          .from('applications')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('campaign_id', campaignId)
+          .single()
+        if (error && error.code !== 'PGRST116') throw error
+        return data
       })
     },
 
@@ -603,6 +524,144 @@ export const database = {
           .single()
         if (error) throw error
         return data
+      })
+    }
+  },
+
+  // 포인트 관련
+  points: {
+    // 사용자 포인트 잔액 가져오기
+    async getBalance(userId) {
+      return safeQuery(async () => {
+        const { data, error } = await supabase
+          .from('user_points')
+          .select('balance')
+          .eq('user_id', userId)
+          .single()
+        
+        if (error && error.code === 'PGRST116') {
+          // 포인트 레코드가 없으면 0 반환
+          return 0
+        }
+        if (error) throw error
+        return data?.balance || 0
+      })
+    },
+
+    // 포인트 추가
+    async add(userId, amount, description = '') {
+      return safeQuery(async () => {
+        // 현재 잔액 가져오기
+        const currentBalance = await this.getBalance(userId)
+        const newBalance = currentBalance + amount
+
+        // 포인트 잔액 업데이트
+        const { data: balanceData, error: balanceError } = await supabase
+          .from('user_points')
+          .upsert([{
+            user_id: userId,
+            balance: newBalance,
+            updated_at: new Date().toISOString()
+          }])
+          .select()
+          .single()
+
+        if (balanceError) throw balanceError
+
+        // 포인트 히스토리 추가
+        const { data: historyData, error: historyError } = await supabase
+          .from('point_history')
+          .insert([{
+            user_id: userId,
+            amount: amount,
+            type: 'earned',
+            description: description,
+            created_at: new Date().toISOString()
+          }])
+          .select()
+          .single()
+
+        if (historyError) throw historyError
+
+        return { balance: balanceData, history: historyData }
+      })
+    },
+
+    // 포인트 차감
+    async subtract(userId, amount, description = '') {
+      return safeQuery(async () => {
+        const currentBalance = await this.getBalance(userId)
+        
+        if (currentBalance < amount) {
+          throw new Error('Insufficient points')
+        }
+
+        const newBalance = currentBalance - amount
+
+        // 포인트 잔액 업데이트
+        const { data: balanceData, error: balanceError } = await supabase
+          .from('user_points')
+          .update({
+            balance: newBalance,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', userId)
+          .select()
+          .single()
+
+        if (balanceError) throw balanceError
+
+        // 포인트 히스토리 추가
+        const { data: historyData, error: historyError } = await supabase
+          .from('point_history')
+          .insert([{
+            user_id: userId,
+            amount: -amount,
+            type: 'spent',
+            description: description,
+            created_at: new Date().toISOString()
+          }])
+          .select()
+          .single()
+
+        if (historyError) throw historyError
+
+        return { balance: balanceData, history: historyData }
+      })
+    }
+  },
+
+  // 통계 관련
+  stats: {
+    async getOverall() {
+      return safeQuery(async () => {
+        try {
+          // 각 테이블에서 개별적으로 카운트 조회
+          const [campaignsResult, applicationsResult, usersResult] = await Promise.allSettled([
+            supabase.from('campaigns').select('id', { count: 'exact', head: true }),
+            supabase.from('applications').select('id', { count: 'exact', head: true }),
+            supabase.from('user_profiles').select('id', { count: 'exact', head: true })
+          ])
+
+          const totalCampaigns = campaignsResult.status === 'fulfilled' ? campaignsResult.value.count || 0 : 0
+          const totalApplications = applicationsResult.status === 'fulfilled' ? applicationsResult.value.count || 0 : 0
+          const totalUsers = usersResult.status === 'fulfilled' ? usersResult.value.count || 0 : 0
+
+          return {
+            totalCampaigns,
+            totalApplications,
+            totalUsers,
+            totalRewards: 0
+          }
+        } catch (error) {
+          console.error('통계 조회 오류:', error)
+          return {
+            totalCampaigns: 0,
+            totalApplications: 0,
+            totalUsers: 0,
+            totalRewards: 0
+          }
+        }
       })
     }
   },

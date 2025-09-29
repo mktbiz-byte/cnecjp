@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { database } from '../../lib/supabase'
 import AdminHeader from './AdminHeader'
+import AdminNavigation from './AdminNavigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -204,6 +205,7 @@ const AdminDashboardSimple = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <AdminHeader title={t.title} />
+      <AdminNavigation />
 
       {/* 메인 콘텐츠 */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
