@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import { database } from '../lib/supabase'
@@ -190,7 +190,7 @@ const CampaignApplicationUpdated = () => {
       setCampaign(campaignData)
 
       // 2. 사용자 프로필 로드
-      const profileData = await database.userProfiles.getByUserId(user.id)
+      const profileData = await database.userProfiles.get(user.id)
       console.log('프로필 데이터:', profileData)
       setUserProfile(profileData)
 
