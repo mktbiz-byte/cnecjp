@@ -65,9 +65,7 @@ const SignupPageExactReplica = () => {
       setLoading(true)
       setError('')
 
-      await signUpWithEmail(formData.email, formData.password, {
-        name: formData.name
-      })
+      await signUpWithEmail(formData.email, formData.password, formData.name)
       
       setSuccess(true)
     } catch (error) {

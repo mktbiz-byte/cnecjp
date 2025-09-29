@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext();
@@ -76,6 +76,49 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
+  const signInWithEmail = async (email, password) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) {
+        console.error("Email sign in error:", error);
+        throw error;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error("Sign in error:", error);
+      throw error;
+    }
+  };
+
+  const signUpWithEmail = async (email, password, name) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name
+          }
+        }
+      });
+      
+      if (error) {
+        console.error("Email sign up error:", error);
+        throw error;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error("Sign up error:", error);
+      throw error;
+    }
+  };
+
   const signInWithGoogle = async () => {
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -114,6 +157,8 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     loading,
+    signInWithEmail,
+    signUpWithEmail,
     signInWithGoogle,
     signOut,
   };
