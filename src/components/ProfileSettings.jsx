@@ -128,7 +128,7 @@ const ProfileSettings = () => {
     }
   }
 
-  const t = texts[language] || texts.ko
+  const t = texts[language] || texts.ja
 
   useEffect(() => {
     if (user) {
