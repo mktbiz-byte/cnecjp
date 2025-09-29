@@ -171,29 +171,33 @@ export const database = {
   applications: {
     // 모든 신청 가져오기
     async getAll() {
-      const { data, error } = await supabase
-        .from('applications')
-        .select(`
-          *,
-          campaigns (
-            title,
-            brand,
-            reward_amount,
-            google_drive_url,
-            google_slides_url
-          ),
-          user_profiles (
-            name,
-            age,
-            skin_type,
-            instagram_url,
-            tiktok_url,
-            youtube_url
-          )
-        `)
-        .order('created_at', { ascending: false })
-      if (error) throw error
-      return data
+      try {
+        console.log('Applications getAll() 호출')
+        const { data, error } = await supabase
+          .from('applications')
+          .select(`
+            *,
+            campaigns (
+              title,
+              brand,
+              reward_amount,
+              google_drive_url,
+              google_slides_url
+            )
+          `)
+          .order('created_at', { ascending: false })
+        
+        if (error) {
+          console.error('Applications getAll error:', error)
+          throw error
+        }
+        
+        console.log('Applications 데이터 로드 성공:', data?.length || 0, '개')
+        return data || []
+      } catch (error) {
+        console.error('Applications getAll 함수 오류:', error)
+        throw error
+      }
     },
 
     // 사용자별 신청 가져오기
