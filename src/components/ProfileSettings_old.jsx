@@ -9,9 +9,10 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Separator } from '@/components/ui/separator'
 import { 
-  Loader2, Save, User, Lock, 
+  Loader2, Save, User, MapPin, Lock, Calendar, 
   Instagram, Youtube, Hash, Globe, CheckCircle,
   AlertCircle, Home, ArrowLeft
 } from 'lucide-react'
@@ -21,7 +22,7 @@ const ProfileSettings = () => {
   const { user } = useAuth()
   const { language } = useLanguage()
   
-  // 실제 데이터베이스 스키마에 맞춘 최소한의 필드만 사용
+  // address 필드 제거하고 실제 데이터베이스 스키마에 맞춤
   const [profile, setProfile] = useState({
     name: '',
     email: '',
@@ -30,6 +31,7 @@ const ProfileSettings = () => {
     instagram_url: '',
     youtube_url: '',
     tiktok_url: '',
+    group_purchase_available: false,
     bio: ''
   })
   
@@ -44,7 +46,7 @@ const ProfileSettings = () => {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  // 다국어 텍스트
+  // 다국어 텍스트 - address 제거
   const texts = {
     ko: {
       title: '프로필 설정',
@@ -59,6 +61,7 @@ const ProfileSettings = () => {
       instagramUrl: '인스타그램 URL',
       youtubeUrl: '유튜브 URL',
       tiktokUrl: '틱톡 URL',
+      groupPurchase: '공동구매 참여 가능',
       bio: '자기소개',
       changePassword: '비밀번호 변경',
       currentPassword: '현재 비밀번호',
@@ -88,6 +91,7 @@ const ProfileSettings = () => {
       instagramUrl: 'Instagram URL',
       youtubeUrl: 'YouTube URL',
       tiktokUrl: 'TikTok URL',
+      groupPurchase: '共同購入参加可能',
       bio: '自己紹介',
       changePassword: 'パスワード変更',
       currentPassword: '現在のパスワード',
@@ -131,6 +135,7 @@ const ProfileSettings = () => {
           instagram_url: profileData.instagram_url || '',
           youtube_url: profileData.youtube_url || '',
           tiktok_url: profileData.tiktok_url || '',
+          group_purchase_available: profileData.group_purchase_available || false,
           bio: profileData.bio || ''
         })
       } else {
@@ -161,7 +166,7 @@ const ProfileSettings = () => {
 
       console.log('프로필 저장 시작:', profile)
 
-      // 실제 데이터베이스 스키마에 맞춘 데이터만 전송
+      // address 필드 제거하고 저장
       const profileData = {
         user_id: user.id,
         name: profile.name.trim(),
@@ -171,6 +176,7 @@ const ProfileSettings = () => {
         instagram_url: profile.instagram_url.trim() || null,
         youtube_url: profile.youtube_url.trim() || null,
         tiktok_url: profile.tiktok_url.trim() || null,
+        group_purchase_available: profile.group_purchase_available,
         bio: profile.bio.trim() || null
       }
 
@@ -414,6 +420,18 @@ const ProfileSettings = () => {
               </div>
 
               <Separator />
+
+              {/* 공동구매 참여 */}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="group_purchase"
+                  checked={profile.group_purchase_available}
+                  onCheckedChange={(checked) => 
+                    setProfile(prev => ({ ...prev, group_purchase_available: checked }))
+                  }
+                />
+                <Label htmlFor="group_purchase">{t.groupPurchase}</Label>
+              </div>
 
               {/* 자기소개 */}
               <div className="space-y-2">
