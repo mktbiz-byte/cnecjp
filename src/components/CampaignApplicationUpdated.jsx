@@ -75,13 +75,11 @@ const CampaignApplicationUpdated = () => {
     youtube_url: '',
     youtube_followers: '',
     
-    // 캠페인 질문 답변
-    question_answers: {},
-    
-    // 신청 내용
-    motivation: '',
-    content_plan: '',
-    previous_experience: '',
+    // 캠페인 동적 질문 답변
+    question_1: '',
+    question_2: '',
+    question_3: '',
+    question_4: '',
     
     // 동의사항
     terms_agreed: false,
@@ -210,9 +208,21 @@ const CampaignApplicationUpdated = () => {
       })
     }
     
-    // 신청 내용 검증
-    if (!applicationForm.motivation.trim()) errors.push('応募動機を入力してください。')
-    if (!applicationForm.content_plan.trim()) errors.push('コンテンツ企画案を入力してください。')
+    // 동적 질문 검증
+    if (campaign) {
+      if (campaign.question_1_required && !applicationForm.question_1?.trim()) {
+        errors.push(`${campaign.question_1}の回答を入力してください。`)
+      }
+      if (campaign.question_2_required && !applicationForm.question_2?.trim()) {
+        errors.push(`${campaign.question_2}の回答を入力してください。`)
+      }
+      if (campaign.question_3_required && !applicationForm.question_3?.trim()) {
+        errors.push(`${campaign.question_3}の回答を入力してください。`)
+      }
+      if (campaign.question_4_required && !applicationForm.question_4?.trim()) {
+        errors.push(`${campaign.question_4}の回答を入力してください。`)
+      }
+    }
     
     // 동의사항 검증
     if (!applicationForm.terms_agreed) errors.push('利用規約に同意してください。')
@@ -692,40 +702,74 @@ const CampaignApplicationUpdated = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="motivation">応募動機 *</Label>
-                  <Textarea
-                    id="motivation"
-                    value={applicationForm.motivation}
-                    onChange={(e) => handleInputChange('motivation', e.target.value)}
-                    placeholder="このキャンペーンに応募する理由を教えてください"
-                    rows={4}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="content_plan">コンテンツ企画案 *</Label>
-                  <Textarea
-                    id="content_plan"
-                    value={applicationForm.content_plan}
-                    onChange={(e) => handleInputChange('content_plan', e.target.value)}
-                    placeholder="どのようなコンテンツを制作予定ですか？"
-                    rows={4}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="previous_experience">過去の経験・実績</Label>
-                  <Textarea
-                    id="previous_experience"
-                    value={applicationForm.previous_experience}
-                    onChange={(e) => handleInputChange('previous_experience', e.target.value)}
-                    placeholder="関連する経験や実績があれば教えてください"
-                    rows={3}
-                  />
-                </div>
+                {/* 동적 질문들 렌더링 */}
+                {campaign && (
+                  <>
+                    {campaign.question_1 && (
+                      <div className="space-y-2">
+                        <Label htmlFor="question_1">
+                          {campaign.question_1} {campaign.question_1_required && '*'}
+                        </Label>
+                        <Textarea
+                          id="question_1"
+                          value={applicationForm.question_1 || ''}
+                          onChange={(e) => handleInputChange('question_1', e.target.value)}
+                          placeholder="回答を入力してください"
+                          rows={4}
+                          required={campaign.question_1_required}
+                        />
+                      </div>
+                    )}
+                    
+                    {campaign.question_2 && (
+                      <div className="space-y-2">
+                        <Label htmlFor="question_2">
+                          {campaign.question_2} {campaign.question_2_required && '*'}
+                        </Label>
+                        <Textarea
+                          id="question_2"
+                          value={applicationForm.question_2 || ''}
+                          onChange={(e) => handleInputChange('question_2', e.target.value)}
+                          placeholder="回答を入力してください"
+                          rows={4}
+                          required={campaign.question_2_required}
+                        />
+                      </div>
+                    )}
+                    
+                    {campaign.question_3 && (
+                      <div className="space-y-2">
+                        <Label htmlFor="question_3">
+                          {campaign.question_3} {campaign.question_3_required && '*'}
+                        </Label>
+                        <Textarea
+                          id="question_3"
+                          value={applicationForm.question_3 || ''}
+                          onChange={(e) => handleInputChange('question_3', e.target.value)}
+                          placeholder="回答を入力してください"
+                          rows={4}
+                          required={campaign.question_3_required}
+                        />
+                      </div>
+                    )}
+                    
+                    {campaign.question_4 && (
+                      <div className="space-y-2">
+                        <Label htmlFor="question_4">
+                          {campaign.question_4} {campaign.question_4_required && '*'}
+                        </Label>
+                        <Textarea
+                          id="question_4"
+                          value={applicationForm.question_4 || ''}
+                          onChange={(e) => handleInputChange('question_4', e.target.value)}
+                          placeholder="回答を入力してください"
+                          rows={4}
+                          required={campaign.question_4_required}
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
               </CardContent>
             </Card>
 
