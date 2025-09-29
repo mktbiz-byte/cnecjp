@@ -6,7 +6,23 @@ import './App.css';
 
 // 모든 페이지 컴포넌트 import
 import HomePageExactReplica from './components/HomePageExactReplica';
-// ... (다른 모든 컴포넌트 import)
+import LoginPageExactReplica from './components/LoginPageExactReplica';
+import SignupPageExactReplica from './components/SignupPageExactReplica';
+import CampaignApplicationUpdated from './components/CampaignApplicationUpdated';
+import MyPageWithPointSystem from './components/MyPageWithPointSystem';
+import JapanWithdrawalRequest from './components/JapanWithdrawalRequest';
+import ProfileManagement from './components/ProfileManagement';
+import AuthCallbackSafe from './components/AuthCallbackSafe';
+
+// 관리자 컴포넌트
+import AdminDashboardSimple from './components/admin/AdminDashboardSimple';
+import AdminCampaignsWithQuestions from './components/admin/AdminCampaignsWithQuestions';
+import ApplicationsReportSimple from './components/admin/ApplicationsReportSimple';
+import ConfirmedCreatorsReport from './components/admin/ConfirmedCreatorsReport';
+import SNSUploadFinalReport from './components/admin/SNSUploadFinalReport';
+import EmailTemplateManager from './components/admin/EmailTemplateManager';
+import UserApprovalManager from './components/admin/UserApprovalManager';
+import SecretAdminLogin from './components/SecretAdminLogin';
 
 function App() {
   return (
@@ -37,9 +53,29 @@ const MainContent = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
       <Routes>
-        {/* 모든 라우트 설정 */}
+        {/* 메인 페이지 */}
         <Route path="/" element={<HomePageExactReplica />} />
-        {/* ... (다른 모든 라우트) */}
+        
+        {/* 인증 관련 */}
+        <Route path="/login" element={<LoginPageExactReplica />} />
+        <Route path="/signup" element={<SignupPageExactReplica />} />
+        <Route path="/auth/callback" element={<AuthCallbackSafe />} />
+        
+        {/* 사용자 페이지 */}
+        <Route path="/campaign-application" element={<CampaignApplicationUpdated />} />
+        <Route path="/mypage" element={<MyPageWithPointSystem />} />
+        <Route path="/withdrawal" element={<JapanWithdrawalRequest />} />
+        <Route path="/profile" element={<ProfileManagement />} />
+        
+        {/* 관리자 페이지 */}
+        <Route path="/secret-admin-login" element={<SecretAdminLogin />} />
+        <Route path="/admin" element={<AdminDashboardSimple />} />
+        <Route path="/admin/campaigns" element={<AdminCampaignsWithQuestions />} />
+        <Route path="/admin/applications" element={<ApplicationsReportSimple />} />
+        <Route path="/admin/confirmed-creators" element={<ConfirmedCreatorsReport />} />
+        <Route path="/admin/sns-uploads" element={<SNSUploadFinalReport />} />
+        <Route path="/admin/email-templates" element={<EmailTemplateManager />} />
+        <Route path="/admin/user-approval" element={<UserApprovalManager />} />
       </Routes>
     </div>
   );
