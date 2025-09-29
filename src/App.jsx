@@ -10,7 +10,7 @@ import HomePageExactReplica from './components/HomePageExactReplica';
 import LoginPageExactReplica from './components/LoginPageExactReplica';
 import SignupPageExactReplica from './components/SignupPageExactReplica';
 import CampaignApplicationUpdated from './components/CampaignApplicationUpdated';
-import MyPageWithPointSystem from './components/MyPageWithPointSystem';
+import MyPageWithWithdrawal from './components/MyPageWithWithdrawal';
 import JapanWithdrawalRequest from './components/JapanWithdrawalRequest';
 import ProfileManagement from './components/ProfileManagement';
 import ProfileSettings from './components/ProfileSettings';
@@ -23,7 +23,7 @@ import ApplicationsReportSimple from './components/admin/ApplicationsReportSimpl
 import ConfirmedCreatorsReport from './components/admin/ConfirmedCreatorsReport';
 import SNSUploadFinalReport from './components/admin/SNSUploadFinalReport';
 import EmailTemplateManager from './components/admin/EmailTemplateManager';
-import UserApprovalManager from './components/admin/UserApprovalManager';
+import UserApprovalManagerEnhanced from './components/admin/UserApprovalManagerEnhanced';
 import AdminWithdrawals from './components/admin/AdminWithdrawals';
 import SystemSettings from './components/admin/SystemSettings';
 import SecretAdminLogin from './components/SecretAdminLogin';
@@ -78,7 +78,7 @@ const MainContent = () => {
         
         {/* 사용자 페이지 */}
         <Route path="/campaign-application" element={<CampaignApplicationUpdated />} />
-        <Route path="/mypage" element={<MyPageWithPointSystem />} />
+        <Route path="/mypage" element={<MyPageWithWithdrawal />} />
         <Route path="/withdrawal" element={<JapanWithdrawalRequest />} />
         <Route path="/profile" element={<ProfileManagement />} />
         <Route path="/profile-settings" element={<ProfileSettings />} />
@@ -92,7 +92,7 @@ const MainContent = () => {
         <Route path="/admin/confirmed-creators" element={<ConfirmedCreatorsReport />} />
         <Route path="/admin/sns-uploads" element={<SNSUploadFinalReport />} />
         <Route path="/admin/email-templates" element={<EmailTemplateManager />} />
-        <Route path="/admin/user-approval" element={<UserApprovalManager />} />
+        <Route path="/admin/users" element={<UserApprovalManagerEnhanced />} />
         <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
         <Route path="/admin/system-settings" element={<SystemSettings />} />
       </Routes>
