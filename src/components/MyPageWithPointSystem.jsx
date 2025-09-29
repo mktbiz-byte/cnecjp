@@ -53,11 +53,11 @@ const MyPageWithPointSystem = () => {
       setError('')
       
       // 사용자 프로필 로드
-      const profile = await database.userProfiles.getByUserId(user.id)
+      const profile = await database.userProfiles.get(user.id)
       setUserProfile(profile)
       
       // 사용자의 신청서들 로드
-      const userApplications = await database.applications.getByUserId(user.id)
+      const userApplications = await database.applications.getByUser(user.id)
       setApplications(userApplications || [])
       
       // 포인트 잔액 계산

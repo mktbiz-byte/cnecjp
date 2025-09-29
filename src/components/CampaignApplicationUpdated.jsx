@@ -117,7 +117,7 @@ const CampaignApplicationUpdated = () => {
       setCampaign(campaignData)
       
       // 사용자 프로필 로드
-      const profileData = await database.userProfiles.getByUserId(user.id)
+      const profileData = await database.userProfiles.get(user.id)
       if (profileData) {
         setUserProfile(profileData)
         
