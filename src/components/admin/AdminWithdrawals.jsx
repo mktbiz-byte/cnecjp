@@ -16,7 +16,7 @@ import {
   Loader2, CreditCard, Building, User, MapPin, Phone, Mail, 
   AlertCircle, CheckCircle, Clock, DollarSign, FileText, 
   ArrowRight, Copy, ExternalLink, Download, Eye, Edit,
-  Search, Filter, RefreshCw
+  Search, Filter, RefreshCw, X
 } from 'lucide-react'
 
 const AdminWithdrawals = () => {

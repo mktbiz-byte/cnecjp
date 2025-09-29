@@ -22,6 +22,7 @@ import ConfirmedCreatorsReport from './components/admin/ConfirmedCreatorsReport'
 import SNSUploadFinalReport from './components/admin/SNSUploadFinalReport';
 import EmailTemplateManager from './components/admin/EmailTemplateManager';
 import UserApprovalManager from './components/admin/UserApprovalManager';
+import AdminWithdrawals from './components/admin/AdminWithdrawals';
 import SecretAdminLogin from './components/SecretAdminLogin';
 
 function App() {
@@ -76,6 +77,7 @@ const MainContent = () => {
         <Route path="/admin/sns-uploads" element={<SNSUploadFinalReport />} />
         <Route path="/admin/email-templates" element={<EmailTemplateManager />} />
         <Route path="/admin/user-approval" element={<UserApprovalManager />} />
+        <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
       </Routes>
     </div>
   );

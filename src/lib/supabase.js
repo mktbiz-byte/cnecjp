@@ -247,6 +247,21 @@ export const database = {
       return data
     },
 
+    // 신청 업데이트
+    async update(id, updateData) {
+      const { data, error } = await supabase
+        .from('applications')
+        .update({
+          ...updateData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    },
+
     // 포인트 요청
     async requestPoints(id) {
       const { data, error } = await supabase
@@ -276,11 +291,36 @@ export const database = {
       return data
     },
 
+    // 모든 프로필 가져오기 (관리자용)
+    async getAll() {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data
+    },
+
     // 프로필 생성 또는 업데이트
     async upsert(profileData) {
       const { data, error } = await supabase
         .from('user_profiles')
         .upsert([profileData])
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    },
+
+    // 프로필 업데이트
+    async update(userId, updateData) {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .update({
+          ...updateData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', userId)
         .select()
         .single()
       if (error) throw error
@@ -480,6 +520,115 @@ export const database = {
 
       // 출금 상태를 승인으로 변경
       return await this.updateStatus(id, 'approved', adminNotes)
+    }
+  },
+
+  // 포인트 요청 관련
+  pointRequests: {
+    // 포인트 요청 생성
+    async create(requestData) {
+      const { data, error } = await supabase
+        .from('point_requests')
+        .insert([{
+          ...requestData,
+          created_at: new Date().toISOString()
+        }])
+        .select()
+        .single()
+      
+      if (error) throw error
+      return data
+    },
+
+    // 사용자별 포인트 요청 가져오기
+    async getByUser(userId) {
+      const { data, error } = await supabase
+        .from('point_requests')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      return data
+    },
+
+    // 모든 포인트 요청 가져오기 (관리자용)
+    async getAll() {
+      const { data, error } = await supabase
+        .from('point_requests')
+        .select(`
+          *,
+          user_profiles (
+            name,
+            phone
+          ),
+          applications (
+            campaign_id,
+            campaigns (
+              title,
+              brand
+            )
+          )
+        `)
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      return data
+    },
+
+    // 포인트 요청 상태 업데이트
+    async updateStatus(id, status, adminNotes = '') {
+      const { data, error } = await supabase
+        .from('point_requests')
+        .update({
+          status,
+          admin_notes: adminNotes,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single()
+      
+      if (error) throw error
+      return data
+    }
+  },
+
+  // 이메일 템플릿 관련
+  emailTemplates: {
+    // 모든 템플릿 가져오기
+    async getAll() {
+      const { data, error } = await supabase
+        .from('email_templates')
+        .select('*')
+        .order('type')
+      
+      if (error) throw error
+      return data
+    },
+
+    // 템플릿 생성 또는 업데이트
+    async upsert(templateData) {
+      const { data, error } = await supabase
+        .from('email_templates')
+        .upsert([templateData])
+        .select()
+        .single()
+      
+      if (error) throw error
+      return data
+    },
+
+    // 특정 타입의 템플릿 가져오기
+    async getByType(type) {
+      const { data, error } = await supabase
+        .from('email_templates')
+        .select('*')
+        .eq('type', type)
+        .single()
+      
+      if (error && error.code !== 'PGRST116') throw error
+      return data
     }
   },
 

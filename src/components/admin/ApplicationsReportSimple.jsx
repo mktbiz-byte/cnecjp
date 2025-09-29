@@ -16,12 +16,10 @@ import {
 } from 'lucide-react'
 
 const ApplicationsReportSimple = () => {
-  const { campaignId } = useParams()
   const navigate = useNavigate()
   
-  const [campaign, setCampaign] = useState(null)
+  const [campaigns, setCampaigns] = useState([])
   const [applications, setApplications] = useState([])
-  const [userProfiles, setUserProfiles] = useState({})
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
   const [error, setError] = useState('')
@@ -30,39 +28,24 @@ const ApplicationsReportSimple = () => {
   const [selectedApplication, setSelectedApplication] = useState(null)
   const [detailModal, setDetailModal] = useState(false)
   const [statusFilter, setStatusFilter] = useState('all')
+  const [campaignFilter, setCampaignFilter] = useState('all')
 
   useEffect(() => {
-    if (campaignId) {
-      loadData()
-    }
-  }, [campaignId])
+    loadData()
+  }, [])
 
   const loadData = async () => {
     try {
       setLoading(true)
       setError('')
       
-      // 캠페인 정보 로드
-      const campaignData = await database.campaigns.getById(campaignId)
-      if (!campaignData) {
-        setError('キャンペーンが見つかりません。')
-        return
-      }
-      setCampaign(campaignData)
+      // 모든 캠페인 로드
+      const campaignsData = await database.campaigns.getAll()
+      setCampaigns(campaignsData || [])
       
-      // 해당 캠페인의 신청서들 로드
-      const applicationsData = await database.applications.getByCampaignId(campaignId)
+      // 모든 신청서 로드 (캠페인 정보 포함)
+      const applicationsData = await database.applications.getAll()
       setApplications(applicationsData || [])
-      
-      // 신청자들의 프로필 정보 로드
-      const profiles = {}
-      for (const app of applicationsData || []) {
-        const profile = await database.userProfiles.getByUserId(app.user_id)
-        if (profile) {
-          profiles[app.user_id] = profile
-        }
-      }
-      setUserProfiles(profiles)
       
     } catch (error) {
       console.error('Load data error:', error)
@@ -181,6 +164,8 @@ const ApplicationsReportSimple = () => {
   const filteredApplications = applications.filter(app => {
     if (statusFilter === 'all') return true
     if (statusFilter === 'virtual') return app.virtual_selected
+    if (statusFilter === 'pending') return app.status === 'pending' && !app.virtual_selected
+    if (campaignFilter !== 'all') return app.campaign_id === parseInt(campaignFilter)
     return app.status === statusFilter
   })
 
@@ -195,28 +180,13 @@ const ApplicationsReportSimple = () => {
     )
   }
 
-  if (!campaign) {
-    return (
-      <div className="text-center py-8">
-        <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-gray-600 mb-2">キャンペーンが見つかりません</h3>
-        <Button onClick={() => navigate('/admin/campaigns')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          キャンペーン一覧に戻る
-        </Button>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <Button variant="outline" onClick={() => navigate('/admin/campaigns')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            キャンペーン一覧に戻る
-          </Button>
+          <h1 className="text-2xl font-bold text-gray-800">キャンペーン応募管理</h1>
+          <p className="text-gray-600">全てのキャンペーン応募を管理します</p>
         </div>
         <div className="flex space-x-2">
           <Button onClick={exportToExcel} variant="outline">
@@ -226,48 +196,35 @@ const ApplicationsReportSimple = () => {
         </div>
       </div>
 
-      {/* Campaign Info */}
+      {/* Summary Stats */}
       <Card>
         <CardHeader>
-          <div className="flex items-start justify-between">
-            <div>
-              <CardTitle className="text-2xl">{campaign.title}</CardTitle>
-              <CardDescription className="text-lg mt-2 text-purple-600">
-                {campaign.brand} - 応募者一覧
-              </CardDescription>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-green-600">
-                {formatCurrency(campaign.reward_amount)}
-              </div>
-              <div className="text-sm text-gray-600">報酬</div>
-            </div>
-          </div>
+          <CardTitle>応募統計</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid md:grid-cols-4 gap-4">
             <div className="flex items-center space-x-2">
               <Users className="h-5 w-5 text-gray-500" />
               <span className="text-sm">
-                <strong>応募者:</strong> {applications.length}名
+                <strong>総応募者:</strong> {filteredApplications.length}名
               </span>
             </div>
             <div className="flex items-center space-x-2">
               <Star className="h-5 w-5 text-orange-500" />
               <span className="text-sm">
-                <strong>仮選択:</strong> {applications.filter(app => app.virtual_selected).length}名
+                <strong>仮選択:</strong> {filteredApplications.filter(app => app.virtual_selected).length}名
               </span>
             </div>
             <div className="flex items-center space-x-2">
               <CheckCircle className="h-5 w-5 text-green-500" />
               <span className="text-sm">
-                <strong>承認済み:</strong> {applications.filter(app => app.status === 'approved').length}名
+                <strong>承認済み:</strong> {filteredApplications.filter(app => app.status === 'approved').length}名
               </span>
             </div>
             <div className="flex items-center space-x-2">
-              <Calendar className="h-5 w-5 text-gray-500" />
+              <FileText className="h-5 w-5 text-blue-500" />
               <span className="text-sm">
-                <strong>締切:</strong> {new Date(campaign.application_deadline).toLocaleDateString('ja-JP')}
+                <strong>キャンペーン数:</strong> {campaigns.length}件
               </span>
             </div>
           </div>
@@ -277,9 +234,9 @@ const ApplicationsReportSimple = () => {
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 flex-wrap gap-4">
             <span className="font-medium">フィルター:</span>
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 flex-wrap">
               <Button
                 variant={statusFilter === 'all' ? 'default' : 'outline'}
                 size="sm"
@@ -309,6 +266,23 @@ const ApplicationsReportSimple = () => {
                 承認済み ({applications.filter(app => app.status === 'approved').length})
               </Button>
             </div>
+            
+            {/* Campaign Filter */}
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium">キャンペーン:</span>
+              <select
+                value={campaignFilter}
+                onChange={(e) => setCampaignFilter(e.target.value)}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="all">全てのキャンペーン</option>
+                {campaigns.map(campaign => (
+                  <option key={campaign.id} value={campaign.id}>
+                    {campaign.title}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -331,7 +305,7 @@ const ApplicationsReportSimple = () => {
       {/* Applications List */}
       <div className="grid gap-4">
         {filteredApplications.map((application) => {
-          const profile = userProfiles[application.user_id]
+          const campaign = application.campaigns
           
           return (
             <Card key={application.id} className={application.virtual_selected ? 'border-l-4 border-l-orange-500' : ''}>
@@ -339,19 +313,35 @@ const ApplicationsReportSimple = () => {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-3">
-                      <h3 className="text-lg font-semibold">{profile?.name || 'N/A'}</h3>
+                      <h3 className="text-lg font-semibold">{application.user_profiles?.name || 'N/A'}</h3>
                       {getStatusBadge(application.status, application.virtual_selected)}
                       <span className="text-sm text-gray-500">
                         {new Date(application.created_at).toLocaleDateString('ja-JP')}
                       </span>
                     </div>
                     
+                    {/* Campaign Info */}
+                    <div className="bg-blue-50 p-3 rounded-lg mb-3">
+                      <div className="flex items-center space-x-2">
+                        <FileText className="h-4 w-4 text-blue-600" />
+                        <span className="font-medium text-blue-800">{campaign?.title || 'N/A'}</span>
+                        <Badge variant="outline" className="text-blue-600 border-blue-300">
+                          {campaign?.brand || 'N/A'}
+                        </Badge>
+                        {campaign?.reward_amount && (
+                          <span className="text-sm text-green-600 font-medium">
+                            ¥{campaign.reward_amount.toLocaleString()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    
                     <div className="grid md:grid-cols-3 gap-4 text-sm mb-4">
                       <div>
-                        <span className="font-medium">年齢:</span> {profile?.age || 'N/A'}歳
+                        <span className="font-medium">年齢:</span> {application.user_profiles?.age || 'N/A'}歳
                       </div>
                       <div>
-                        <span className="font-medium">肌タイプ:</span> {profile?.skin_type || 'N/A'}
+                        <span className="font-medium">肌タイプ:</span> {application.user_profiles?.skin_type || 'N/A'}
                       </div>
                       <div>
                         <span className="font-medium">応募日:</span> {new Date(application.created_at).toLocaleDateString('ja-JP')}
@@ -360,26 +350,26 @@ const ApplicationsReportSimple = () => {
                     
                     {/* SNS 정보 */}
                     <div className="grid md:grid-cols-3 gap-4 text-sm mb-4">
-                      {profile?.instagram_url && (
+                      {application.user_profiles?.instagram_url && (
                         <div className="flex items-center space-x-2">
                           <Instagram className="h-4 w-4 text-pink-500" />
-                          <a href={profile.instagram_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                          <a href={application.user_profiles.instagram_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                             Instagram
                           </a>
                         </div>
                       )}
-                      {profile?.tiktok_url && (
+                      {application.user_profiles?.tiktok_url && (
                         <div className="flex items-center space-x-2">
                           <Hash className="h-4 w-4 text-black" />
-                          <a href={profile.tiktok_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                          <a href={application.user_profiles.tiktok_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                             TikTok
                           </a>
                         </div>
                       )}
-                      {profile?.youtube_url && (
+                      {application.user_profiles?.youtube_url && (
                         <div className="flex items-center space-x-2">
                           <Youtube className="h-4 w-4 text-red-500" />
-                          <a href={profile.youtube_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                          <a href={application.user_profiles.youtube_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                             YouTube
                           </a>
                         </div>

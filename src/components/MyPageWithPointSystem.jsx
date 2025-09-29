@@ -67,7 +67,7 @@ const MyPageWithPointSystem = () => {
       }, 0)
       
       // 출금 요청된 포인트 차감
-      const withdrawalRequests = await database.withdrawals.getByUserId(user.id)
+      const withdrawalRequests = await database.withdrawals.getByUser(user.id)
       const withdrawnPoints = withdrawalRequests?.reduce((sum, withdrawal) => {
         return sum + (withdrawal.status === 'completed' ? withdrawal.amount : 0)
       }, 0) || 0
