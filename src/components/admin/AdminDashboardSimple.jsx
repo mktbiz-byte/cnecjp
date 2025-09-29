@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import { database } from '../../lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -28,15 +29,15 @@ const AdminDashboardSimple = () => {
   const navigate = useNavigate()
   
   const [stats, setStats] = useState({
-    totalCampaigns: 4,
-    activeCampaigns: 4,
-    totalApplications: 12,
-    totalRewards: 360000,
-    totalUsers: 25,
-    pendingApplications: 3
+    totalCampaigns: 0,
+    activeCampaigns: 0,
+    totalApplications: 0,
+    totalRewards: 0,
+    totalUsers: 0,
+    pendingApplications: 0
   })
   
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -48,7 +49,40 @@ const AdminDashboardSimple = () => {
     }
 
     console.log('관리자 로그인 성공:', user?.email)
+    loadDashboardData()
   }, [user, navigate])
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true)
+      setError('')
+      
+      // 실제 데이터베이스에서 통계 데이터 로드
+      const statsData = await database.stats.getOverall()
+      
+      // 추가 통계 계산
+      const campaigns = await database.campaigns.getAll()
+      const applications = await database.applications.getAll()
+      
+      const activeCampaigns = campaigns.filter(c => c.status === 'active').length
+      const pendingApplications = applications.filter(a => a.status === 'pending').length
+      
+      setStats({
+        totalCampaigns: statsData.totalCampaigns,
+        activeCampaigns: activeCampaigns,
+        totalApplications: statsData.totalApplications,
+        totalRewards: statsData.totalRewards,
+        totalUsers: statsData.totalUsers,
+        pendingApplications: pendingApplications
+      })
+      
+    } catch (error) {
+      console.error('Dashboard data loading error:', error)
+      setError('데이터를 불러오는데 실패했습니다.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleSignOut = async () => {
     try {

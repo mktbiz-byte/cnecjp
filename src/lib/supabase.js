@@ -169,6 +169,14 @@ export const database = {
             reward_amount,
             google_drive_url,
             google_slides_url
+          ),
+          user_profiles (
+            name,
+            age,
+            skin_type,
+            instagram_url,
+            tiktok_url,
+            youtube_url
           )
         `)
         .order('created_at', { ascending: false })
