@@ -535,19 +535,24 @@ export const database = {
 
     // 모든 출금 내역 가져오기 (관리자용)
     async getAll() {
-      const { data, error } = await supabase
-        .from('withdrawals')
-        .select(`
-          *,
-          user_profiles (
-            name,
-            phone
-          )
-        `)
-        .order('created_at', { ascending: false })
-      
-      if (error) throw error
-      return data
+      try {
+        console.log('Withdrawals getAll() 호출')
+        const { data, error } = await supabase
+          .from('withdrawals')
+          .select('*')
+          .order('created_at', { ascending: false })
+        
+        if (error) {
+          console.error('Withdrawals getAll error:', error)
+          throw error
+        }
+        
+        console.log('Withdrawals 데이터 로드 성공:', data?.length || 0, '개')
+        return data || []
+      } catch (error) {
+        console.error('Withdrawals getAll 함수 오류:', error)
+        throw error
+      }
     },
 
     // 출금 요청 생성
@@ -636,26 +641,33 @@ export const database = {
 
     // 모든 포인트 요청 가져오기 (관리자용)
     async getAll() {
-      const { data, error } = await supabase
-        .from('point_requests')
-        .select(`
-          *,
-          user_profiles (
-            name,
-            phone
-          ),
-          applications (
-            campaign_id,
-            campaigns (
-              title,
-              brand
+      try {
+        console.log('PointRequests getAll() 호출')
+        const { data, error } = await supabase
+          .from('point_requests')
+          .select(`
+            *,
+            applications (
+              campaign_id,
+              campaigns (
+                title,
+                brand
+              )
             )
-          )
-        `)
-        .order('created_at', { ascending: false })
-      
-      if (error) throw error
-      return data
+          `)
+          .order('created_at', { ascending: false })
+        
+        if (error) {
+          console.error('PointRequests getAll error:', error)
+          throw error
+        }
+        
+        console.log('PointRequests 데이터 로드 성공:', data?.length || 0, '개')
+        return data || []
+      } catch (error) {
+        console.error('PointRequests getAll 함수 오류:', error)
+        throw error
+      }
     },
 
     // 포인트 요청 상태 업데이트
