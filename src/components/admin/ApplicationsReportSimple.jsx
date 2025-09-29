@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useLanguage } from '../../contexts/LanguageContext'
 import { database } from '../../lib/supabase'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -17,6 +18,67 @@ import {
 
 const ApplicationsReportSimple = () => {
   const navigate = useNavigate()
+  const { language } = useLanguage()
+
+  // 다국어 텍스트
+  const texts = {
+    ko: {
+      title: '신청서 관리',
+      subtitle: '모든 캠페인 신청서를 관리합니다',
+      totalApplications: '총 신청서',
+      pendingApplications: '대기 중',
+      approvedApplications: '승인됨',
+      rejectedApplications: '거절됨',
+      filterByCampaign: '캠페인별 필터',
+      filterByStatus: '상태별 필터',
+      allCampaigns: '모든 캠페인',
+      allStatuses: '모든 상태',
+      pending: '대기 중',
+      approved: '승인됨',
+      rejected: '거절됨',
+      completed: '완료됨',
+      viewDetails: '상세 보기',
+      approve: '승인',
+      reject: '거절',
+      backToDashboard: '대시보드로 돌아가기',
+      loading: '데이터를 불러오는 중...',
+      error: '데이터를 불러오는데 실패했습니다.',
+      noApplications: '신청서가 없습니다.',
+      applicationDetails: '신청서 상세 정보',
+      campaignInfo: '캠페인 정보',
+      applicantInfo: '신청자 정보',
+      close: '닫기'
+    },
+    ja: {
+      title: '申請書管理',
+      subtitle: 'すべてのキャンペーン申請書を管理します',
+      totalApplications: '総申請書',
+      pendingApplications: '待機中',
+      approvedApplications: '承認済み',
+      rejectedApplications: '拒否済み',
+      filterByCampaign: 'キャンペーン別フィルター',
+      filterByStatus: 'ステータス別フィルター',
+      allCampaigns: 'すべてのキャンペーン',
+      allStatuses: 'すべてのステータス',
+      pending: '待機中',
+      approved: '承認済み',
+      rejected: '拒否済み',
+      completed: '完了済み',
+      viewDetails: '詳細表示',
+      approve: '承認',
+      reject: '拒否',
+      backToDashboard: 'ダッシュボードに戻る',
+      loading: 'データを読み込み中...',
+      error: 'データの読み込みに失敗しました。',
+      noApplications: '申請書がありません。',
+      applicationDetails: '申請書詳細情報',
+      campaignInfo: 'キャンペーン情報',
+      applicantInfo: '申請者情報',
+      close: '閉じる'
+    }
+  }
+
+  const t = texts[language] || texts.ko
   
   const [campaigns, setCampaigns] = useState([])
   const [applications, setApplications] = useState([])
