@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext();
@@ -15,6 +15,7 @@ export const AuthProvider = ({ children }) => {
           console.error("Error getting session:", error);
           setUser(null);
         } else {
+          console.log("Session loaded:", session?.user?.email);
           setUser(session?.user ?? null);
         }
       } catch (error) {
@@ -27,8 +28,44 @@ export const AuthProvider = ({ children }) => {
 
     getSession();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event, session?.user?.email);
+      
+      if (event === 'SIGNED_IN' && session?.user) {
+        setUser(session.user);
+        
+        // 사용자 프로필 확인/생성
+        try {
+          const { data: profile, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single();
+
+          if (profileError && profileError.code === 'PGRST116') {
+            // 프로필이 없으면 생성
+            const { error: insertError } = await supabase
+              .from('user_profiles')
+              .insert({
+                user_id: session.user.id,
+                email: session.user.email,
+                name: session.user.user_metadata?.full_name || session.user.email,
+              });
+            
+            if (insertError) {
+              console.error("Error creating profile:", insertError);
+            } else {
+              console.log("Profile created successfully");
+            }
+          }
+        } catch (error) {
+          console.error("Error handling user profile:", error);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+      } else {
+        setUser(session?.user ?? null);
+      }
     });
 
     return () => {
@@ -36,16 +73,55 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
+  const signInWithGoogle = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+      
+      if (error) {
+        console.error("Google sign in error:", error);
+        throw error;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error("Sign in error:", error);
+      throw error;
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Sign out error:", error);
+        throw error;
+      }
+      setUser(null);
+    } catch (error) {
+      console.error("Sign out error:", error);
+      throw error;
+    }
+  };
+
   const value = {
     user,
     loading,
-    signInWithGoogle: () => supabase.auth.signInWithOAuth({ provider: 'google' }),
-    signOut: () => supabase.auth.signOut(),
+    signInWithGoogle,
+    signOut,
   };
 
-  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
