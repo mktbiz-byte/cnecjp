@@ -1,14 +1,38 @@
 const { google } = require("googleapis");
 
 exports.handler = async function (event, context) {
+  // CORS 헤더 설정
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
+  };
+  
+  // OPTIONS 요청 처리 (CORS preflight)
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ message: 'CORS preflight 성공' })
+    };
+  }
+
   if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method Not Allowed" };
+    return { 
+      statusCode: 405, 
+      headers,
+      body: JSON.stringify({ error: "Method Not Allowed" })
+    };
   }
 
   const { action, payload, credentials } = JSON.parse(event.body);
 
   if (!credentials) {
-    return { statusCode: 400, body: "Credentials are required." };
+    return { 
+      statusCode: 400, 
+      headers,
+      body: JSON.stringify({ error: "Credentials are required." })
+    };
   }
 
   try {
@@ -90,21 +114,100 @@ exports.handler = async function (event, context) {
 
         return {
           statusCode: 200,
+          headers,
           body: JSON.stringify({
             driveUrl: userFolder.webViewLink,
             slidesUrl: presentation.webViewLink,
           }),
         };
+      
+      case "listFiles":
+        const { folderId, pageSize = 100, pageToken } = payload;
+        
+        const query = folderId ? `'${folderId}' in parents` : '';
+        
+        const listResponse = await drive.files.list({
+          q: query,
+          pageSize: pageSize,
+          fields: 'nextPageToken, files(id, name, mimeType, webViewLink, iconLink, thumbnailLink, createdTime, modifiedTime, size)',
+          pageToken: pageToken || null
+        });
+        
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify(listResponse.data)
+        };
+      
+      case "createFolder":
+        const { folderName, parentFolderId } = payload;
+        
+        const folderMetadata = {
+          name: folderName,
+          mimeType: 'application/vnd.google-apps.folder'
+        };
+        
+        if (parentFolderId) {
+          folderMetadata.parents = [parentFolderId];
+        }
+        
+        const folderResponse = await drive.files.create({
+          requestBody: folderMetadata,
+          fields: 'id, name, webViewLink'
+        });
+        
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify(folderResponse.data)
+        };
+      
+      case "shareFile":
+        const { fileId, email, role = 'reader' } = payload;
+        
+        const permissionResponse = await drive.permissions.create({
+          fileId: fileId,
+          requestBody: {
+            type: 'user',
+            role: role,
+            emailAddress: email
+          },
+          fields: 'id'
+        });
+        
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify(permissionResponse.data)
+        };
+      
+      case "getFileInfo":
+        const { targetFileId } = payload;
+        
+        const fileInfoResponse = await drive.files.get({
+          fileId: targetFileId,
+          fields: 'id, name, mimeType, webViewLink, iconLink, thumbnailLink, createdTime, modifiedTime, size'
+        });
+        
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify(fileInfoResponse.data)
+        };
 
       default:
-        return { statusCode: 400, body: "Invalid action." };
+        return { 
+          statusCode: 400, 
+          headers,
+          body: JSON.stringify({ error: "Invalid action." })
+        };
     }
   } catch (error) {
     console.error("Google Drive API Error:", error);
     return {
       statusCode: 500,
+      headers,
       body: JSON.stringify({ error: error.message }),
     };
   }
 };
-
