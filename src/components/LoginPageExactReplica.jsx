@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { Button } from '@/components/ui/button'
@@ -202,7 +202,7 @@ const LoginPageExactReplica = () => {
               <span className="text-gray-600">
                 アカウントをお持ちでないですか？
               </span>{' '}
-              <Link to="/register" className="text-red-600 hover:text-red-700 font-medium underline">
+              <Link to="/signup" className="text-red-600 hover:text-red-700 font-medium underline">
                 新規登録
               </Link>
             </div>
