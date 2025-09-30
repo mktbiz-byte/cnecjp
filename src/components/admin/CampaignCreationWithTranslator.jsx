@@ -622,8 +622,8 @@ const CampaignCreationWithTranslator = () => {
             </div>
           </div>
 
-          {/* 오른쪽: 번역기 */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
+          {/* 오른쪽: 번역기 (스크롤 따라다님) */}
+          <div className="bg-white rounded-lg shadow-sm border p-6 sticky top-4 h-fit">
             <h2 className="text-xl font-semibold mb-6 text-gray-900">🌐 한국어 → 일본어 번역기</h2>
             
             <div className="space-y-6">
