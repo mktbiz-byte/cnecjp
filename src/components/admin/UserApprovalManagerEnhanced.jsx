@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useLanguage } from '../../contexts/LanguageContext'
-import { database } from '../../lib/supabase'
+import { database, supabase } from '../../lib/supabase'
 import AdminNavigation from './AdminNavigation'
 import { 
   Loader2, User, Mail, Phone, Calendar, Shield, 
@@ -224,7 +224,7 @@ const UserApprovalManagerEnhanced = () => {
     try {
       setProcessing(true)
       
-      const { error } = await database.supabase
+      const { error } = await supabase
         .rpc('change_user_role', {
           target_user_id: selectedUser.user_id,
           new_role: newRole
@@ -255,7 +255,7 @@ const UserApprovalManagerEnhanced = () => {
       
       const amount = isAdd ? parseInt(pointAmount) : -parseInt(pointAmount)
       
-      const { error } = await database.supabase
+      const { error } = await supabase
         .rpc('add_points', {
           target_user_id: selectedUser.user_id,
           point_amount: amount,
@@ -284,7 +284,7 @@ const UserApprovalManagerEnhanced = () => {
     try {
       setProcessing(true)
       
-      const { error } = await database.supabase
+      const { error } = await supabase
         .from('withdrawal_requests')
         .update({
           status,
