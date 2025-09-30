@@ -42,7 +42,11 @@ const CampaignApplicationUpdated = () => {
     phone_number: '',
     instagram_url: '',
     youtube_url: '',
-    tiktok_url: ''
+    tiktok_url: '',
+    
+    // 오프라인 방문 관련
+    offline_visit_available: false,
+    offline_visit_notes: ''
   })
 
   // 다국어 텍스트
@@ -229,7 +233,9 @@ const CampaignApplicationUpdated = () => {
           phone_number: existingApp.phone_number || '',
           instagram_url: existingApp.instagram_url || profileData?.instagram_url || '',
           youtube_url: existingApp.youtube_url || profileData?.youtube_url || '',
-          tiktok_url: existingApp.tiktok_url || profileData?.tiktok_url || ''
+          tiktok_url: existingApp.tiktok_url || profileData?.tiktok_url || '',
+          offline_visit_available: existingApp.offline_visit_available || false,
+          offline_visit_notes: existingApp.offline_visit_notes || ''
         }))
       }
 
@@ -508,12 +514,45 @@ const CampaignApplicationUpdated = () => {
                 )}
 
                 {/* 참여 조건 */}
-                {campaign.requirements && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">{t.requirements}</h4>
-                    <p className="text-sm text-gray-600 whitespace-pre-wrap">{campaign.requirements}</p>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">{t.requirements}</h4>
+                  <div className="space-y-2">
+                    {/* 기본 참여 조건 */}
+                    {campaign.requirements && (
+                      <p className="text-sm text-gray-600 whitespace-pre-wrap">{campaign.requirements}</p>
+                    )}
+                    
+                    {/* 나이 조건 */}
+                    {campaign.age_requirement && (
+                      <div className="flex items-center text-sm text-gray-600">
+                        <span className="font-medium mr-2">나이:</span>
+                        <span>{campaign.age_requirement}</span>
+                      </div>
+                    )}
+                    
+                    {/* 피부타입 조건 */}
+                    {campaign.skin_type_requirement && (
+                      <div className="flex items-center text-sm text-gray-600">
+                        <span className="font-medium mr-2">피부타입:</span>
+                        <span>{campaign.skin_type_requirement}</span>
+                      </div>
+                    )}
+                    
+                    {/* 오프라인 방문 조건 */}
+                    {campaign.offline_visit_requirement && (
+                      <div className="bg-blue-50 p-3 rounded-lg">
+                        <div className="flex items-center text-sm text-blue-800 mb-1">
+                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                          </svg>
+                          <span className="font-medium">오프라인 방문 조건</span>
+                        </div>
+                        <p className="text-sm text-blue-700 whitespace-pre-wrap">{campaign.offline_visit_requirement}</p>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             )}
           </div>
