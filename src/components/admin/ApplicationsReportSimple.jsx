@@ -274,7 +274,7 @@ const ApplicationsReportSimple = () => {
     setDriveForm({
       google_drive_url: application.google_drive_url || '',
       google_slides_url: application.google_slides_url || '',
-      notes: application.drive_notes || ''
+      notes: application.additional_info || '' // drive_notes 대신 additional_info 필드 사용
     })
     setDriveModal(true)
   }
@@ -290,8 +290,7 @@ const ApplicationsReportSimple = () => {
       const updateData = {
         google_drive_url: driveForm.google_drive_url.trim() || null,
         google_slides_url: driveForm.google_slides_url.trim() || null,
-        drive_notes: driveForm.notes.trim() || null,
-        drive_provided_at: new Date().toISOString(),
+        additional_info: driveForm.notes.trim() || null, // drive_notes 대신 additional_info 필드 사용
         updated_at: new Date().toISOString()
       }
 
@@ -822,7 +821,8 @@ const ApplicationsReportSimple = () => {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm text-gray-600">{t.name}:</p>
-                        <p className="font-medium">{selectedApplication.user_name || '-'}</p>
+                        <p className="font-medium">{selectedApplication.applicant_name || selectedApplication.user_name || '-'}</p>
+                        <p className="text-sm text-gray-500 mt-1">{selectedApplication.user_email || '이메일 없음'}</p>
                       </div>
                             <div>
                               <p className="text-sm text-gray-600">{t.age}:</p>

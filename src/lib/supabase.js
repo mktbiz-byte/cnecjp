@@ -492,11 +492,25 @@ export const database = {
           updateData.rejected_at = null
         }
 
-        const { data, error } = await supabase
-          .from('campaign_applications')
+        // applications 테이블을 우선 사용 (실제 데이터가 있는 테이블)
+        let { data, error } = await supabase
+          .from('applications')
           .update(updateData)
           .eq('id', id)
           .select()
+        
+        // applications 테이블에서 실패하면 campaign_applications 테이블 시도
+        if (error || !data || data.length === 0) {
+          console.log('applications 테이블 업데이트 실패, campaign_applications 테이블 시도')
+          const result = await supabase
+            .from('campaign_applications')
+            .update(updateData)
+            .eq('id', id)
+            .select()
+          
+          data = result.data
+          error = result.error
+        }
         
         if (error) {
           console.error('상태 업데이트 오류:', error)
@@ -512,14 +526,31 @@ export const database = {
       return safeQuery(async () => {
         console.log('신청서 업데이트 시작:', id, updateData)
         
-        const { data, error } = await supabase
-          .from('campaign_applications')
+        // applications 테이블을 우선 사용 (실제 데이터가 있는 테이블)
+        let { data, error } = await supabase
+          .from('applications')
           .update({
             ...updateData,
             updated_at: new Date().toISOString()
           })
           .eq('id', id)
           .select()
+        
+        // applications 테이블에서 실패하면 campaign_applications 테이블 시도
+        if (error || !data || data.length === 0) {
+          console.log('applications 테이블 업데이트 실패, campaign_applications 테이블 시도')
+          const result = await supabase
+            .from('campaign_applications')
+            .update({
+              ...updateData,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', id)
+            .select()
+          
+          data = result.data
+          error = result.error
+        }
         
         if (error) {
           console.error('신청서 업데이트 오류:', error)
