@@ -9,6 +9,7 @@ const AdminCampaignsWithQuestions = () => {
   const { language } = useLanguage()
 
   const [campaigns, setCampaigns] = useState([])
+  const [applications, setApplications] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -21,11 +22,17 @@ const AdminCampaignsWithQuestions = () => {
       setLoading(true)
       setError('')
       
-      console.log('캠페인 데이터 로드 시작')
+      console.log('캠페인 및 신청서 데이터 로드 시작')
       
-      const data = await database.campaigns.getAll()
-      console.log('로드된 캠페인 데이터:', data)
-      setCampaigns(data || [])
+      // 캠페인 데이터 로드
+      const campaignData = await database.campaigns.getAll()
+      console.log('로드된 캠페인 데이터:', campaignData)
+      setCampaigns(campaignData || [])
+      
+      // 신청서 데이터 로드
+      const applicationData = await database.applications.getAll()
+      console.log('로드된 신청서 데이터:', applicationData)
+      setApplications(applicationData || [])
       
     } catch (error) {
       console.error('데이터 로드 오류:', error)
@@ -46,6 +53,18 @@ const AdminCampaignsWithQuestions = () => {
       style: 'currency',
       currency: 'KRW'
     }).format(amount)
+  }
+
+  // 캠페인별 신청자/확정자 수 계산
+  const getCampaignStats = (campaignId) => {
+    const campaignApplications = applications.filter(app => app.campaign_id === campaignId)
+    const totalApplicants = campaignApplications.length
+    const confirmedApplicants = campaignApplications.filter(app => app.status === 'approved').length
+    
+    return {
+      totalApplicants,
+      confirmedApplicants
+    }
   }
 
   if (loading) {
@@ -138,6 +157,20 @@ const AdminCampaignsWithQuestions = () => {
                           </div>
                           <div className="ml-6 flex items-center text-sm text-gray-500">
                             <p>마감일: {formatDate(campaign.application_deadline)}</p>
+                          </div>
+                        </div>
+                        <div className="mt-2 flex">
+                          <div className="flex items-center text-sm text-blue-600 font-medium">
+                            {(() => {
+                              const stats = getCampaignStats(campaign.id)
+                              return (
+                                <p>
+                                  모집인원: {campaign.max_participants || '-'}명 | 
+                                  신청자: {stats.totalApplicants}명 | 
+                                  확정자: {stats.confirmedApplicants}명
+                                </p>
+                              )
+                            })()}
                           </div>
                         </div>
                       </div>
