@@ -246,10 +246,10 @@ const CampaignApplicationUpdated = () => {
 
     // 개인정보 필수 필드 검증
     if (!applicationData.age || applicationData.age < 1) {
-      errors.push('나이를 올바르게 입력해주세요')
+      errors.push('年齢を正しく入力してください')
     }
     if (!applicationData.skin_type.trim()) {
-      errors.push('피부타입을 선택해주세요')
+      errors.push('肌タイプを選択してください')
     }
 
     // 연락처 및 배송 정보 필수 필드 검증
@@ -576,7 +576,7 @@ const CampaignApplicationUpdated = () => {
                       type="number"
                       value={applicationData.age || userProfile?.age || ''}
                       onChange={(e) => setApplicationData(prev => ({ ...prev, age: e.target.value }))}
-                      placeholder="나이를 입력하세요"
+                      placeholder="年齢を入力してください"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                       required
                     />
@@ -592,12 +592,12 @@ const CampaignApplicationUpdated = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                       required
                     >
-                      <option value="">피부타입을 선택하세요</option>
-                      <option value="dry">건성</option>
-                      <option value="oily">지성</option>
-                      <option value="combination">복합성</option>
-                      <option value="sensitive">민감성</option>
-                      <option value="normal">보통</option>
+                      <option value="">肌タイプを選択してください</option>
+                      <option value="dry">乾燥肌</option>
+                      <option value="oily">脂性肌</option>
+                      <option value="combination">混合肌</option>
+                      <option value="sensitive">敏感肌</option>
+                      <option value="normal">普通肌</option>
                     </select>
                   </div>
                 </div>
