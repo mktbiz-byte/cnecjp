@@ -21,8 +21,9 @@ import AdminDashboardSimple from './components/admin/AdminDashboardSimple';
 import AdminCampaignsWithQuestions from './components/admin/AdminCampaignsWithQuestions';
 import CampaignCreationWithTranslator from './components/admin/CampaignCreationWithTranslator';
 import ApplicationsReportSimple from './components/admin/ApplicationsReportSimple';
-import ConfirmedCreatorsReport from './components/admin/ConfirmedCreatorsReport';
-import SNSUploadFinalReport from './components/admin/SNSUploadFinalReport';
+import ConfirmedCreatorsReport from './components/admin/ConfirmedCreatorsReport'
+import SNSUploadFinalReport from './components/admin/SNSUploadFinalReport'
+import CampaignReport from './components/admin/CampaignReport'
 import EmailTemplateManager from './components/admin/EmailTemplateManager';
 import UserApprovalManagerEnhanced from './components/admin/UserApprovalManagerEnhanced';
 import AdminWithdrawals from './components/admin/AdminWithdrawals';
@@ -93,6 +94,7 @@ const MainContent = () => {
         <Route path="/admin/applications" element={<ApplicationsReportSimple />} />
         <Route path="/admin/confirmed-creators" element={<ConfirmedCreatorsReport />} />
         <Route path="/admin/sns-uploads" element={<SNSUploadFinalReport />} />
+        <Route path="/admin/campaign-report/:campaignId" element={<CampaignReport />} />
         <Route path="/admin/email-templates" element={<EmailTemplateManager />} />
         <Route path="/admin/users" element={<UserApprovalManagerEnhanced />} />
         <Route path="/admin/user-approval" element={<UserApprovalManagerEnhanced />} />

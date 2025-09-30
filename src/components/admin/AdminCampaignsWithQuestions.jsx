@@ -229,6 +229,12 @@ const AdminCampaignsWithQuestions = () => {
                         수정
                       </button>
                       <button
+                        onClick={() => window.open(`/admin/campaign-report/${campaign.id}`, '_blank')}
+                        className="inline-flex items-center px-3 py-1 border border-purple-300 shadow-sm text-sm leading-4 font-medium rounded-md text-purple-700 bg-purple-50 hover:bg-purple-100"
+                      >
+                        기업보고서
+                      </button>
+                      <button
                         onClick={() => handleDelete(campaign.id, campaign.title)}
                         className="inline-flex items-center px-3 py-1 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100"
                       >

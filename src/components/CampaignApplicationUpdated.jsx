@@ -33,6 +33,7 @@ const CampaignApplicationUpdated = () => {
     additional_info: '',
     
     // 개인정보 (수정 가능)
+    applicant_name: '',
     age: '',
     skin_type: '',
     
@@ -206,6 +207,7 @@ const CampaignApplicationUpdated = () => {
       if (profileData) {
         setApplicationData(prev => ({
           ...prev,
+          applicant_name: profileData.name || '',
           age: profileData.age || '',
           skin_type: profileData.skin_type || '',
           instagram_url: profileData.instagram_url || '',
@@ -223,6 +225,7 @@ const CampaignApplicationUpdated = () => {
       if (existingApp) {
         setApplicationData(prev => ({
           ...prev,
+          applicant_name: existingApp.applicant_name || profileData?.name || '',
           answer_1: existingApp.answer_1 || '',
           answer_2: existingApp.answer_2 || '',
           answer_3: existingApp.answer_3 || '',
@@ -594,6 +597,20 @@ const CampaignApplicationUpdated = () => {
                       value={userProfile?.name || ''}
                       disabled
                       className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      이름 <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={applicationData.applicant_name || userProfile?.name || ''}
+                      onChange={(e) => setApplicationData(prev => ({ ...prev, applicant_name: e.target.value }))}
+                      placeholder="이름을 입력해주세요"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                      required
                     />
                   </div>
 
