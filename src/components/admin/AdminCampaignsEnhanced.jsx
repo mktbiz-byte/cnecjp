@@ -49,9 +49,9 @@ const AdminCampaignsEnhanced = () => {
     requirements: '',
     reward_amount: '',
     max_participants: '',
-    start_date: '',
-    end_date: '',
-    application_deadline: '',
+    start_date: null,
+    end_date: null,
+    application_deadline: null,
     status: 'draft',
     category: '',
     target_audience: '',
@@ -94,10 +94,56 @@ const AdminCampaignsEnhanced = () => {
       setProcessing(true)
       setError('')
       
+      // 필수 필드 검증
+      if (!campaignForm.title || !campaignForm.brand || !campaignForm.description) {
+        setError(language === 'ko' 
+          ? '제목, 브랜드, 설명을 모두 입력해주세요.'
+          : 'タイトル、ブランド、説明をすべて入力してください。'
+        )
+        setProcessing(false)
+        return
+      }
+
+      // 날짜 필드 유효성 검사
+      if (!campaignForm.start_date || !campaignForm.end_date || !campaignForm.application_deadline) {
+        setError(language === 'ko' 
+          ? '시작일, 종료일, 신청 마감일을 모두 입력해주세요.'
+          : '開始日、終了日、応募締切日をすべて入力してください。'
+        )
+        setProcessing(false)
+        return
+      }
+
+      // 날짜 논리 검증
+      const startDate = new Date(campaignForm.start_date)
+      const endDate = new Date(campaignForm.end_date)
+      const deadlineDate = new Date(campaignForm.application_deadline)
+
+      if (deadlineDate >= startDate) {
+        setError(language === 'ko' 
+          ? '신청 마감일은 시작일보다 이전이어야 합니다.'
+          : '応募締切日は開始日より前である必要があります。'
+        )
+        setProcessing(false)
+        return
+      }
+
+      if (startDate >= endDate) {
+        setError(language === 'ko' 
+          ? '시작일은 종료일보다 이전이어야 합니다.'
+          : '開始日は終了日より前である必要があります。'
+        )
+        setProcessing(false)
+        return
+      }
+      
       const campaignData = {
         ...campaignForm,
         reward_amount: parseInt(campaignForm.reward_amount) || 0,
         max_participants: parseInt(campaignForm.max_participants) || 0,
+        start_date: campaignForm.start_date,
+        end_date: campaignForm.end_date,
+        application_deadline: campaignForm.application_deadline,
         created_at: new Date().toISOString()
       }
       
@@ -131,10 +177,56 @@ const AdminCampaignsEnhanced = () => {
       setProcessing(true)
       setError('')
       
+      // 필수 필드 검증
+      if (!campaignForm.title || !campaignForm.brand || !campaignForm.description) {
+        setError(language === 'ko' 
+          ? '제목, 브랜드, 설명을 모두 입력해주세요.'
+          : 'タイトル、ブランド、説明をすべて入力してください。'
+        )
+        setProcessing(false)
+        return
+      }
+
+      // 날짜 필드 유효성 검사
+      if (!campaignForm.start_date || !campaignForm.end_date || !campaignForm.application_deadline) {
+        setError(language === 'ko' 
+          ? '시작일, 종료일, 신청 마감일을 모두 입력해주세요.'
+          : '開始日、終了日、応募締切日をすべて入力してください。'
+        )
+        setProcessing(false)
+        return
+      }
+
+      // 날짜 논리 검증
+      const startDate = new Date(campaignForm.start_date)
+      const endDate = new Date(campaignForm.end_date)
+      const deadlineDate = new Date(campaignForm.application_deadline)
+
+      if (deadlineDate >= startDate) {
+        setError(language === 'ko' 
+          ? '신청 마감일은 시작일보다 이전이어야 합니다.'
+          : '応募締切日は開始日より前である必要があります。'
+        )
+        setProcessing(false)
+        return
+      }
+
+      if (startDate >= endDate) {
+        setError(language === 'ko' 
+          ? '시작일은 종료일보다 이전이어야 합니다.'
+          : '開始日は終了日より前である必要があります。'
+        )
+        setProcessing(false)
+        return
+      }
+      
       const updateData = {
         ...campaignForm,
         reward_amount: parseInt(campaignForm.reward_amount) || 0,
         max_participants: parseInt(campaignForm.max_participants) || 0,
+        start_date: campaignForm.start_date,
+        end_date: campaignForm.end_date,
+        application_deadline: campaignForm.application_deadline,
         updated_at: new Date().toISOString()
       }
       
@@ -408,9 +500,9 @@ const AdminCampaignsEnhanced = () => {
       requirements: campaign.requirements || '',
       reward_amount: campaign.reward_amount?.toString() || '',
       max_participants: campaign.max_participants?.toString() || '',
-      start_date: campaign.start_date || '',
-      end_date: campaign.end_date || '',
-      application_deadline: campaign.application_deadline || '',
+      start_date: campaign.start_date || null,
+      end_date: campaign.end_date || null,
+      application_deadline: campaign.application_deadline || null,
       status: campaign.status || 'draft',
       category: campaign.category || '',
       target_audience: campaign.target_audience || '',
