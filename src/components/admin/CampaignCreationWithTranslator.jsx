@@ -404,117 +404,197 @@ const CampaignCreationWithTranslator = () => {
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">질문</h3>
                 
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        질문 1
-                      </label>
-                      <input
-                        type="text"
-                        value={campaignForm.question1 || ''}
-                        onChange={(e) => setCampaignForm({...campaignForm, question1: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="질문 1을 입력하세요"
-                      />
+                <div className="space-y-6">
+                  {/* 질문 1 */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <div className="grid grid-cols-2 gap-4 mb-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          질문 1
+                        </label>
+                        <input
+                          type="text"
+                          value={campaignForm.question1 || ''}
+                          onChange={(e) => setCampaignForm({...campaignForm, question1: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="질문 1을 입력하세요"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          답변 형태
+                        </label>
+                        <select
+                          value={campaignForm.question1_type || 'short'}
+                          onChange={(e) => setCampaignForm({...campaignForm, question1_type: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="short">짧은답변</option>
+                          <option value="long">긴답변</option>
+                          <option value="checkbox">체크박스</option>
+                        </select>
+                      </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        답수
-                      </label>
-                      <input
-                        type="number"
-                        value={campaignForm.question1_answers || ''}
-                        onChange={(e) => setCampaignForm({...campaignForm, question1_answers: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="0"
-                      />
-                    </div>
+                    {campaignForm.question1_type === 'checkbox' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          선택 옵션 (쉼표로 구분)
+                        </label>
+                        <input
+                          type="text"
+                          value={campaignForm.question1_options || ''}
+                          onChange={(e) => setCampaignForm({...campaignForm, question1_options: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="옵션1, 옵션2, 옵션3"
+                        />
+                      </div>
+                    )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        질문 2
-                      </label>
-                      <input
-                        type="text"
-                        value={campaignForm.question2 || ''}
-                        onChange={(e) => setCampaignForm({...campaignForm, question2: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="질문 2를 입력하세요"
-                      />
+                  {/* 질문 2 */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <div className="grid grid-cols-2 gap-4 mb-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          질문 2
+                        </label>
+                        <input
+                          type="text"
+                          value={campaignForm.question2 || ''}
+                          onChange={(e) => setCampaignForm({...campaignForm, question2: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="질문 2를 입력하세요"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          답변 형태
+                        </label>
+                        <select
+                          value={campaignForm.question2_type || 'short'}
+                          onChange={(e) => setCampaignForm({...campaignForm, question2_type: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="short">짧은답변</option>
+                          <option value="long">긴답변</option>
+                          <option value="checkbox">체크박스</option>
+                        </select>
+                      </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        답수
-                      </label>
-                      <input
-                        type="number"
-                        value={campaignForm.question2_answers || ''}
-                        onChange={(e) => setCampaignForm({...campaignForm, question2_answers: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="0"
-                      />
-                    </div>
+                    {campaignForm.question2_type === 'checkbox' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          선택 옵션 (쉼표로 구분)
+                        </label>
+                        <input
+                          type="text"
+                          value={campaignForm.question2_options || ''}
+                          onChange={(e) => setCampaignForm({...campaignForm, question2_options: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="옵션1, 옵션2, 옵션3"
+                        />
+                      </div>
+                    )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        질문 3
-                      </label>
-                      <input
-                        type="text"
-                        value={campaignForm.question3 || ''}
-                        onChange={(e) => setCampaignForm({...campaignForm, question3: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="질문 3을 입력하세요"
-                      />
+                  {/* 질문 3 */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <div className="grid grid-cols-2 gap-4 mb-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          질문 3
+                        </label>
+                        <input
+                          type="text"
+                          value={campaignForm.question3 || ''}
+                          onChange={(e) => setCampaignForm({...campaignForm, question3: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="질문 3을 입력하세요"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          답변 형태
+                        </label>
+                        <select
+                          value={campaignForm.question3_type || 'short'}
+                          onChange={(e) => setCampaignForm({...campaignForm, question3_type: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="short">짧은답변</option>
+                          <option value="long">긴답변</option>
+                          <option value="checkbox">체크박스</option>
+                        </select>
+                      </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        답수
-                      </label>
-                      <input
-                        type="number"
-                        value={campaignForm.question3_answers || ''}
-                        onChange={(e) => setCampaignForm({...campaignForm, question3_answers: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="0"
-                      />
-                    </div>
+                    {campaignForm.question3_type === 'checkbox' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          선택 옵션 (쉼표로 구분)
+                        </label>
+                        <input
+                          type="text"
+                          value={campaignForm.question3_options || ''}
+                          onChange={(e) => setCampaignForm({...campaignForm, question3_options: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="옵션1, 옵션2, 옵션3"
+                        />
+                      </div>
+                    )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        질문 4
-                      </label>
-                      <input
-                        type="text"
-                        value={campaignForm.question4 || ''}
-                        onChange={(e) => setCampaignForm({...campaignForm, question4: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="질문 4를 입력하세요"
-                      />
+                  {/* 질문 4 */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <div className="grid grid-cols-2 gap-4 mb-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          질문 4
+                        </label>
+                        <input
+                          type="text"
+                          value={campaignForm.question4 || ''}
+                          onChange={(e) => setCampaignForm({...campaignForm, question4: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="질문 4를 입력하세요"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          답변 형태
+                        </label>
+                        <select
+                          value={campaignForm.question4_type || 'short'}
+                          onChange={(e) => setCampaignForm({...campaignForm, question4_type: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="short">짧은답변</option>
+                          <option value="long">긴답변</option>
+                          <option value="checkbox">체크박스</option>
+                        </select>
+                      </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        답수
-                      </label>
-                      <input
-                        type="number"
-                        value={campaignForm.question4_answers || ''}
-                        onChange={(e) => setCampaignForm({...campaignForm, question4_answers: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="0"
-                      />
-                    </div>
+                    {campaignForm.question4_type === 'checkbox' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          선택 옵션 (쉼표로 구분)
+                        </label>
+                        <input
+                          type="text"
+                          value={campaignForm.question4_options || ''}
+                          onChange={(e) => setCampaignForm({...campaignForm, question4_options: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="옵션1, 옵션2, 옵션3"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
