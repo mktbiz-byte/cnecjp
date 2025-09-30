@@ -6,7 +6,7 @@ import googleDriveHelper from '../../lib/googleDriveHelper_enhanced'
 import { 
   Loader2, Save, AlertCircle, CheckCircle, Key, 
   RefreshCw, Upload, Download, FileText, Settings,
-  Lock, Shield, Database, Cloud
+  Lock, Shield, Database, Cloud, Mail
 } from 'lucide-react'
 
 const SystemSettings = () => {
