@@ -54,19 +54,22 @@ const SNSUploadFinalReport = () => {
       }
       
       // SNS 업로드 데이터 로드
-      const query = campaignId 
-        ? { campaign_id: campaignId }
-        : {}
+      let applicationsData
+      if (campaignId) {
+        applicationsData = await database.applications.getByCampaignId(campaignId)
+      } else {
+        applicationsData = await database.applications.getAll()
+      }
       
-      const applicationsData = await database.applications.getAll(query)
-      if (applicationsData.error) {
+      if (!applicationsData) {
         setError('SNSアップロードデータの読み込みに失敗しました。')
         return
       }
       
       // 기본 통계 계산
+      const dataArray = Array.isArray(applicationsData) ? applicationsData : applicationsData?.data || []
       const stats = {
-        totalUploads: applicationsData.data?.length || 0,
+        totalUploads: dataArray.length,
         platformStats: {
           instagram: 0,
           tiktok: 0, 
@@ -75,12 +78,12 @@ const SNSUploadFinalReport = () => {
         }
       }
       
-      setApplications(applicationsData.data || [])
+      setApplications(dataArray)
       setReportData(stats)
       
       // 사용자 프로필 로드
-      if (applicationsData.data?.length > 0) {
-        const userIds = [...new Set(applicationsData.data.map(app => app.user_id))]
+      if (dataArray.length > 0) {
+        const userIds = [...new Set(dataArray.map(app => app.user_id))]
         const profiles = {}
         
         for (const userId of userIds) {

@@ -93,7 +93,9 @@ const MainContent = () => {
         <Route path="/admin/campaign-create" element={<CampaignCreationWithTranslator />} />
         <Route path="/admin/applications" element={<ApplicationsReportSimple />} />
         <Route path="/admin/confirmed-creators" element={<ConfirmedCreatorsReport />} />
+        <Route path="/admin/confirmed-creators/:campaignId" element={<ConfirmedCreatorsReport />} />
         <Route path="/admin/sns-uploads" element={<SNSUploadFinalReport />} />
+        <Route path="/admin/sns-uploads/:campaignId" element={<SNSUploadFinalReport />} />
         <Route path="/admin/campaign-report/:campaignId" element={<CampaignReport />} />
         <Route path="/admin/email-templates" element={<EmailTemplateManager />} />
         <Route path="/admin/users" element={<UserApprovalManagerEnhanced />} />

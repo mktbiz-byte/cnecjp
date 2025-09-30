@@ -53,17 +53,20 @@ const ConfirmedCreatorsReport = () => {
       }
       
       // 승인된 신청서들 로드 (확정 크리에이터)
-      const query = campaignId 
-        ? { campaign_id: campaignId, status: 'approved' }
-        : { status: 'approved' }
+      let applicationsData
+      if (campaignId) {
+        applicationsData = await database.applications.getByCampaignId(campaignId)
+      } else {
+        applicationsData = await database.applications.getAll()
+      }
       
-      const applicationsData = await database.applications.getAll(query)
-      if (applicationsData.error) {
-        setError('確定クリエイターデータの読み込みに失敗しました。')
+      if (!applicationsData || applicationsData.length === 0) {
+        setApplications([])
         return
       }
       
-      const approvedApplications = applicationsData.data?.filter(app => app.status === 'approved' || app.status === 'completed') || []
+      const approvedApplications = (Array.isArray(applicationsData) ? applicationsData : applicationsData?.data || [])
+        .filter(app => app.status === 'approved' || app.status === 'completed')
       setApplications(approvedApplications)
       
       // 신청자들의 프로필 정보 로드
