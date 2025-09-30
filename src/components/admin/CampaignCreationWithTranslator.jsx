@@ -1,0 +1,472 @@
+import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useLanguage } from '../../contexts/LanguageContext'
+import { database } from '../../lib/supabase'
+import AdminNavigation from './AdminNavigation'
+
+const CampaignCreationWithTranslator = () => {
+  const navigate = useNavigate()
+  const { language } = useLanguage()
+
+  const [campaignForm, setCampaignForm] = useState({
+    title: '',
+    brand: '',
+    description: '',
+    requirements: '',
+    category: 'beauty',
+    reward_amount: '',
+    max_participants: '',
+    application_deadline: '',
+    start_date: '',
+    end_date: '',
+    status: 'active',
+    target_platforms: {
+      instagram: true,
+      youtube: false,
+      tiktok: false
+    },
+    questions: [
+      { text: '', required: true },
+      { text: '', required: false },
+      { text: '', required: false },
+      { text: '', required: false }
+    ]
+  })
+
+  const [processing, setProcessing] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+
+  // 번역기 상태
+  const [koreanText, setKoreanText] = useState('')
+  const [japaneseText, setJapaneseText] = useState('')
+  const [isTranslating, setIsTranslating] = useState(false)
+  const [translationError, setTranslationError] = useState('')
+
+  // 번역 함수
+  const translateText = async (text) => {
+    if (!text.trim()) return
+
+    setIsTranslating(true)
+    setTranslationError('')
+
+    try {
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY
+      if (!apiKey) {
+        throw new Error('OpenAI API 키가 설정되지 않았습니다.')
+      }
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [
+            {
+              role: 'system',
+              content: '당신은 한국어를 자연스러운 일본어로 번역하는 전문 번역가입니다. 마케팅 문구나 캠페인 내용을 번역할 때는 일본 현지 감각에 맞게 자연스럽게 번역해주세요.'
+            },
+            {
+              role: 'user',
+              content: `다음 한국어 텍스트를 자연스러운 일본어로 번역해주세요:\n\n${text}`
+            }
+          ],
+          max_tokens: 1000,
+          temperature: 0.3
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(`번역 API 호출 실패: ${errorData.error?.message || response.statusText}`)
+      }
+
+      const data = await response.json()
+      const translatedText = data.choices[0]?.message?.content?.trim()
+      
+      if (translatedText) {
+        setJapaneseText(translatedText)
+      } else {
+        throw new Error('번역 결과를 받을 수 없습니다')
+      }
+
+    } catch (error) {
+      console.error('번역 오류:', error)
+      setTranslationError(error.message || '번역 중 오류가 발생했습니다.')
+    } finally {
+      setIsTranslating(false)
+    }
+  }
+
+  // 클립보드에 복사
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      alert('클립보드에 복사되었습니다!')
+    } catch (error) {
+      console.error('클립보드 복사 실패:', error)
+    }
+  }
+
+  // 캠페인 저장
+  const handleSaveCampaign = async () => {
+    setProcessing(true)
+    setError('')
+    setSuccess('')
+
+    try {
+      // 필수 필드 검증
+      if (!campaignForm.title || !campaignForm.brand || !campaignForm.requirements) {
+        throw new Error('제목, 브랜드, 참가조건은 필수 입력 항목입니다.')
+      }
+
+      // SNS 플랫폼 검증
+      const hasSelectedPlatform = Object.values(campaignForm.target_platforms).some(Boolean)
+      if (!hasSelectedPlatform) {
+        throw new Error('최소 하나의 SNS 플랫폼을 선택해주세요.')
+      }
+
+      // 캠페인 데이터 준비
+      const campaignData = {
+        ...campaignForm,
+        reward_amount: parseInt(campaignForm.reward_amount) || 0,
+        max_participants: parseInt(campaignForm.max_participants) || 0,
+        target_platforms: campaignForm.target_platforms,
+        questions: campaignForm.questions.filter(q => q.text.trim())
+      }
+
+      const result = await database.campaigns.create(campaignData)
+      
+      if (result.error) {
+        throw new Error(result.error.message)
+      }
+
+      setSuccess('캠페인이 성공적으로 생성되었습니다!')
+      
+      // 폼 초기화
+      setCampaignForm({
+        title: '',
+        brand: '',
+        description: '',
+        requirements: '',
+        category: 'beauty',
+        reward_amount: '',
+        max_participants: '',
+        application_deadline: '',
+        start_date: '',
+        end_date: '',
+        status: 'active',
+        target_platforms: {
+          instagram: true,
+          youtube: false,
+          tiktok: false
+        },
+        questions: [
+          { text: '', required: true },
+          { text: '', required: false },
+          { text: '', required: false },
+          { text: '', required: false }
+        ]
+      })
+
+      // 3초 후 캠페인 관리 페이지로 이동
+      setTimeout(() => {
+        navigate('/admin/campaigns')
+      }, 3000)
+
+    } catch (error) {
+      console.error('캠페인 생성 오류:', error)
+      setError(error.message)
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <AdminNavigation />
+      
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">새 캠페인 생성</h1>
+          <p className="text-gray-600 mt-2">왼쪽에서 캠페인 정보를 입력하고, 오른쪽 번역기를 활용하세요.</p>
+        </div>
+
+        {/* 알림 메시지 */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-800">{error}</p>
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-green-800">{success}</p>
+          </div>
+        )}
+
+        {/* 좌우 분할 레이아웃 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          {/* 왼쪽: 캠페인 생성 폼 */}
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <h2 className="text-xl font-semibold mb-6 text-gray-900">📝 캠페인 정보</h2>
+            
+            <div className="space-y-6">
+              {/* 기본 정보 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  캠페인 제목 *
+                </label>
+                <input
+                  type="text"
+                  value={campaignForm.title}
+                  onChange={(e) => setCampaignForm({...campaignForm, title: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="캠페인 제목을 입력하세요"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  브랜드 *
+                </label>
+                <input
+                  type="text"
+                  value={campaignForm.brand}
+                  onChange={(e) => setCampaignForm({...campaignForm, brand: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="브랜드명을 입력하세요"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  설명
+                </label>
+                <textarea
+                  value={campaignForm.description}
+                  onChange={(e) => setCampaignForm({...campaignForm, description: e.target.value})}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="캠페인 설명을 입력하세요"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  참가조건 *
+                </label>
+                <textarea
+                  value={campaignForm.requirements}
+                  onChange={(e) => setCampaignForm({...campaignForm, requirements: e.target.value})}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="참가 조건을 입력하세요"
+                />
+              </div>
+
+              {/* 보상 및 참가자 수 */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    보상금액
+                  </label>
+                  <input
+                    type="number"
+                    value={campaignForm.reward_amount}
+                    onChange={(e) => setCampaignForm({...campaignForm, reward_amount: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="0"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    최대 참가자수
+                  </label>
+                  <input
+                    type="number"
+                    value={campaignForm.max_participants}
+                    onChange={(e) => setCampaignForm({...campaignForm, max_participants: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+              {/* SNS 플랫폼 선택 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  대상 SNS 플랫폼 *
+                </label>
+                <div className="space-y-2">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={campaignForm.target_platforms.instagram}
+                      onChange={(e) => setCampaignForm({
+                        ...campaignForm,
+                        target_platforms: {
+                          ...campaignForm.target_platforms,
+                          instagram: e.target.checked
+                        }
+                      })}
+                      className="mr-2"
+                    />
+                    📷 Instagram
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={campaignForm.target_platforms.youtube}
+                      onChange={(e) => setCampaignForm({
+                        ...campaignForm,
+                        target_platforms: {
+                          ...campaignForm.target_platforms,
+                          youtube: e.target.checked
+                        }
+                      })}
+                      className="mr-2"
+                    />
+                    🎥 YouTube
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={campaignForm.target_platforms.tiktok}
+                      onChange={(e) => setCampaignForm({
+                        ...campaignForm,
+                        target_platforms: {
+                          ...campaignForm.target_platforms,
+                          tiktok: e.target.checked
+                        }
+                      })}
+                      className="mr-2"
+                    />
+                    🎵 TikTok
+                  </label>
+                </div>
+              </div>
+
+              {/* 저장 버튼 */}
+              <div className="pt-4">
+                <button
+                  onClick={handleSaveCampaign}
+                  disabled={processing}
+                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  {processing ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      저장 중...
+                    </>
+                  ) : (
+                    '💾 캠페인 저장'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 오른쪽: 번역기 */}
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <h2 className="text-xl font-semibold mb-6 text-gray-900">🌐 한국어 → 일본어 번역기</h2>
+            
+            <div className="space-y-6">
+              {/* 한국어 입력 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  📝 한국어 입력
+                </label>
+                <textarea
+                  value={koreanText}
+                  onChange={(e) => setKoreanText(e.target.value)}
+                  rows={6}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="번역할 한국어 텍스트를 입력하세요..."
+                />
+                <div className="text-sm text-gray-500 mt-1">
+                  {koreanText.length} / 500자
+                </div>
+              </div>
+
+              {/* 번역 버튼 */}
+              <button
+                onClick={() => translateText(koreanText)}
+                disabled={isTranslating || !koreanText.trim()}
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {isTranslating ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    번역 중...
+                  </>
+                ) : (
+                  '🔄 번역하기'
+                )}
+              </button>
+
+              {/* 번역 오류 */}
+              {translationError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-red-800 text-sm">{translationError}</p>
+                </div>
+              )}
+
+              {/* 일본어 결과 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  🇯🇵 일본어 번역 결과
+                </label>
+                <div className="relative">
+                  <textarea
+                    value={japaneseText}
+                    onChange={(e) => setJapaneseText(e.target.value)}
+                    rows={6}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-green-50"
+                    placeholder="번역 결과가 여기에 표시됩니다..."
+                  />
+                  {japaneseText && (
+                    <button
+                      onClick={() => copyToClipboard(japaneseText)}
+                      className="absolute top-2 right-2 bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                    >
+                      📋 복사
+                    </button>
+                  )}
+                </div>
+                {japaneseText && (
+                  <div className="text-sm text-gray-500 mt-1">
+                    {japaneseText.length}자
+                  </div>
+                )}
+              </div>
+
+              {/* 사용 팁 */}
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+                <h4 className="font-medium text-yellow-800 mb-2">💡 사용 팁</h4>
+                <ul className="text-sm text-yellow-700 space-y-1">
+                  <li>• 번역 결과는 수정 가능합니다</li>
+                  <li>• 복사 버튼으로 쉽게 캠페인 폼에 붙여넣기 할 수 있습니다</li>
+                  <li>• 마케팅 문구는 현지 감각에 맞게 자연스럽게 번역됩니다</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default CampaignCreationWithTranslator

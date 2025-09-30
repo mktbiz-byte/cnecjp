@@ -19,6 +19,7 @@ import AuthCallbackSafe from './components/AuthCallbackSafe';
 // 관리자 컴포넌트
 import AdminDashboardSimple from './components/admin/AdminDashboardSimple';
 import AdminCampaignsWithQuestions from './components/admin/AdminCampaignsWithQuestions';
+import CampaignCreationWithTranslator from './components/admin/CampaignCreationWithTranslator';
 import ApplicationsReportSimple from './components/admin/ApplicationsReportSimple';
 import ConfirmedCreatorsReport from './components/admin/ConfirmedCreatorsReport';
 import SNSUploadFinalReport from './components/admin/SNSUploadFinalReport';
@@ -88,6 +89,7 @@ const MainContent = () => {
         <Route path="/test-admin-login" element={<TestAdminLogin />} />
         <Route path="/admin" element={<AdminDashboardSimple />} />
         <Route path="/admin/campaigns" element={<AdminCampaignsWithQuestions />} />
+        <Route path="/admin/campaign-create" element={<CampaignCreationWithTranslator />} />
         <Route path="/admin/applications" element={<ApplicationsReportSimple />} />
         <Route path="/admin/confirmed-creators" element={<ConfirmedCreatorsReport />} />
         <Route path="/admin/sns-uploads" element={<SNSUploadFinalReport />} />
