@@ -35,9 +35,7 @@ const SNSUploadFinalReport = () => {
   })
 
   useEffect(() => {
-    if (campaignId) {
-      loadData()
-    }
+    loadData()
   }, [campaignId])
 
   const loadData = async () => {
@@ -45,41 +43,62 @@ const SNSUploadFinalReport = () => {
       setLoading(true)
       setError('')
       
-      // 캠페인 정보 로드
-      const campaignData = await database.campaigns.getById(campaignId)
-      if (!campaignData) {
-        setError('キャンペーンが見つかりません。')
+      // 특정 캠페인 또는 전체 캠페인 로드
+      if (campaignId) {
+        const campaignData = await database.campaigns.getById(campaignId)
+        if (!campaignData) {
+          setError('キャンペーンが見つかりません。')
+          return
+        }
+        setCampaign(campaignData)
+      }
+      
+      // SNS 업로드 데이터 로드
+      const query = campaignId 
+        ? { campaign_id: campaignId }
+        : {}
+      
+      const applicationsData = await database.applications.getAll(query)
+      if (applicationsData.error) {
+        setError('SNSアップロードデータの読み込みに失敗しました。')
         return
       }
-      setCampaign(campaignData)
       
-      // 완료된 신청서들만 로드 (영상 업로드 완료)
-      const applicationsData = await database.applications.getByCampaignId(campaignId)
-      const completedApplications = applicationsData?.filter(app => 
-        app.status === 'completed' && app.video_links && 
-        Object.values(app.video_links).some(link => link && link !== app.video_links?.notes)
-      ) || []
-      setApplications(completedApplications)
-      
-      // 신청자들의 프로필 정보 로드
-      const profiles = {}
-      for (const app of completedApplications) {
-        const profile = await database.userProfiles.getByUserId(app.user_id)
-        if (profile) {
-          profiles[app.user_id] = profile
+      // 기본 통계 계산
+      const stats = {
+        totalUploads: applicationsData.data?.length || 0,
+        platformStats: {
+          instagram: 0,
+          tiktok: 0, 
+          youtube: 0,
+          other: 0
         }
       }
-      setUserProfiles(profiles)
       
-      // 보고서 데이터 계산
-      calculateReportData(completedApplications)
+      setApplications(applicationsData.data || [])
+      setReportData(stats)
+      
+      // 사용자 프로필 로드
+      if (applicationsData.data?.length > 0) {
+        const userIds = [...new Set(applicationsData.data.map(app => app.user_id))]
+        const profiles = {}
+        
+        for (const userId of userIds) {
+          const profile = await database.userProfiles.getByUserId(userId)
+          if (profile) {
+            profiles[userId] = profile
+          }
+        }
+        setUserProfiles(profiles)
+      }
       
     } catch (error) {
-      console.error('Load data error:', error)
-      setError('データの読み込みに失敗しました。')
+      console.error('SNS 업로드 데이터 로드 오류:', error)
+      setError('データの読み込み中にエラーが発生しました。')
     } finally {
       setLoading(false)
     }
+
   }
 
   const calculateReportData = (apps) => {

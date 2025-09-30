@@ -34,9 +34,7 @@ const ConfirmedCreatorsReport = () => {
   const [trackingNumber, setTrackingNumber] = useState('')
 
   useEffect(() => {
-    if (campaignId) {
-      loadData()
-    }
+    loadData()
   }, [campaignId])
 
   const loadData = async () => {
@@ -44,17 +42,28 @@ const ConfirmedCreatorsReport = () => {
       setLoading(true)
       setError('')
       
-      // 캠페인 정보 로드
-      const campaignData = await database.campaigns.getById(campaignId)
-      if (!campaignData) {
-        setError('キャンペーンが見つかりません。')
+      // 특정 캠페인 또는 전체 캠페인 로드
+      if (campaignId) {
+        const campaignData = await database.campaigns.getById(campaignId)
+        if (!campaignData) {
+          setError('キャンペーンが見つかりません。')
+          return
+        }
+        setCampaign(campaignData)
+      }
+      
+      // 승인된 신청서들 로드 (확정 크리에이터)
+      const query = campaignId 
+        ? { campaign_id: campaignId, status: 'approved' }
+        : { status: 'approved' }
+      
+      const applicationsData = await database.applications.getAll(query)
+      if (applicationsData.error) {
+        setError('確定クリエイターデータの読み込みに失敗しました。')
         return
       }
-      setCampaign(campaignData)
       
-      // 승인된 신청서들만 로드
-      const applicationsData = await database.applications.getByCampaignId(campaignId)
-      const approvedApplications = applicationsData?.filter(app => app.status === 'approved' || app.status === 'completed') || []
+      const approvedApplications = applicationsData.data?.filter(app => app.status === 'approved' || app.status === 'completed') || []
       setApplications(approvedApplications)
       
       // 신청자들의 프로필 정보 로드
