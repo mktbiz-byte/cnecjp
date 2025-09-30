@@ -63,3 +63,4 @@ npm run dev
 
 자세한 내용은 `NETLIFY_DEPLOYMENT.md` 파일을 참고하여 GitHub와 연동된 자동 배포를 설정하세요.
 '''
+# Trigger Netlify deployment
