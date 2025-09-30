@@ -702,31 +702,82 @@ const CampaignApplicationUpdated = () => {
               </div>
 
               {/* 질문 답변 섹션 */}
-              {campaign?.questions && campaign.questions.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">{t.questions}</h3>
-                  <div className="space-y-4">
-                    {campaign.questions.map((question, index) => (
-                      <div key={index}>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          {question.question}
-                          {question.required && <span className="text-red-500 ml-1">*</span>}
-                        </label>
-                        <textarea
-                          value={applicationData[`answer_${index + 1}`] || ''}
-                          onChange={(e) => setApplicationData(prev => ({
-                            ...prev,
-                            [`answer_${index + 1}`]: e.target.value
-                          }))}
-                          rows={3}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                          required={question.required}
-                        />
-                      </div>
-                    ))}
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">질문</h3>
+                <div className="space-y-4">
+                  {/* 질문 1 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      질문 1 <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <textarea
+                      value={applicationData.answer_1 || ''}
+                      onChange={(e) => setApplicationData(prev => ({
+                        ...prev,
+                        answer_1: e.target.value
+                      }))}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                      placeholder="질문 1에 대한 답변을 입력하세요"
+                      required
+                    />
+                  </div>
+
+                  {/* 질문 2 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      질문 2 <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <textarea
+                      value={applicationData.answer_2 || ''}
+                      onChange={(e) => setApplicationData(prev => ({
+                        ...prev,
+                        answer_2: e.target.value
+                      }))}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                      placeholder="질문 2에 대한 답변을 입력하세요"
+                      required
+                    />
+                  </div>
+
+                  {/* 질문 3 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      질문 3 <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <textarea
+                      value={applicationData.answer_3 || ''}
+                      onChange={(e) => setApplicationData(prev => ({
+                        ...prev,
+                        answer_3: e.target.value
+                      }))}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                      placeholder="질문 3에 대한 답변을 입력하세요"
+                      required
+                    />
+                  </div>
+
+                  {/* 질문 4 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      질문 4 <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <textarea
+                      value={applicationData.answer_4 || ''}
+                      onChange={(e) => setApplicationData(prev => ({
+                        ...prev,
+                        answer_4: e.target.value
+                      }))}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                      placeholder="질문 4에 대한 답변을 입력하세요"
+                      required
+                    />
                   </div>
                 </div>
-              )}
+              </div>
 
               {/* 추가 정보 섹션 */}
               <div>
