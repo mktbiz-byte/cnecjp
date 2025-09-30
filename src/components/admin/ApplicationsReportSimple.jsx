@@ -47,7 +47,7 @@ const ApplicationsReportSimple = () => {
       rejectedApplications: '거절됨',
       filterByCampaign: '캠페인별 필터',
       filterByStatus: '상태별 필터',
-      searchPlaceholder: '이름, 이메일, 캠페인명으로 검색...',
+      searchPlaceholder: '이름, 캠페인명으로 검색...',
       allCampaigns: '모든 캠페인',
       allStatuses: '모든 상태',
       pending: '대기 중',
@@ -354,15 +354,13 @@ const ApplicationsReportSimple = () => {
   // 필터링된 신청서
   const filteredApplications = applications.filter(app => {
     const matchesCampaign = !selectedCampaign || app.campaign_id === selectedCampaign
-    const matchesStatus = !statusFilter || app.status === statusFilter
-    const matchesSearch = !searchTerm || 
+    const matchesStatus = statusFilter === '' || app.status === statusFilter
+    const matchesSearch = searchTerm === '' || 
       app.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      campaigns.find(c => c.id === app.campaign_id)?.title?.toLowerCase().includes(searchTerm.toLowerCase())
+      app.campaign_title?.toLowerCase().includes(searchTerm.toLowerCase())
     
     return matchesCampaign && matchesStatus && matchesSearch
   })
-
   // 통계 계산
   const stats = {
     total: filteredApplications.length,
@@ -614,10 +612,6 @@ const ApplicationsReportSimple = () => {
                           </div>
                           <div className="mt-2 flex">
                             <div className="flex items-center text-sm text-gray-500">
-                              <Mail className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-                              <p>{application.user_email || '-'}</p>
-                            </div>
-                            <div className="ml-6 flex items-center text-sm text-gray-500">
                               <Calendar className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
                               <p>{formatDate(application.created_at)}</p>
                             </div>
@@ -821,14 +815,10 @@ const ApplicationsReportSimple = () => {
                         <h4 className="text-md font-semibold mb-3">{t.applicantInfo}</h4>
                         <div className="bg-gray-50 p-4 rounded-lg">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-sm text-gray-600">{t.name}:</p>
-                              <p className="font-medium">{selectedApplication.user_name || '-'}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-gray-600">{t.email}:</p>
-                              <p className="font-medium">{selectedApplication.user_email || '-'}</p>
-                            </div>
+                      <div>
+                        <p className="text-sm text-gray-600">{t.name}:</p>
+                        <p className="font-medium">{selectedApplication.user_name || '-'}</p>
+                      </div>
                             <div>
                               <p className="text-sm text-gray-600">{t.age}:</p>
                               <p className="font-medium">{selectedApplication.user_age || '-'}</p>

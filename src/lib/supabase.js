@@ -237,30 +237,89 @@ export const database = {
   applications: {
     async getAll() {
       return safeQuery(async () => {
-        console.log('Applications getAll() 호출 - 두 테이블 모두 확인')
+        console.log('Applications getAll() 호출 - 사용자 정보와 함께 조회')
         
         try {
-          // 먼저 campaign_applications 테이블 확인
+          // campaign_applications 테이블에서 사용자 프로필과 캠페인 정보 조인
           const { data: campaignAppsData, error: campaignAppsError } = await supabase
             .from('campaign_applications')
-            .select('*')
+            .select(`
+              *,
+              user_profiles!campaign_applications_user_id_fkey(
+                id,
+                name,
+                email,
+                age,
+                skin_type,
+                instagram_url,
+                tiktok_url,
+                youtube_url,
+                other_sns_url
+              ),
+              campaigns!campaign_applications_campaign_id_fkey(
+                id,
+                title
+              )
+            `)
             .order('created_at', { ascending: false })
           
           if (!campaignAppsError && campaignAppsData && campaignAppsData.length > 0) {
             console.log('Campaign Applications 데이터 로드 성공:', campaignAppsData.length, '개')
-            return campaignAppsData
+            
+            // 사용자 정보를 메인 객체에 병합
+            const enrichedData = campaignAppsData.map(application => ({
+              ...application,
+              user_name: application.user_profiles?.name || application.applicant_name || '-',
+              user_email: application.user_profiles?.email || '-',
+              user_age: application.user_profiles?.age || application.age || '-',
+              user_skin_type: application.user_profiles?.skin_type || application.skin_type || '-',
+              user_instagram_url: application.user_profiles?.instagram_url || application.instagram_url || '',
+              user_tiktok_url: application.user_profiles?.tiktok_url || application.tiktok_url || '',
+              user_youtube_url: application.user_profiles?.youtube_url || application.youtube_url || '',
+              user_bio: application.user_profiles?.bio || application.bio || '',
+              campaign_title: application.campaigns?.title || '캠페인 정보 없음'
+            }))
+            
+            return enrichedData
           }
           
           // campaign_applications가 비어있으면 기존 applications 테이블 확인
           console.log('Campaign Applications 테이블이 비어있음, 기존 applications 테이블 확인')
           const { data: appsData, error: appsError } = await supabase
             .from('applications')
-            .select('*')
+            .select(`
+              *,
+              user_profiles!applications_user_id_fkey(
+                id,
+                name,
+                email,
+                age,
+                skin_type,
+                instagram_url,
+                tiktok_url,
+                youtube_url,
+                other_sns_url
+              )
+            `)
             .order('created_at', { ascending: false })
           
           if (!appsError && appsData) {
             console.log('기존 Applications 데이터 로드 성공:', appsData.length, '개')
-            return appsData
+            
+            // 사용자 정보를 메인 객체에 병합
+            const enrichedData = appsData.map(application => ({
+              ...application,
+              user_name: application.user_profiles?.name || application.applicant_name || '-',
+              user_email: application.user_profiles?.email || '-',
+              user_age: application.user_profiles?.age || application.age || '-',
+              user_skin_type: application.user_profiles?.skin_type || application.skin_type || '-',
+              user_instagram_url: application.user_profiles?.instagram_url || application.instagram_url || '',
+              user_tiktok_url: application.user_profiles?.tiktok_url || application.tiktok_url || '',
+              user_youtube_url: application.user_profiles?.youtube_url || application.youtube_url || '',
+              user_bio: application.user_profiles?.bio || application.bio || ''
+            }))
+            
+            return enrichedData
           }
           
           // 둘 다 실패하면 오류 처리
@@ -488,9 +547,52 @@ export const database = {
           })
           .eq('id', id)
           .select()
-          .single()
         if (error) throw error
-        return data
+        return data && data.length > 0 ? data[0] : null
+      })
+    },
+
+    async getByCampaign(campaignId) {
+      return safeQuery(async () => {
+        console.log('캠페인별 신청서 조회:', campaignId)
+        const { data, error } = await supabase
+          .from('campaign_applications')
+          .select(`
+            *,
+            user_profiles!campaign_applications_user_id_fkey(
+              name,
+              email,
+              age,
+              skin_type,
+              instagram_url,
+              tiktok_url,
+              youtube_url,
+              other_sns_url
+            )
+          `)
+          .eq('campaign_id', campaignId)
+          .order('created_at', { ascending: false })
+        
+        if (error) {
+          console.error('캠페인별 신청서 조회 오류:', error)
+          throw error
+        }
+        
+        console.log('캠페인별 신청서 조회 성공:', data?.length || 0, '개')
+        
+        // 사용자 프로필 정보를 신청서 데이터와 병합
+        const enrichedData = (data || []).map(application => ({
+          ...application,
+          applicant_name: application.user_profiles?.name || application.applicant_name || '-',
+          age: application.user_profiles?.age || application.age || '-',
+          skin_type: application.user_profiles?.skin_type || application.skin_type || '-',
+          instagram_url: application.user_profiles?.instagram_url || application.instagram_url || '',
+          tiktok_url: application.user_profiles?.tiktok_url || application.tiktok_url || '',
+          youtube_url: application.user_profiles?.youtube_url || application.youtube_url || '',
+          other_sns_url: application.user_profiles?.other_sns_url || application.other_sns_url || ''
+        }))
+        
+        return enrichedData
       })
     }
   },
@@ -686,6 +788,129 @@ export const database = {
           .eq('template_type', category)
         if (error) throw error
         return data || []
+      })
+    }
+  },
+
+  // 출금 관련 API
+  withdrawals: {
+    async getAll() {
+      return safeQuery(async () => {
+        const { data, error } = await supabase
+          .from('withdrawals')
+          .select(`
+            *,
+            user_profiles!withdrawals_user_id_fkey(name, email)
+          `)
+          .order('requested_at', { ascending: false })
+        if (error) throw error
+        return data || []
+      })
+    },
+
+    async getByUser(userId) {
+      return safeQuery(async () => {
+        const { data, error } = await supabase
+          .from('withdrawals')
+          .select('*')
+          .eq('user_id', userId)
+          .order('requested_at', { ascending: false })
+        if (error) throw error
+        return data || []
+      })
+    },
+
+    async create(withdrawalData) {
+      return safeQuery(async () => {
+        const { data, error } = await supabase
+          .from('withdrawals')
+          .insert([{
+            user_id: withdrawalData.user_id,
+            amount: withdrawalData.amount,
+            bank_info: {
+              paypal_email: withdrawalData.paypal_email,
+              paypal_name: withdrawalData.paypal_name
+            },
+            status: 'pending',
+            requested_at: new Date().toISOString()
+          }])
+          .select()
+        if (error) throw error
+        return data && data.length > 0 ? data[0] : null
+      })
+    },
+
+    async updateStatus(id, status, processedBy = null, notes = null) {
+      return safeQuery(async () => {
+        const updateData = {
+          status,
+          updated_at: new Date().toISOString()
+        }
+        
+        if (status === 'completed' || status === 'rejected') {
+          updateData.processed_at = new Date().toISOString()
+          if (processedBy) updateData.processed_by = processedBy
+        }
+        
+        if (notes) updateData.notes = notes
+
+        const { data, error } = await supabase
+          .from('withdrawals')
+          .update(updateData)
+          .eq('id', id)
+          .select()
+        if (error) throw error
+        return data && data.length > 0 ? data[0] : null
+      })
+    }
+  },
+
+  // 사용자 포인트 관련 API
+  userPoints: {
+    async getUserTotalPoints(userId) {
+      return safeQuery(async () => {
+        const { data, error } = await supabase
+          .from('user_points')
+          .select('points')
+          .eq('user_id', userId)
+          .eq('status', 'approved')
+        
+        if (error) throw error
+        
+        const totalPoints = (data || []).reduce((sum, record) => sum + record.points, 0)
+        return totalPoints
+      })
+    },
+
+    async getUserPoints(userId) {
+      return safeQuery(async () => {
+        const { data, error } = await supabase
+          .from('user_points')
+          .select(`
+            *,
+            campaigns!user_points_campaign_id_fkey(title)
+          `)
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+        if (error) throw error
+        return data || []
+      })
+    },
+
+    async deductPoints(userId, amount, reason = '출금 신청') {
+      return safeQuery(async () => {
+        const { data, error } = await supabase
+          .from('user_points')
+          .insert([{
+            user_id: userId,
+            points: -amount,
+            reason: reason,
+            status: 'approved',
+            approved_at: new Date().toISOString()
+          }])
+          .select()
+        if (error) throw error
+        return data && data.length > 0 ? data[0] : null
       })
     }
   }

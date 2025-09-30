@@ -23,29 +23,54 @@ import AdminDashboardSimple from './components/admin/AdminDashboardSimple';
 import AdminCampaignsWithQuestions from './components/admin/AdminCampaignsWithQuestions';
 import CampaignCreationWithTranslator from './components/admin/CampaignCreationWithTranslator';
 import ApplicationsReportSimple from './components/admin/ApplicationsReportSimple';
-import ConfirmedCreatorsReport from './components/admin/ConfirmedCreatorsReport';
-import SNSUploadFinalReport from './components/admin/SNSUploadFinalReport';
-import CampaignReportEnhanced from './components/admin/CampaignReportEnhanced';
+import ConfirmedCreatorsReport from './components/admin/ConfirmedCreatorsReport'
+import SNSUploadFinalReport from './components/admin/SNSUploadFinalReport'
+import CampaignReport from './components/admin/CampaignReport'
 import EmailTemplateManager from './components/admin/EmailTemplateManager';
 import UserApprovalManagerEnhanced from './components/admin/UserApprovalManagerEnhanced';
 import AdminWithdrawals from './components/admin/AdminWithdrawals';
 import SystemSettings from './components/admin/SystemSettings';
-
-// 테스트용 관리자 로그인 컴포넌트
 import SecretAdminLogin from './components/SecretAdminLogin';
 import TestAdminLogin from './components/TestAdminLogin';
-import CampaignApplicationUpdated from './components/CampaignApplicationUpdated';
 
-const AppContent = () => {
-  const { user } = useAuth();
-
+function App() {
   useEffect(() => {
-    // 이메일 스케줄러 초기화
-    emailScheduler.init();
+    // 이메일 스케줄러 시작
+    emailScheduler.start();
+    
+    // 컴포넌트 언마운트 시 스케줄러 중지
+    return () => {
+      emailScheduler.stop();
+    };
   }, []);
 
   return (
-    <div className="App">
+    <Router>
+      <AuthProvider>
+        <LanguageProvider>
+          <MainContent />
+        </LanguageProvider>
+      </AuthProvider>
+    </Router>
+  );
+}
+
+const MainContent = () => {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
       <Routes>
         {/* 메인 페이지 */}
         <Route path="/" element={<HomePageExactReplica />} />
@@ -56,12 +81,10 @@ const AppContent = () => {
         <Route path="/auth/callback" element={<AuthCallbackSafe />} />
         
         {/* 사용자 페이지 */}
-        <Route path="/campaign-application" element={<CampaignApplicationUpdated />} />
-        <Route path="/mypage" element={<MyPageWithWithdrawal />} />
+        <Route path="/campaign-application" element={<CampaignApplicationUpdated />}         <Route path="/mypage" element={<MyPageWithWithdrawal />} />
         <Route path="/profile" element={<ProfileSettings />} />
         <Route path="/paypal-withdrawal" element={<PayPalWithdrawal />} />
-        <Route path="/company-report/:campaignId" element={<CompanyReport />} />
-        <Route path="/profile-settings" element={<ProfileSettings />} />
+        <Route path="/company-report/:campaignId" element={<CompanyReport />} />       <Route path="/profile-settings" element={<ProfileSettings />} />
         
         {/* 관리자 페이지 */}
         <Route path="/secret-admin-login" element={<SecretAdminLogin />} />
@@ -74,7 +97,7 @@ const AppContent = () => {
         <Route path="/admin/confirmed-creators/:campaignId" element={<ConfirmedCreatorsReport />} />
         <Route path="/admin/sns-uploads" element={<SNSUploadFinalReport />} />
         <Route path="/admin/sns-uploads/:campaignId" element={<SNSUploadFinalReport />} />
-        <Route path="/admin/campaign-report/:campaignId" element={<CampaignReportEnhanced />} />
+        <Route path="/admin/campaign-report/:campaignId" element={<CampaignReport />} />
         <Route path="/admin/email-templates" element={<EmailTemplateManager />} />
         <Route path="/admin/users" element={<UserApprovalManagerEnhanced />} />
         <Route path="/admin/user-approval" element={<UserApprovalManagerEnhanced />} />
@@ -82,18 +105,6 @@ const AppContent = () => {
         <Route path="/admin/system-settings" element={<SystemSettings />} />
       </Routes>
     </div>
-  );
-};
-
-const App = () => {
-  return (
-    <Router>
-      <AuthProvider>
-        <LanguageProvider>
-          <AppContent />
-        </LanguageProvider>
-      </AuthProvider>
-    </Router>
   );
 };
 
