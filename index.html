@@ -5,6 +5,24 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CNEC Japan - K-Beauty × ショート動画の専門プラットフォーム</title>
+    <script>
+      // EmailJS 더미 객체 - EM.init 오류 방지용
+      window.EM = {
+        init: function(publicKey) {
+          console.log('EmailJS dummy init called with key:', publicKey);
+          return Promise.resolve();
+        },
+        send: function(serviceId, templateId, templateParams) {
+          console.log('EmailJS dummy send called:', { serviceId, templateId, templateParams });
+          return Promise.resolve({ status: 200, text: 'OK' });
+        },
+        sendForm: function(serviceId, templateId, form) {
+          console.log('EmailJS dummy sendForm called:', { serviceId, templateId, form });
+          return Promise.resolve({ status: 200, text: 'OK' });
+        }
+      };
+      window.emailjs = window.EM;
+    </script>
   </head>
   <body>
     <div id="root"></div>
