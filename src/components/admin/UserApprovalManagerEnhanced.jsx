@@ -187,18 +187,46 @@ const UserApprovalManagerEnhanced = () => {
 
   const loadWithdrawalRequests = async () => {
     try {
-      const { data, error } = await supabase
+      // 먼저 탈퇴 요청만 로드
+      const { data: withdrawals, error: withdrawalError } = await supabase
         .from('withdrawal_requests')
-        .select(`
-          *,
-          user_profiles!inner(name, email)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
       
-      if (error) throw error
-      setWithdrawalRequests(data || [])
+      if (withdrawalError) {
+        console.error('탈퇴 요청 로드 오류:', withdrawalError)
+        setWithdrawalRequests([])
+        return
+      }
+      
+      // 사용자 정보를 별도로 로드하여 매칭
+      if (withdrawals && withdrawals.length > 0) {
+        const userIds = withdrawals.map(w => w.user_id)
+        const { data: profiles, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('user_id, name, email')
+          .in('user_id', userIds)
+        
+        if (profileError) {
+          console.error('사용자 프로필 로드 오류:', profileError)
+        }
+        
+        // 데이터 매칭
+        const enrichedWithdrawals = withdrawals.map(withdrawal => ({
+          ...withdrawal,
+          user_profiles: profiles?.find(p => p.user_id === withdrawal.user_id) || {
+            name: '알 수 없음',
+            email: '알 수 없음'
+          }
+        }))
+        
+        setWithdrawalRequests(enrichedWithdrawals)
+      } else {
+        setWithdrawalRequests([])
+      }
     } catch (error) {
       console.error('탈퇴 요청 로드 오류:', error)
+      setWithdrawalRequests([])
     }
   }
 
@@ -253,16 +281,39 @@ const UserApprovalManagerEnhanced = () => {
     try {
       setProcessing(true)
       
-      const amount = isAdd ? parseInt(pointAmount) : -parseInt(pointAmount)
+      const amount = parseInt(pointAmount)
+      if (isNaN(amount) || amount <= 0) {
+        setError(language === 'ko' ? '유효한 포인트 수량을 입력해주세요.' : '有効なポイント数を入力してください。')
+        return
+      }
       
-      const { error } = await supabase
-        .rpc('add_points', {
-          target_user_id: selectedUser.user_id,
-          point_amount: amount,
-          transaction_description: pointDescription || (isAdd ? '관리자 포인트 추가' : '관리자 포인트 차감')
+      const finalAmount = isAdd ? amount : -amount
+      const description = pointDescription || (isAdd ? 
+        (language === 'ko' ? '관리자 포인트 추가' : '管理者ポイント追加') : 
+        (language === 'ko' ? '관리자 포인트 차감' : '管理者ポイント減算'))
+      
+      // 포인트 거래 기록 직접 삽입
+      const { error: transactionError } = await supabase
+        .from('point_transactions')
+        .insert({
+          user_id: selectedUser.user_id,
+          amount: finalAmount,
+          transaction_type: isAdd ? 'admin_add' : 'admin_subtract',
+          description: description,
+          created_at: new Date().toISOString()
         })
       
-      if (error) throw error
+      if (transactionError) throw transactionError
+      
+      // 사용자 포인트 업데이트
+      const { error: updateError } = await supabase
+        .from('user_profiles')
+        .update({ 
+          points: selectedUser.points + finalAmount 
+        })
+        .eq('user_id', selectedUser.user_id)
+      
+      if (updateError) throw updateError
       
       await loadUsers()
       setSuccess(isAdd ? t.messages.pointsAdded : t.messages.pointsSubtracted)
@@ -273,7 +324,7 @@ const UserApprovalManagerEnhanced = () => {
       setTimeout(() => setSuccess(''), 3000)
     } catch (error) {
       console.error('포인트 관리 오류:', error)
-      setError(t.messages.error)
+      setError(language === 'ko' ? '포인트 처리 중 오류가 발생했습니다.' : 'ポイント処理中にエラーが発生しました。')
       setTimeout(() => setError(''), 3000)
     } finally {
       setProcessing(false)
