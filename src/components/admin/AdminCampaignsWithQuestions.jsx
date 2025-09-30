@@ -6,7 +6,7 @@ import AdminNavigation from './AdminNavigation'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Search, Filter } from 'lucide-react'
+import { Search, Filter, Users, BarChart3, FileText } from 'lucide-react'
 
 const AdminCampaignsWithQuestions = () => {
   const navigate = useNavigate()
@@ -284,12 +284,35 @@ const AdminCampaignsWithQuestions = () => {
                       >
                         수정
                       </button>
-                      <button
-                        onClick={() => window.open(`/company-report/${campaign.id}`, '_blank')}
-                        className="inline-flex items-center px-3 py-1 border border-purple-300 shadow-sm text-sm leading-4 font-medium rounded-md text-purple-700 bg-purple-50 hover:bg-purple-100"
-                      >
-                        기업보고서
-                      </button>
+                      
+                      {/* 보고서 버튼 그룹 */}
+                      <div className="flex space-x-1">
+                        <button
+                          onClick={() => window.open(`/company-report/${campaign.id}`, '_blank')}
+                          className="inline-flex items-center px-3 py-1 border border-purple-300 shadow-sm text-sm leading-4 font-medium rounded-l-md text-purple-700 bg-purple-50 hover:bg-purple-100"
+                          title="기업 보고서"
+                        >
+                          <FileText className="h-4 w-4 mr-1" />
+                          기업보고서
+                        </button>
+                        <button
+                          onClick={() => window.open(`/admin/confirmed-creators/${campaign.id}`, '_blank')}
+                          className="inline-flex items-center px-3 py-1 border border-green-300 shadow-sm text-sm leading-4 font-medium text-green-700 bg-green-50 hover:bg-green-100"
+                          title="확정 크리에이터 보고서"
+                        >
+                          <Users className="h-4 w-4 mr-1" />
+                          확정자
+                        </button>
+                        <button
+                          onClick={() => window.open(`/admin/sns-uploads/${campaign.id}`, '_blank')}
+                          className="inline-flex items-center px-3 py-1 border border-blue-300 shadow-sm text-sm leading-4 font-medium rounded-r-md text-blue-700 bg-blue-50 hover:bg-blue-100"
+                          title="SNS 업로드 보고서"
+                        >
+                          <BarChart3 className="h-4 w-4 mr-1" />
+                          SNS
+                        </button>
+                      </div>
+                      
                       <button
                         onClick={() => handleDelete(campaign.id, campaign.title)}
                         className="inline-flex items-center px-3 py-1 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100"
