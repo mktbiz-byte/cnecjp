@@ -25,6 +25,8 @@ const AdminNavigation = () => {
       dashboard: '대시보드',
       campaigns: '캠페인 관리',
       applications: '신청서 관리',
+      confirmedCreators: '확정 크리에이터',
+      snsUploads: 'SNS 업로드',
       users: '사용자 승인',
       withdrawals: '출금 관리',
       emailTemplates: '이메일 템플릿',
@@ -35,6 +37,8 @@ const AdminNavigation = () => {
       dashboard: 'ダッシュボード',
       campaigns: 'キャンペーン管理',
       applications: '申請書管理',
+      confirmedCreators: '確定クリエイター',
+      snsUploads: 'SNSアップロード',
       users: 'ユーザー承認',
       withdrawals: '出金管理',
       emailTemplates: 'メールテンプレート',
@@ -64,6 +68,16 @@ const AdminNavigation = () => {
       icon: FileText
     },
     {
+      path: '/admin/confirmed-creators',
+      label: t.confirmedCreators,
+      icon: Users
+    },
+    {
+      path: '/admin/sns-uploads',
+      label: t.snsUploads,
+      icon: BarChart3
+    },
+    {
       path: '/admin/user-approval',
       label: t.users,
       icon: Users
@@ -77,12 +91,6 @@ const AdminNavigation = () => {
       path: '/admin/email-templates',
       label: t.emailTemplates,
       icon: Mail
-    },
-    {
-      path: '/admin/statistics',
-      label: t.statistics,
-      icon: BarChart3,
-      disabled: true
     },
     {
       path: '/admin/system-settings',
