@@ -10,7 +10,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { 
@@ -30,9 +29,8 @@ const AdminCampaignsWithQuestions = () => {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  const [createModal, setCreateModal] = useState(false)
-  const [editModal, setEditModal] = useState(false)
   const [selectedCampaign, setSelectedCampaign] = useState(null)
+  const [isEditing, setIsEditing] = useState(false)
 
   const [campaignForm, setCampaignForm] = useState({
     title: '',
@@ -110,7 +108,11 @@ const AdminCampaignsWithQuestions = () => {
       instagram: 'Instagram',
       youtube: 'YouTube',
       tiktok: 'TikTok',
-      translator: '한국어 → 일본어 번역기'
+      translator: '한국어 → 일본어 번역기',
+      campaignList: '캠페인 목록',
+      campaignForm: '캠페인 작성',
+      newCampaign: '새 캠페인',
+      selectCampaign: '캠페인을 선택하거나 새로 작성하세요'
     },
     ja: {
       title: 'キャンペーン管理',
@@ -158,7 +160,11 @@ const AdminCampaignsWithQuestions = () => {
       instagram: 'Instagram',
       youtube: 'YouTube',
       tiktok: 'TikTok',
-      translator: '韓国語 → 日本語翻訳機'
+      translator: '韓国語 → 日本語翻訳機',
+      campaignList: 'キャンペーン一覧',
+      campaignForm: 'キャンペーン作成',
+      newCampaign: '新規キャンペーン',
+      selectCampaign: 'キャンペーンを選択するか新規作成してください'
     }
   }
 
@@ -222,6 +228,8 @@ const AdminCampaignsWithQuestions = () => {
       question_4: '',
       question_4_required: false
     })
+    setSelectedCampaign(null)
+    setIsEditing(false)
   }
 
   const handleCreateCampaign = async () => {
@@ -249,7 +257,6 @@ const AdminCampaignsWithQuestions = () => {
       console.log('캠페인 생성 완료')
       
       setSuccess(t.campaignCreated)
-      setCreateModal(false)
       resetForm()
       
       // 데이터 다시 로드
@@ -292,8 +299,6 @@ const AdminCampaignsWithQuestions = () => {
       console.log('캠페인 수정 완료')
       
       setSuccess(t.campaignUpdated)
-      setEditModal(false)
-      setSelectedCampaign(null)
       resetForm()
       
       // 데이터 다시 로드
@@ -332,6 +337,11 @@ const AdminCampaignsWithQuestions = () => {
       
       setSuccess(t.campaignDeleted)
       
+      // 선택된 캠페인이 삭제된 경우 폼 리셋
+      if (selectedCampaign && selectedCampaign.id === campaignId) {
+        resetForm()
+      }
+      
       // 데이터 다시 로드
       setTimeout(() => {
         loadData()
@@ -345,8 +355,9 @@ const AdminCampaignsWithQuestions = () => {
     }
   }
 
-  const openEditModal = (campaign) => {
+  const selectCampaignForEdit = (campaign) => {
     setSelectedCampaign(campaign)
+    setIsEditing(true)
     
     // 날짜 형식 변환 (ISO string을 YYYY-MM-DD 형식으로)
     const formatDateForInput = (dateStr) => {
@@ -367,6 +378,11 @@ const AdminCampaignsWithQuestions = () => {
       start_date: formatDateForInput(campaign.start_date),
       end_date: formatDateForInput(campaign.end_date),
       status: campaign.status || 'active',
+      target_platforms: campaign.target_platforms || {
+        instagram: false,
+        youtube: false,
+        tiktok: false
+      },
       question_1: campaign.question_1 || '',
       question_1_required: campaign.question_1_required || false,
       question_2: campaign.question_2 || '',
@@ -376,8 +392,12 @@ const AdminCampaignsWithQuestions = () => {
       question_4: campaign.question_4 || '',
       question_4_required: campaign.question_4_required || false
     })
-    
-    setEditModal(true)
+  }
+
+  const startNewCampaign = () => {
+    resetForm()
+    setIsEditing(false)
+    setSelectedCampaign({ id: 'new' })
   }
 
   const getStatusBadge = (status) => {
@@ -424,17 +444,16 @@ const AdminCampaignsWithQuestions = () => {
     <div className="min-h-screen bg-gray-50">
       <AdminNavigation />
       
-      {/* 분할 화면 레이아웃 */}
+      {/* 3분할 화면 레이아웃 */}
       <div className="flex h-screen pt-16">
-        {/* 왼쪽: 캠페인 관리 */}
-        <div className="w-1/2 overflow-y-auto border-r border-gray-200 bg-white">
-          <div className="p-6">
+        {/* 왼쪽: 캠페인 목록 (30%) */}
+        <div className="w-1/3 overflow-y-auto border-r border-gray-200 bg-white">
+          <div className="p-4">
             {/* Header */}
-            <div className="mb-6">
+            <div className="mb-4">
               <div className="flex justify-between items-center">
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">{t.title}</h1>
-                  <p className="text-gray-600 mt-1">{t.subtitle}</p>
+                  <h2 className="text-lg font-bold text-gray-900">{t.campaignList}</h2>
                 </div>
                 <div className="flex space-x-2">
                   <Button
@@ -443,17 +462,11 @@ const AdminCampaignsWithQuestions = () => {
                     size="sm"
                     disabled={loading}
                   >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    새로고침
+                    <RefreshCw className="h-4 w-4" />
                   </Button>
-                  <Dialog open={createModal} onOpenChange={setCreateModal}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" onClick={() => { resetForm(); setCreateModal(true) }}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        {t.createCampaign}
-                      </Button>
-                    </DialogTrigger>
-                  </Dialog>
+                  <Button size="sm" onClick={startNewCampaign}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </div>
@@ -462,7 +475,7 @@ const AdminCampaignsWithQuestions = () => {
             {error && (
               <Alert className="mb-4 border-red-200 bg-red-50">
                 <AlertCircle className="h-4 w-4 text-red-600" />
-                <AlertDescription className="text-red-800">
+                <AlertDescription className="text-red-800 text-sm">
                   {error}
                 </AlertDescription>
               </Alert>
@@ -471,21 +484,27 @@ const AdminCampaignsWithQuestions = () => {
             {success && (
               <Alert className="mb-4 border-green-200 bg-green-50">
                 <CheckCircle className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-800">
+                <AlertDescription className="text-green-800 text-sm">
                   {success}
                 </AlertDescription>
               </Alert>
             )}
 
             {/* 캠페인 목록 */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               {campaigns.map((campaign) => (
-                <Card key={campaign.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
+                <Card 
+                  key={campaign.id} 
+                  className={`cursor-pointer transition-all hover:shadow-md ${
+                    selectedCampaign?.id === campaign.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''
+                  }`}
+                  onClick={() => selectCampaignForEdit(campaign)}
+                >
+                  <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <CardTitle className="text-lg">{campaign.title}</CardTitle>
-                        <CardDescription className="mt-1">
+                        <CardTitle className="text-sm">{campaign.title}</CardTitle>
+                        <CardDescription className="text-xs">
                           {campaign.brand}
                         </CardDescription>
                       </div>
@@ -494,51 +513,41 @@ const AdminCampaignsWithQuestions = () => {
                   </CardHeader>
                   
                   <CardContent className="pt-0">
-                    <div className="space-y-2">
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-500">보상금:</span>
-                          <span className="ml-1 font-medium">{formatCurrency(campaign.reward_amount)}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">참여자:</span>
-                          <span className="ml-1 font-medium">{campaign.max_participants || '-'}명</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">마감일:</span>
-                          <span className="ml-1 font-medium">{formatDate(campaign.application_deadline)}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">카테고리:</span>
-                          <span className="ml-1 font-medium">{t[campaign.category] || campaign.category}</span>
-                        </div>
+                    <div className="space-y-1 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">보상금:</span>
+                        <span className="font-medium">{formatCurrency(campaign.reward_amount)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">마감일:</span>
+                        <span className="font-medium">{formatDate(campaign.application_deadline)}</span>
                       </div>
                       
-                      <div className="flex justify-end space-x-2 pt-2">
+                      <div className="flex justify-end space-x-1 pt-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => navigate(`/admin/applications?campaign=${campaign.id}`)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            navigate(`/admin/applications?campaign=${campaign.id}`)
+                          }}
+                          className="text-xs px-2 py-1 h-6"
                         >
-                          <Eye className="h-4 w-4 mr-1" />
+                          <Eye className="h-3 w-3 mr-1" />
                           신청자
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => openEditModal(campaign)}
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
-                          {t.edit}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteCampaign(campaign.id)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeleteCampaign(campaign.id)
+                          }}
                           disabled={processing}
+                          className="text-xs px-2 py-1 h-6"
                         >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          {t.delete}
+                          <Trash2 className="h-3 w-3 mr-1" />
+                          삭제
                         </Button>
                       </div>
                     </div>
@@ -547,17 +556,263 @@ const AdminCampaignsWithQuestions = () => {
               ))}
               
               {campaigns.length === 0 && (
-                <div className="text-center py-12">
-                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">등록된 캠페인이 없습니다.</p>
+                <div className="text-center py-8">
+                  <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500 text-sm">등록된 캠페인이 없습니다.</p>
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* 오른쪽: 번역기 */}
-        <div className="w-1/2 bg-gray-50">
+        {/* 가운데: 캠페인 작성/수정 폼 (40%) */}
+        <div className="w-2/5 overflow-y-auto bg-white">
+          <div className="p-6">
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center">
+                <span className="mr-2">📝</span>
+                {selectedCampaign?.id === 'new' ? t.newCampaign : 
+                 isEditing ? t.editCampaign : t.campaignForm}
+              </h2>
+              {!selectedCampaign && (
+                <p className="text-gray-600 text-sm mt-1">{t.selectCampaign}</p>
+              )}
+            </div>
+
+            {selectedCampaign && (
+              <div className="space-y-4">
+                {/* 기본 정보 */}
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <Label htmlFor="title">{t.campaignTitle} *</Label>
+                    <Input
+                      id="title"
+                      value={campaignForm.title}
+                      onChange={(e) => setCampaignForm(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="캠페인 제목을 입력하세요"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="brand">{t.brand} *</Label>
+                    <Input
+                      id="brand"
+                      value={campaignForm.brand}
+                      onChange={(e) => setCampaignForm(prev => ({ ...prev, brand: e.target.value }))}
+                      placeholder="브랜드명을 입력하세요"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="description">{t.description}</Label>
+                  <Textarea
+                    id="description"
+                    value={campaignForm.description}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="캠페인 설명을 입력하세요"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="requirements">{t.requirements} *</Label>
+                  <Textarea
+                    id="requirements"
+                    value={campaignForm.requirements}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, requirements: e.target.value }))}
+                    placeholder="참가조건을 입력하세요"
+                    rows={3}
+                  />
+                </div>
+
+                {/* 카테고리 및 금액 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="category">{t.category}</Label>
+                    <Select value={campaignForm.category} onValueChange={(value) => setCampaignForm(prev => ({ ...prev, category: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="beauty">{t.beauty}</SelectItem>
+                        <SelectItem value="fashion">{t.fashion}</SelectItem>
+                        <SelectItem value="food">{t.food}</SelectItem>
+                        <SelectItem value="lifestyle">{t.lifestyle}</SelectItem>
+                        <SelectItem value="tech">{t.tech}</SelectItem>
+                        <SelectItem value="other">{t.other}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="reward_amount">{t.rewardAmount}</Label>
+                    <Input
+                      id="reward_amount"
+                      type="number"
+                      value={campaignForm.reward_amount}
+                      onChange={(e) => setCampaignForm(prev => ({ ...prev, reward_amount: e.target.value }))}
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="max_participants">{t.maxParticipants}</Label>
+                  <Input
+                    id="max_participants"
+                    type="number"
+                    value={campaignForm.max_participants}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, max_participants: e.target.value }))}
+                    placeholder="0"
+                  />
+                </div>
+
+                {/* 날짜 설정 */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="application_deadline">{t.applicationDeadline}</Label>
+                    <Input
+                      id="application_deadline"
+                      type="date"
+                      value={campaignForm.application_deadline}
+                      onChange={(e) => setCampaignForm(prev => ({ ...prev, application_deadline: e.target.value }))}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="start_date">{t.startDate}</Label>
+                    <Input
+                      id="start_date"
+                      type="date"
+                      value={campaignForm.start_date}
+                      onChange={(e) => setCampaignForm(prev => ({ ...prev, start_date: e.target.value }))}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="end_date">{t.endDate}</Label>
+                    <Input
+                      id="end_date"
+                      type="date"
+                      value={campaignForm.end_date}
+                      onChange={(e) => setCampaignForm(prev => ({ ...prev, end_date: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="status">{t.status}</Label>
+                  <Select value={campaignForm.status} onValueChange={(value) => setCampaignForm(prev => ({ ...prev, status: value }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">{t.active}</SelectItem>
+                      <SelectItem value="inactive">{t.inactive}</SelectItem>
+                      <SelectItem value="completed">{t.completed}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* SNS 플랫폼 선택 */}
+                <div>
+                  <Label>{t.targetPlatforms} *</Label>
+                  <div className="flex space-x-4 mt-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="instagram"
+                        checked={campaignForm.target_platforms.instagram}
+                        onCheckedChange={(checked) => setCampaignForm(prev => ({
+                          ...prev,
+                          target_platforms: { ...prev.target_platforms, instagram: checked }
+                        }))}
+                      />
+                      <Label htmlFor="instagram">📷 {t.instagram}</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="youtube"
+                        checked={campaignForm.target_platforms.youtube}
+                        onCheckedChange={(checked) => setCampaignForm(prev => ({
+                          ...prev,
+                          target_platforms: { ...prev.target_platforms, youtube: checked }
+                        }))}
+                      />
+                      <Label htmlFor="youtube">🎥 {t.youtube}</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="tiktok"
+                        checked={campaignForm.target_platforms.tiktok}
+                        onCheckedChange={(checked) => setCampaignForm(prev => ({
+                          ...prev,
+                          target_platforms: { ...prev.target_platforms, tiktok: checked }
+                        }))}
+                      />
+                      <Label htmlFor="tiktok">🎵 {t.tiktok}</Label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 질문 설정 */}
+                <div className="space-y-3">
+                  <h3 className="text-md font-semibold">{t.questions}</h3>
+                  
+                  {[1, 2, 3, 4].map((num) => (
+                    <div key={num} className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Label htmlFor={`question_${num}`} className="text-sm">{t.question} {num}</Label>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`question_${num}_required`}
+                            checked={campaignForm[`question_${num}_required`]}
+                            onCheckedChange={(checked) => setCampaignForm(prev => ({ ...prev, [`question_${num}_required`]: checked }))}
+                          />
+                          <Label htmlFor={`question_${num}_required`} className="text-xs">
+                            {t.required}
+                          </Label>
+                        </div>
+                      </div>
+                      <Textarea
+                        id={`question_${num}`}
+                        value={campaignForm[`question_${num}`]}
+                        onChange={(e) => setCampaignForm(prev => ({ ...prev, [`question_${num}`]: e.target.value }))}
+                        placeholder={`질문 ${num}을 입력하세요`}
+                        rows={2}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* 버튼 */}
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={resetForm}
+                    disabled={processing}
+                  >
+                    {t.cancel}
+                  </Button>
+                  <Button
+                    onClick={isEditing ? handleUpdateCampaign : handleCreateCampaign}
+                    disabled={processing}
+                  >
+                    {processing ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
+                    {t.save}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 오른쪽: 번역기 (30%) */}
+        <div className="w-1/3 bg-gray-50">
           <div className="p-6">
             <div className="mb-4">
               <h2 className="text-xl font-bold text-gray-900 flex items-center">
@@ -572,446 +827,6 @@ const AdminCampaignsWithQuestions = () => {
           </div>
         </div>
       </div>
-
-      {/* 캠페인 생성 모달 */}
-      <Dialog open={createModal} onOpenChange={setCreateModal}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{t.createCampaign}</DialogTitle>
-            <DialogDescription>
-              새로운 캠페인을 생성합니다. 모든 필수 정보를 입력해주세요.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-6">
-            {/* 기본 정보 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="title">{t.campaignTitle} *</Label>
-                <Input
-                  id="title"
-                  value={campaignForm.title}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="캠페인 제목을 입력하세요"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="brand">{t.brand} *</Label>
-                <Input
-                  id="brand"
-                  value={campaignForm.brand}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, brand: e.target.value }))}
-                  placeholder="브랜드명을 입력하세요"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="description">{t.description}</Label>
-              <Textarea
-                id="description"
-                value={campaignForm.description}
-                onChange={(e) => setCampaignForm(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="캠페인 설명을 입력하세요"
-                rows={3}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="requirements">{t.requirements} *</Label>
-              <Textarea
-                id="requirements"
-                value={campaignForm.requirements}
-                onChange={(e) => setCampaignForm(prev => ({ ...prev, requirements: e.target.value }))}
-                placeholder="참가조건을 입력하세요"
-                rows={3}
-              />
-            </div>
-
-            {/* 카테고리 및 금액 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="category">{t.category}</Label>
-                <Select value={campaignForm.category} onValueChange={(value) => setCampaignForm(prev => ({ ...prev, category: value }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="beauty">{t.beauty}</SelectItem>
-                    <SelectItem value="fashion">{t.fashion}</SelectItem>
-                    <SelectItem value="food">{t.food}</SelectItem>
-                    <SelectItem value="lifestyle">{t.lifestyle}</SelectItem>
-                    <SelectItem value="tech">{t.tech}</SelectItem>
-                    <SelectItem value="other">{t.other}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="reward_amount">{t.rewardAmount}</Label>
-                <Input
-                  id="reward_amount"
-                  type="number"
-                  value={campaignForm.reward_amount}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, reward_amount: e.target.value }))}
-                  placeholder="0"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="max_participants">{t.maxParticipants}</Label>
-                <Input
-                  id="max_participants"
-                  type="number"
-                  value={campaignForm.max_participants}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, max_participants: e.target.value }))}
-                  placeholder="0"
-                />
-              </div>
-            </div>
-
-            {/* 날짜 설정 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="application_deadline">{t.applicationDeadline}</Label>
-                <Input
-                  id="application_deadline"
-                  type="date"
-                  value={campaignForm.application_deadline}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, application_deadline: e.target.value }))}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="start_date">{t.startDate}</Label>
-                <Input
-                  id="start_date"
-                  type="date"
-                  value={campaignForm.start_date}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, start_date: e.target.value }))}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="end_date">{t.endDate}</Label>
-                <Input
-                  id="end_date"
-                  type="date"
-                  value={campaignForm.end_date}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, end_date: e.target.value }))}
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="status">{t.status}</Label>
-              <Select value={campaignForm.status} onValueChange={(value) => setCampaignForm(prev => ({ ...prev, status: value }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">{t.active}</SelectItem>
-                  <SelectItem value="inactive">{t.inactive}</SelectItem>
-                  <SelectItem value="completed">{t.completed}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* SNS 플랫폼 선택 */}
-            <div>
-              <Label>{t.targetPlatforms} *</Label>
-              <div className="flex space-x-4 mt-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="instagram"
-                    checked={campaignForm.target_platforms.instagram}
-                    onCheckedChange={(checked) => setCampaignForm(prev => ({
-                      ...prev,
-                      target_platforms: { ...prev.target_platforms, instagram: checked }
-                    }))}
-                  />
-                  <Label htmlFor="instagram">📷 {t.instagram}</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="youtube"
-                    checked={campaignForm.target_platforms.youtube}
-                    onCheckedChange={(checked) => setCampaignForm(prev => ({
-                      ...prev,
-                      target_platforms: { ...prev.target_platforms, youtube: checked }
-                    }))}
-                  />
-                  <Label htmlFor="youtube">🎥 {t.youtube}</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="tiktok"
-                    checked={campaignForm.target_platforms.tiktok}
-                    onCheckedChange={(checked) => setCampaignForm(prev => ({
-                      ...prev,
-                      target_platforms: { ...prev.target_platforms, tiktok: checked }
-                    }))}
-                  />
-                  <Label htmlFor="tiktok">🎵 {t.tiktok}</Label>
-                </div>
-              </div>
-            </div>
-
-            {/* 질문 설정 */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">{t.questions}</h3>
-              
-              {[1, 2, 3, 4].map((num) => (
-                <div key={num} className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Label htmlFor={`question_${num}`}>{t.question} {num}</Label>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`question_${num}_required`}
-                        checked={campaignForm[`question_${num}_required`]}
-                        onCheckedChange={(checked) => setCampaignForm(prev => ({ ...prev, [`question_${num}_required`]: checked }))}
-                      />
-                      <Label htmlFor={`question_${num}_required`} className="text-sm">
-                        {t.required}
-                      </Label>
-                    </div>
-                  </div>
-                  <Textarea
-                    id={`question_${num}`}
-                    value={campaignForm[`question_${num}`]}
-                    onChange={(e) => setCampaignForm(prev => ({ ...prev, [`question_${num}`]: e.target.value }))}
-                    placeholder={`질문 ${num}을 입력하세요`}
-                    rows={2}
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* 버튼 */}
-            <div className="flex justify-end space-x-2 pt-6">
-              <Button
-                variant="outline"
-                onClick={() => setCreateModal(false)}
-                disabled={processing}
-              >
-                {t.cancel}
-              </Button>
-              <Button
-                onClick={handleCreateCampaign}
-                disabled={processing}
-              >
-                {processing ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Save className="h-4 w-4 mr-2" />
-                )}
-                {t.save}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* 캠페인 수정 모달 */}
-      <Dialog open={editModal} onOpenChange={setEditModal}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{t.editCampaign}</DialogTitle>
-            <DialogDescription>
-              캠페인 정보를 수정합니다.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-6">
-            {/* 기본 정보 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="edit_title">{t.campaignTitle} *</Label>
-                <Input
-                  id="edit_title"
-                  value={campaignForm.title}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="캠페인 제목을 입력하세요"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="edit_brand">{t.brand} *</Label>
-                <Input
-                  id="edit_brand"
-                  value={campaignForm.brand}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, brand: e.target.value }))}
-                  placeholder="브랜드명을 입력하세요"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="edit_description">{t.description}</Label>
-              <Textarea
-                id="edit_description"
-                value={campaignForm.description}
-                onChange={(e) => setCampaignForm(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="캠페인 설명을 입력하세요"
-                rows={3}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="edit_requirements">{t.requirements} *</Label>
-              <Textarea
-                id="edit_requirements"
-                value={campaignForm.requirements}
-                onChange={(e) => setCampaignForm(prev => ({ ...prev, requirements: e.target.value }))}
-                placeholder="참가조건을 입력하세요"
-                rows={3}
-              />
-            </div>
-
-            {/* 카테고리 및 금액 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="edit_category">{t.category}</Label>
-                <Select value={campaignForm.category} onValueChange={(value) => setCampaignForm(prev => ({ ...prev, category: value }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="beauty">{t.beauty}</SelectItem>
-                    <SelectItem value="fashion">{t.fashion}</SelectItem>
-                    <SelectItem value="food">{t.food}</SelectItem>
-                    <SelectItem value="lifestyle">{t.lifestyle}</SelectItem>
-                    <SelectItem value="tech">{t.tech}</SelectItem>
-                    <SelectItem value="other">{t.other}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="edit_reward_amount">{t.rewardAmount}</Label>
-                <Input
-                  id="edit_reward_amount"
-                  type="number"
-                  value={campaignForm.reward_amount}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, reward_amount: e.target.value }))}
-                  placeholder="0"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="edit_max_participants">{t.maxParticipants}</Label>
-                <Input
-                  id="edit_max_participants"
-                  type="number"
-                  value={campaignForm.max_participants}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, max_participants: e.target.value }))}
-                  placeholder="0"
-                />
-              </div>
-            </div>
-
-            {/* 날짜 설정 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="edit_application_deadline">{t.applicationDeadline}</Label>
-                <Input
-                  id="edit_application_deadline"
-                  type="date"
-                  value={campaignForm.application_deadline}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, application_deadline: e.target.value }))}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="edit_start_date">{t.startDate}</Label>
-                <Input
-                  id="edit_start_date"
-                  type="date"
-                  value={campaignForm.start_date}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, start_date: e.target.value }))}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="edit_end_date">{t.endDate}</Label>
-                <Input
-                  id="edit_end_date"
-                  type="date"
-                  value={campaignForm.end_date}
-                  onChange={(e) => setCampaignForm(prev => ({ ...prev, end_date: e.target.value }))}
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="edit_status">{t.status}</Label>
-              <Select value={campaignForm.status} onValueChange={(value) => setCampaignForm(prev => ({ ...prev, status: value }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">{t.active}</SelectItem>
-                  <SelectItem value="inactive">{t.inactive}</SelectItem>
-                  <SelectItem value="completed">{t.completed}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* 질문 설정 */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">{t.questions}</h3>
-              
-              {[1, 2, 3, 4].map((num) => (
-                <div key={num} className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Label htmlFor={`edit_question_${num}`}>{t.question} {num}</Label>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`edit_question_${num}_required`}
-                        checked={campaignForm[`question_${num}_required`]}
-                        onCheckedChange={(checked) => setCampaignForm(prev => ({ ...prev, [`question_${num}_required`]: checked }))}
-                      />
-                      <Label htmlFor={`edit_question_${num}_required`} className="text-sm">
-                        {t.required}
-                      </Label>
-                    </div>
-                  </div>
-                  <Textarea
-                    id={`edit_question_${num}`}
-                    value={campaignForm[`question_${num}`]}
-                    onChange={(e) => setCampaignForm(prev => ({ ...prev, [`question_${num}`]: e.target.value }))}
-                    placeholder={`질문 ${num}을 입력하세요`}
-                    rows={2}
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* 버튼 */}
-            <div className="flex justify-end space-x-2 pt-6">
-              <Button
-                variant="outline"
-                onClick={() => setEditModal(false)}
-                disabled={processing}
-              >
-                {t.cancel}
-              </Button>
-              <Button
-                onClick={handleUpdateCampaign}
-                disabled={processing}
-              >
-                {processing ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Save className="h-4 w-4 mr-2" />
-                )}
-                {t.save}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
