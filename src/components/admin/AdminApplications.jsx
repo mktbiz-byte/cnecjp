@@ -79,7 +79,7 @@ const AdminApplications = () => {
     if (!selectedCampaign) return
     
     try {
-      const applicationsData = await database.applications.getByCampaignId(selectedCampaign)
+      const applicationsData = await database.applications.getByCampaign(selectedCampaign)
       setApplications(applicationsData || [])
     } catch (error) {
       console.error('Load applications error:', error)

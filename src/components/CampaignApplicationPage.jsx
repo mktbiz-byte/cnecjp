@@ -323,7 +323,6 @@ const CampaignApplicationPage = () => {
                 <CardDescription className="text-lg text-purple-600 font-medium mb-4">
                   {campaign.brand}
                 </CardDescription>
-                <p className="text-gray-600 mb-4">{campaign.description}</p>
                 
                 {campaign.platforms && (
                   <div className="flex flex-wrap gap-2 mb-4">

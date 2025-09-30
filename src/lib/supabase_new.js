@@ -237,142 +237,60 @@ export const database = {
   applications: {
     async getAll() {
       return safeQuery(async () => {
-        console.log('Applications getAll() 호출 - 두 테이블 모두 확인')
+        console.log('Campaign Applications getAll() 호출')
+        const { data, error } = await supabase
+          .from('campaign_applications')
+          .select('*')
+          .order('created_at', { ascending: false })
         
-        try {
-          // 먼저 campaign_applications 테이블 확인
-          const { data: campaignAppsData, error: campaignAppsError } = await supabase
-            .from('campaign_applications')
-            .select('*')
-            .order('created_at', { ascending: false })
-          
-          if (!campaignAppsError && campaignAppsData && campaignAppsData.length > 0) {
-            console.log('Campaign Applications 데이터 로드 성공:', campaignAppsData.length, '개')
-            return campaignAppsData
+        if (error) {
+          console.error('Campaign Applications getAll error:', error)
+          if (error.message.includes('permission denied')) {
+            console.warn('Campaign Applications 테이블 권한 부족으로 빈 배열 반환')
+            return []
           }
-          
-          // campaign_applications가 비어있으면 기존 applications 테이블 확인
-          console.log('Campaign Applications 테이블이 비어있음, 기존 applications 테이블 확인')
-          const { data: appsData, error: appsError } = await supabase
-            .from('applications')
-            .select('*')
-            .order('created_at', { ascending: false })
-          
-          if (!appsError && appsData) {
-            console.log('기존 Applications 데이터 로드 성공:', appsData.length, '개')
-            return appsData
-          }
-          
-          // 둘 다 실패하면 오류 처리
-          if (campaignAppsError && appsError) {
-            console.error('두 테이블 모두 접근 실패:', { campaignAppsError, appsError })
-            if (campaignAppsError.message.includes('permission denied') || appsError.message.includes('permission denied')) {
-              return []
-            }
-            throw campaignAppsError
-          }
-          
-          return []
-        } catch (error) {
-          console.error('Applications getAll 함수 오류:', error)
-          return []
+          throw error
         }
+        
+        console.log('Campaign Applications 데이터 로드 성공:', data?.length || 0, '개')
+        return data || []
       })
     },
 
     async getByUser(userId) {
       return safeQuery(async () => {
-        console.log('getByUser 호출 - 사용자 ID:', userId)
+        const { data, error } = await supabase
+          .from('campaign_applications')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
         
-        try {
-          // 먼저 campaign_applications 테이블 확인
-          const { data: campaignAppsData, error: campaignAppsError } = await supabase
-            .from('campaign_applications')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false })
-          
-          if (!campaignAppsError && campaignAppsData && campaignAppsData.length > 0) {
-            console.log('Campaign Applications에서 사용자 데이터 발견:', campaignAppsData.length, '개')
-            return campaignAppsData
+        if (error) {
+          console.error('getByUser 오류:', error)
+          if (error.message.includes('permission denied')) {
+            return []
           }
-          
-          // campaign_applications가 비어있으면 기존 applications 테이블 확인
-          console.log('Campaign Applications 테이블에서 사용자 데이터 없음, 기존 applications 테이블 확인')
-          const { data: appsData, error: appsError } = await supabase
-            .from('applications')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false })
-          
-          if (!appsError && appsData) {
-            console.log('기존 Applications에서 사용자 데이터 발견:', appsData.length, '개')
-            return appsData
-          }
-          
-          // 둘 다 실패하면 오류 처리
-          if (campaignAppsError && appsError) {
-            console.error('두 테이블 모두 접근 실패:', { campaignAppsError, appsError })
-            if (campaignAppsError.message.includes('permission denied') || appsError.message.includes('permission denied')) {
-              return []
-            }
-            throw campaignAppsError
-          }
-          
-          console.log('두 테이블 모두에서 사용자 데이터 없음')
-          return []
-        } catch (error) {
-          console.error('getByUser 함수 오류:', error)
-          return []
+          throw error
         }
+        
+        return data || []
       })
     },
 
     async getByCampaign(campaignId) {
       return safeQuery(async () => {
-        console.log('getByCampaign 호출 - 캠페인 ID:', campaignId)
+        const { data, error } = await supabase
+          .from('campaign_applications')
+          .select('*')
+          .eq('campaign_id', campaignId)
+          .order('created_at', { ascending: false })
         
-        try {
-          // 먼저 campaign_applications 테이블 확인
-          const { data: campaignAppsData, error: campaignAppsError } = await supabase
-            .from('campaign_applications')
-            .select('*')
-            .eq('campaign_id', campaignId)
-            .order('created_at', { ascending: false })
-          
-          if (!campaignAppsError && campaignAppsData && campaignAppsData.length > 0) {
-            console.log('Campaign Applications에서 데이터 발견:', campaignAppsData.length, '개')
-            return campaignAppsData
-          }
-          
-          // campaign_applications가 비어있으면 기존 applications 테이블 확인
-          console.log('Campaign Applications 테이블에서 데이터 없음, 기존 applications 테이블 확인')
-          const { data: appsData, error: appsError } = await supabase
-            .from('applications')
-            .select('*')
-            .eq('campaign_id', campaignId)
-            .order('created_at', { ascending: false })
-          
-          if (!appsError && appsData) {
-            console.log('기존 Applications에서 데이터 발견:', appsData.length, '개')
-            return appsData
-          }
-          
-          // 둘 다 실패하면 오류 처리
-          if (campaignAppsError && appsError) {
-            console.error('두 테이블 모두 접근 실패:', { campaignAppsError, appsError })
-            if (campaignAppsError.message.includes('permission denied') || appsError.message.includes('permission denied')) {
-              return []
-            }
-            throw campaignAppsError
-          }
-          
-          console.log('두 테이블 모두에서 데이터 없음')
-          return []
-        } catch (error) {
-          console.error('getByCampaign 함수 오류:', error)
-          return []
+        if (error) {
+          console.error('getByCampaign 오류:', error)
+          throw error
         }
+        
+        return data || []
       })
     },
 
