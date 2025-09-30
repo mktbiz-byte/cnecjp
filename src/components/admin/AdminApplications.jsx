@@ -19,6 +19,7 @@ const AdminApplications = () => {
   
   const [campaigns, setCampaigns] = useState([])
   const [applications, setApplications] = useState([])
+  const [userProfiles, setUserProfiles] = useState({})
   const [selectedCampaign, setSelectedCampaign] = useState('')
   const [selectedApplication, setSelectedApplication] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -81,6 +82,24 @@ const AdminApplications = () => {
     try {
       const applicationsData = await database.applications.getByCampaign(selectedCampaign)
       setApplications(applicationsData || [])
+      
+      // 사용자 프로필 정보도 함께 로드
+      if (applicationsData && applicationsData.length > 0) {
+        const profiles = {}
+        for (const app of applicationsData) {
+          if (app.user_id) {
+            try {
+              const profile = await database.userProfiles.get(app.user_id)
+              if (profile) {
+                profiles[app.user_id] = profile
+              }
+            } catch (profileError) {
+              console.warn('프로필 로드 실패:', app.user_id, profileError)
+            }
+          }
+        }
+        setUserProfiles(profiles)
+      }
     } catch (error) {
       console.error('Load applications error:', error)
       setError(language === 'ko' 
@@ -436,9 +455,15 @@ const AdminApplications = () => {
                     {filteredApplications.map((application) => (
                       <TableRow key={application.id}>
                         <TableCell className="font-medium">
-                          {application.user_name}
+                          {application.user_name || 
+                           userProfiles[application.user_id]?.name || 
+                           '정보 없음'}
                         </TableCell>
-                        <TableCell>{application.user_email}</TableCell>
+                        <TableCell>
+                          {application.user_email || 
+                           userProfiles[application.user_id]?.email || 
+                           '정보 없음'}
+                        </TableCell>
                         <TableCell>{application.skin_type}</TableCell>
                         <TableCell>
                           <div className="flex space-x-1">
@@ -549,13 +574,21 @@ const AdminApplications = () => {
                     <Label className="text-sm font-medium text-gray-500">
                       {language === 'ko' ? '이름' : '名前'}
                     </Label>
-                    <p className="text-lg">{selectedApplication.user_name}</p>
+                    <p className="text-lg">
+                      {selectedApplication.user_name || 
+                       userProfiles[selectedApplication.user_id]?.name || 
+                       '정보 없음'}
+                    </p>
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-gray-500">
                       {language === 'ko' ? '이메일' : 'メール'}
                     </Label>
-                    <p className="text-lg">{selectedApplication.user_email}</p>
+                    <p className="text-lg">
+                      {selectedApplication.user_email || 
+                       userProfiles[selectedApplication.user_id]?.email || 
+                       '정보 없음'}
+                    </p>
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-gray-500">
