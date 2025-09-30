@@ -240,45 +240,43 @@ export const database = {
         console.log('Applications getAll() 호출 - 사용자 정보와 함께 조회')
         
         try {
-          // campaign_applications 테이블에서 사용자 프로필과 캠페인 정보 조인
+          // campaign_applications 테이블에서 기본 데이터 조회
           const { data: campaignAppsData, error: campaignAppsError } = await supabase
             .from('campaign_applications')
-            .select(`
-              *,
-              user_profiles!campaign_applications_user_id_fkey(
-                id,
-                name,
-                email,
-                age,
-                skin_type,
-                instagram_url,
-                tiktok_url,
-                youtube_url,
-                other_sns_url
-              ),
-              campaigns!campaign_applications_campaign_id_fkey(
-                id,
-                title
-              )
-            `)
+            .select('*')
             .order('created_at', { ascending: false })
           
           if (!campaignAppsError && campaignAppsData && campaignAppsData.length > 0) {
             console.log('Campaign Applications 데이터 로드 성공:', campaignAppsData.length, '개')
             
-            // 사용자 정보를 메인 객체에 병합
-            const enrichedData = campaignAppsData.map(application => ({
-              ...application,
-              user_name: application.user_profiles?.name || application.applicant_name || '-',
-              user_email: application.user_profiles?.email || '-',
-              user_age: application.user_profiles?.age || application.age || '-',
-              user_skin_type: application.user_profiles?.skin_type || application.skin_type || '-',
-              user_instagram_url: application.user_profiles?.instagram_url || application.instagram_url || '',
-              user_tiktok_url: application.user_profiles?.tiktok_url || application.tiktok_url || '',
-              user_youtube_url: application.user_profiles?.youtube_url || application.youtube_url || '',
-              user_bio: application.user_profiles?.bio || application.bio || '',
-              campaign_title: application.campaigns?.title || '캠페인 정보 없음'
-            }))
+            // 사용자 프로필 정보 별도 조회
+            const { data: userProfiles } = await supabase
+              .from('user_profiles')
+              .select('*')
+            
+            // 캠페인 정보 별도 조회
+            const { data: campaigns } = await supabase
+              .from('campaigns')
+              .select('id, title')
+            
+            // 데이터 병합
+            const enrichedData = campaignAppsData.map(application => {
+              const userProfile = userProfiles?.find(up => up.user_id === application.user_id)
+              const campaign = campaigns?.find(c => c.id === application.campaign_id)
+              
+              return {
+                ...application,
+                user_name: userProfile?.name || application.applicant_name || '-',
+                user_email: userProfile?.email || '-',
+                user_age: userProfile?.age || application.age || '-',
+                user_skin_type: userProfile?.skin_type || application.skin_type || '-',
+                user_instagram_url: userProfile?.instagram_url || application.instagram_url || '',
+                user_tiktok_url: userProfile?.tiktok_url || application.tiktok_url || '',
+                user_youtube_url: userProfile?.youtube_url || application.youtube_url || '',
+                user_bio: userProfile?.bio || application.bio || '',
+                campaign_title: campaign?.title || '캠페인 정보 없음'
+              }
+            })
             
             return enrichedData
           }
@@ -287,37 +285,33 @@ export const database = {
           console.log('Campaign Applications 테이블이 비어있음, 기존 applications 테이블 확인')
           const { data: appsData, error: appsError } = await supabase
             .from('applications')
-            .select(`
-              *,
-              user_profiles!applications_user_id_fkey(
-                id,
-                name,
-                email,
-                age,
-                skin_type,
-                instagram_url,
-                tiktok_url,
-                youtube_url,
-                other_sns_url
-              )
-            `)
+            .select('*')
             .order('created_at', { ascending: false })
           
           if (!appsError && appsData) {
             console.log('기존 Applications 데이터 로드 성공:', appsData.length, '개')
             
-            // 사용자 정보를 메인 객체에 병합
-            const enrichedData = appsData.map(application => ({
-              ...application,
-              user_name: application.user_profiles?.name || application.applicant_name || '-',
-              user_email: application.user_profiles?.email || '-',
-              user_age: application.user_profiles?.age || application.age || '-',
-              user_skin_type: application.user_profiles?.skin_type || application.skin_type || '-',
-              user_instagram_url: application.user_profiles?.instagram_url || application.instagram_url || '',
-              user_tiktok_url: application.user_profiles?.tiktok_url || application.tiktok_url || '',
-              user_youtube_url: application.user_profiles?.youtube_url || application.youtube_url || '',
-              user_bio: application.user_profiles?.bio || application.bio || ''
-            }))
+            // 사용자 프로필 정보 별도 조회
+            const { data: userProfiles } = await supabase
+              .from('user_profiles')
+              .select('*')
+            
+            // 데이터 병합
+            const enrichedData = appsData.map(application => {
+              const userProfile = userProfiles?.find(up => up.user_id === application.user_id)
+              
+              return {
+                ...application,
+                user_name: userProfile?.name || application.applicant_name || '-',
+                user_email: userProfile?.email || '-',
+                user_age: userProfile?.age || application.age || '-',
+                user_skin_type: userProfile?.skin_type || application.skin_type || '-',
+                user_instagram_url: userProfile?.instagram_url || application.instagram_url || '',
+                user_tiktok_url: userProfile?.tiktok_url || application.tiktok_url || '',
+                user_youtube_url: userProfile?.youtube_url || application.youtube_url || '',
+                user_bio: userProfile?.bio || application.bio || ''
+              }
+            })
             
             return enrichedData
           }
@@ -557,19 +551,7 @@ export const database = {
         console.log('캠페인별 신청서 조회:', campaignId)
         const { data, error } = await supabase
           .from('campaign_applications')
-          .select(`
-            *,
-            user_profiles!campaign_applications_user_id_fkey(
-              name,
-              email,
-              age,
-              skin_type,
-              instagram_url,
-              tiktok_url,
-              youtube_url,
-              other_sns_url
-            )
-          `)
+          .select('*')
           .eq('campaign_id', campaignId)
           .order('created_at', { ascending: false })
         
@@ -580,17 +562,26 @@ export const database = {
         
         console.log('캠페인별 신청서 조회 성공:', data?.length || 0, '개')
         
+        // 사용자 프로필 정보 별도 조회
+        const { data: userProfiles } = await supabase
+          .from('user_profiles')
+          .select('*')
+        
         // 사용자 프로필 정보를 신청서 데이터와 병합
-        const enrichedData = (data || []).map(application => ({
-          ...application,
-          applicant_name: application.user_profiles?.name || application.applicant_name || '-',
-          age: application.user_profiles?.age || application.age || '-',
-          skin_type: application.user_profiles?.skin_type || application.skin_type || '-',
-          instagram_url: application.user_profiles?.instagram_url || application.instagram_url || '',
-          tiktok_url: application.user_profiles?.tiktok_url || application.tiktok_url || '',
-          youtube_url: application.user_profiles?.youtube_url || application.youtube_url || '',
-          other_sns_url: application.user_profiles?.other_sns_url || application.other_sns_url || ''
-        }))
+        const enrichedData = (data || []).map(application => {
+          const userProfile = userProfiles?.find(up => up.user_id === application.user_id)
+          
+          return {
+            ...application,
+            applicant_name: userProfile?.name || application.applicant_name || '-',
+            age: userProfile?.age || application.age || '-',
+            skin_type: userProfile?.skin_type || application.skin_type || '-',
+            instagram_url: userProfile?.instagram_url || application.instagram_url || '',
+            tiktok_url: userProfile?.tiktok_url || application.tiktok_url || '',
+            youtube_url: userProfile?.youtube_url || application.youtube_url || '',
+            other_sns_url: userProfile?.other_sns_url || application.other_sns_url || ''
+          }
+        })
         
         return enrichedData
       })
