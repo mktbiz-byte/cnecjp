@@ -66,6 +66,11 @@ export const AuthProvider = ({ children }) => {
         
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
+        // 로그아웃 시 모든 쿠키 정리
+        clearAllCookies();
+      } else if (event === 'TOKEN_REFRESHED') {
+        console.log("Token refreshed successfully");
+        setUser(session?.user ?? null);
       } else {
         setUser(session?.user ?? null);
       }
@@ -75,6 +80,33 @@ export const AuthProvider = ({ children }) => {
       authListener?.subscription.unsubscribe();
     };
   }, []);
+
+  // 모든 쿠키 정리 함수
+  const clearAllCookies = () => {
+    try {
+      // 현재 도메인의 모든 쿠키 삭제
+      document.cookie.split(";").forEach(cookie => {
+        const eqPos = cookie.indexOf("=");
+        const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+        if (name) {
+          // 현재 도메인과 경로에서 삭제
+          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
+          // 상위 도메인에서도 삭제 시도
+          const domain = window.location.hostname.split('.').slice(-2).join('.');
+          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.${domain}`;
+        }
+      });
+      
+      // localStorage와 sessionStorage도 정리
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      console.log("All cookies and storage cleared");
+    } catch (error) {
+      console.error("Error clearing cookies:", error);
+    }
+  };
 
   const signInWithEmail = async (email, password) => {
     try {
@@ -142,14 +174,25 @@ export const AuthProvider = ({ children }) => {
 
   const signOut = async () => {
     try {
+      // 먼저 쿠키와 스토리지 정리
+      clearAllCookies();
+      
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error("Sign out error:", error);
         throw error;
       }
       setUser(null);
+      
+      // 로그아웃 후 페이지 새로고침으로 완전한 상태 초기화
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
     } catch (error) {
       console.error("Sign out error:", error);
+      // 오류가 발생해도 쿠키는 정리
+      clearAllCookies();
+      setUser(null);
       throw error;
     }
   };
