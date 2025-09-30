@@ -1,10 +1,12 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { database } from '../lib/supabase';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -17,6 +19,11 @@ export const AuthProvider = ({ children }) => {
         } else {
           console.log("Session loaded:", session?.user?.email);
           setUser(session?.user ?? null);
+          
+          // 사용자 프로필 로드
+          if (session?.user) {
+            loadUserProfile(session.user.id);
+          }
         }
       } catch (error) {
         console.error("Error in getSession catch:", error);
@@ -37,6 +44,8 @@ export const AuthProvider = ({ children }) => {
         // 사용자 프로필 확인/생성 (비동기로 처리하여 로딩 차단 방지)
         setTimeout(async () => {
           try {
+            await loadUserProfile(session.user.id);
+            
             const { data: profile, error: profileError } = await supabase
               .from('user_profiles')
               .select('*')
@@ -57,6 +66,8 @@ export const AuthProvider = ({ children }) => {
                 console.error("Error creating profile:", insertError);
               } else {
                 console.log("Profile created successfully");
+                // 새로 생성된 프로필 로드
+                loadUserProfile(session.user.id);
               }
             }
           } catch (error) {
@@ -66,6 +77,7 @@ export const AuthProvider = ({ children }) => {
         
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
+        setUserProfile(null);
         // 로그아웃 시 모든 쿠키 정리
         clearAllCookies();
       } else if (event === 'TOKEN_REFRESHED') {
@@ -80,6 +92,32 @@ export const AuthProvider = ({ children }) => {
       authListener?.subscription.unsubscribe();
     };
   }, []);
+
+  // 사용자 프로필 로드 함수
+  const loadUserProfile = async (userId) => {
+    try {
+      const profile = await database.userProfiles.get(userId);
+      setUserProfile(profile);
+      return profile;
+    } catch (error) {
+      console.error("Error loading user profile:", error);
+      return null;
+    }
+  };
+
+  // 프로필 업데이트 함수
+  const updateProfile = async (profileData) => {
+    try {
+      if (!user) throw new Error("User not authenticated");
+      
+      const updatedProfile = await database.userProfiles.update(user.id, profileData);
+      setUserProfile(updatedProfile);
+      return updatedProfile;
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      throw error;
+    }
+  };
 
   // 모든 쿠키 정리 함수
   const clearAllCookies = () => {
@@ -183,6 +221,7 @@ export const AuthProvider = ({ children }) => {
         throw error;
       }
       setUser(null);
+      setUserProfile(null);
       
       // 로그아웃 후 페이지 새로고침으로 완전한 상태 초기화
       setTimeout(() => {
@@ -193,17 +232,21 @@ export const AuthProvider = ({ children }) => {
       // 오류가 발생해도 쿠키는 정리
       clearAllCookies();
       setUser(null);
+      setUserProfile(null);
       throw error;
     }
   };
 
   const value = {
     user,
+    userProfile,
     loading,
     signInWithEmail,
     signUpWithEmail,
     signInWithGoogle,
     signOut,
+    updateProfile,
+    loadUserProfile
   };
 
   // 로딩 상태와 관계없이 children을 렌더링

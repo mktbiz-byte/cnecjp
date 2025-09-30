@@ -13,20 +13,22 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { User, Settings, Award, AlertCircle, Loader2, CheckCircle2, Palette, Mail, Phone } from 'lucide-react'
+import { User, Settings, Award, AlertCircle, Loader2, CheckCircle2, Palette, Mail, Phone, ArrowLeft, Edit, Save, X, FileText, Instagram, DollarSign } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import WithdrawalModal from './WithdrawalModal'
 import WithdrawalHistory from './WithdrawalHistory'
 
 const MyPage = () => {
-  const { user, userProfile, updateProfile, signOut } = useAuth()
+  const { user, userProfile, signOut } = useAuth()
   const { language, t } = useLanguage()
   const navigate = useNavigate()
   
   const [applications, setApplications] = useState([])
   const [loading, setLoading] = useState(false)
+  const [updating, setUpdating] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [activeTab, setActiveTab] = useState('profile')
+  const [editMode, setEditMode] = useState(false)
   const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false)
   
   const [profileData, setProfileData] = useState({
@@ -110,7 +112,8 @@ const MyPage = () => {
       setError('')
       setSuccess('')
 
-      await updateProfile(profileData)
+      // 프로필 업데이트 함수 호출
+      await database.userProfiles.update(user.id, profileData)
       
       setSuccess(language === 'ko' 
         ? '프로필이 성공적으로 업데이트되었습니다.'
@@ -527,7 +530,7 @@ const MyPage = () => {
                             <a href={profileData.youtube_url} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">
                               {profileData.youtube_url}
                             </a>
-                          ) : (language === 'ko' ? '미입력' : '未入력')}
+                          ) : (language === 'ko' ? '미입력' : '未入力')}
                         </div>
                       )}
                     </div>
@@ -664,46 +667,13 @@ const MyPage = () => {
                 <WithdrawalHistory userId={user?.id} />
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <WithdrawalModal 
-            isOpen={withdrawalModalOpen}
-            onClose={() => setWithdrawalModalOpen(false)}
-            currentPoints={userProfile?.points || 0}
-          />CardContent>
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                    {language === 'ko' ? '출금 신청 내역' : '出金申請履歴'}
-                  </h3>
-                  <WithdrawalHistory userId={user.id} />
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                    {language === 'ko' ? '보상 내역' : '報酬履歴'}
-                  </h3>
-                  <div className="text-center py-8">
-                    <div className="text-gray-400 text-4xl mb-4">💰</div>
-                    <h3 className="text-base font-semibold text-gray-600 mb-2">
-                      {language === 'ko' ? '보상 내역이 없습니다' : '報酬履歴はありません'}
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      {language === 'ko' 
-                        ? '캠페인을 완료하면 보상 내역이 여기에 표시됩니다.'
-                        : 'キャンペーンを完了すると報酬履歴がここに表示されます。'
-                      }
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
             
             {/* 출금 신청 모달 */}
             <WithdrawalModal 
               isOpen={withdrawalModalOpen}
               onClose={() => setWithdrawalModalOpen(false)}
-              userId={user.id}
-              availablePoints={userProfile?.total_points || 0}
+              userId={user?.id}
+              availablePoints={userProfile?.points || 0}
               onSuccess={() => {
                 setSuccess(language === 'ko' 
                   ? '출금 신청이 완료되었습니다. 처리까지 영업일 기준 3-5일이 소요됩니다.'
