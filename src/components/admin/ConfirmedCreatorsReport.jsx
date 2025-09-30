@@ -166,7 +166,7 @@ const ConfirmedCreatorsReport = () => {
     )
   }
 
-  if (!campaign) {
+  if (!campaign && campaignId && campaignId !== 'undefined') {
     return (
       <div className="text-center py-8">
         <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
@@ -175,6 +175,175 @@ const ConfirmedCreatorsReport = () => {
           <ArrowLeft className="h-4 w-4 mr-2" />
           キャンペーン一覧に戻る
         </Button>
+      </div>
+    )
+  }
+  
+  // 전체 확정 크리에이터 보기 모드
+  if (!campaign && (!campaignId || campaignId === 'undefined')) {
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <Button variant="outline" onClick={() => navigate('/admin/campaigns')}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              キャンペーン一覧に戻る
+            </Button>
+          </div>
+          <div className="flex space-x-2">
+            <Button onClick={exportToExcel} variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Excel出力
+            </Button>
+          </div>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">全キャンペーン確定クリエイター</CardTitle>
+            <CardDescription className="text-lg mt-2 text-purple-600">
+              全キャンペーンの確定クリエイター管理
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="flex items-center space-x-2">
+                <Users className="h-5 w-5 text-green-500" />
+                <span className="text-sm">
+                  <strong>確定クリエイター:</strong> {applications.length}名
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Package className="h-5 w-5 text-blue-500" />
+                <span className="text-sm">
+                  <strong>発送済み:</strong> {applications.filter(app => app.tracking_number).length}名
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Confirmed Creators List */}
+        <div className="grid gap-4">
+          {applications.map((application) => {
+            const profile = userProfiles[application.user_id]
+            
+            return (
+              <Card key={application.id} className="border-l-4 border-l-green-500">
+                <CardContent className="pt-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <h3 className="text-lg font-semibold">{profile?.name || 'N/A'}</h3>
+                        <Badge className="bg-green-100 text-green-800">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          確定済み
+                        </Badge>
+                        {application.tracking_number && (
+                          <Badge className="bg-blue-100 text-blue-800">
+                            <Package className="h-3 w-3 mr-1" />
+                            発送済み
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      {/* SNS 정보 */}
+                      <div className="grid md:grid-cols-3 gap-4 text-sm mb-4">
+                        {profile?.instagram_url && (
+                          <div className="flex items-center justify-between p-3 bg-pink-50 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                              <Instagram className="h-4 w-4 text-pink-500" />
+                              <span>Instagram</span>
+                            </div>
+                            <Button variant="outline" size="sm" asChild>
+                              <a href={profile.instagram_url} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 주소 정보 */}
+                      <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <MapPin className="h-4 w-4 text-blue-600" />
+                          <span className="font-medium text-blue-800">配送先住所</span>
+                        </div>
+                        <div className="text-sm text-blue-700">
+                          <p><strong>郵便番号:</strong> {profile?.postal_code || 'N/A'}</p>
+                          <p><strong>住所:</strong> {`${profile?.prefecture || ''} ${profile?.city || ''} ${profile?.address || ''}`.trim() || 'N/A'}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col space-y-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openTrackingModal(application)}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        {application.tracking_number ? '配送情報編集' : '配送番号入力'}
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+
+        {applications.length === 0 && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center py-8">
+                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">確定クリエイターがいません</h3>
+                <p className="text-gray-500">まだ承認されたクリエイターがいません。</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 배송 정보 입력 모달 */}
+        <Dialog open={trackingModal} onOpenChange={setTrackingModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>配送情報管理</DialogTitle>
+              <DialogDescription>
+                確定クリエイターへの商品発送情報を入力してください。
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="tracking">配送追跡番号</Label>
+                <Input
+                  id="tracking"
+                  value={trackingNumber}
+                  onChange={(e) => setTrackingNumber(e.target.value)}
+                  placeholder="例: 123456789012"
+                />
+                <p className="text-sm text-gray-500">
+                  日本郵便、ヤマト運輸、佐川急便などの追跡番号を入力してください。
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setTrackingModal(false)}>
+                キャンセル
+              </Button>
+              <Button 
+                onClick={() => handleTrackingUpdate(selectedApplication?.id, trackingNumber)}
+                disabled={processing}
+              >
+                {processing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                保存
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     )
   }

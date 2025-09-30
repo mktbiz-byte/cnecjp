@@ -187,7 +187,7 @@ const SNSUploadFinalReport = () => {
     )
   }
 
-  if (!campaign) {
+  if (!campaign && campaignId && campaignId !== 'undefined') {
     return (
       <div className="text-center py-8">
         <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
@@ -196,6 +196,271 @@ const SNSUploadFinalReport = () => {
           <ArrowLeft className="h-4 w-4 mr-2" />
           キャンペーン一覧に戻る
         </Button>
+      </div>
+    )
+  }
+  
+  // 전체 SNS 업로드 보기 모드
+  if (!campaign && (!campaignId || campaignId === 'undefined')) {
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <Button variant="outline" onClick={() => navigate('/admin/campaigns')}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              キャンペーン一覧に戻る
+            </Button>
+          </div>
+          <div className="flex space-x-2">
+            <Button onClick={exportToExcel} variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Excel出力
+            </Button>
+            <Button onClick={() => window.print()}>
+              <FileText className="h-4 w-4 mr-2" />
+              印刷
+            </Button>
+          </div>
+        </div>
+
+        {/* Header Card */}
+        <Card className="border-l-4 border-l-purple-500">
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="text-3xl mb-2">全キャンペーンSNSアップロード</CardTitle>
+                <CardDescription className="text-xl text-purple-600 font-medium">
+                  SNSアップロード最終報告書
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Key Metrics */}
+        <div className="grid md:grid-cols-4 gap-6">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">完了クリエイター</p>
+                  <p className="text-3xl font-bold text-blue-600">{applications.length}</p>
+                </div>
+                <Users className="h-8 w-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">総アップロード数</p>
+                  <p className="text-3xl font-bold text-green-600">{reportData.totalUploads}</p>
+                </div>
+                <TrendingUp className="h-8 w-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Platform Statistics */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <BarChart3 className="h-5 w-5" />
+              <span>プラットフォーム別アップロード統計</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-4 gap-6">
+              <div className="flex items-center justify-between p-4 bg-pink-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Instagram className="h-8 w-8 text-pink-500" />
+                  <div>
+                    <p className="font-medium">Instagram</p>
+                    <p className="text-sm text-gray-600">リール動画</p>
+                  </div>
+                </div>
+                <div className="text-2xl font-bold text-pink-600">
+                  {reportData.platformStats.instagram}
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Hash className="h-8 w-8 text-black" />
+                  <div>
+                    <p className="font-medium">TikTok</p>
+                    <p className="text-sm text-gray-600">ショート動画</p>
+                  </div>
+                </div>
+                <div className="text-2xl font-bold text-gray-800">
+                  {reportData.platformStats.tiktok}
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Youtube className="h-8 w-8 text-red-500" />
+                  <div>
+                    <p className="font-medium">YouTube</p>
+                    <p className="text-sm text-gray-600">動画</p>
+                  </div>
+                </div>
+                <div className="text-2xl font-bold text-red-600">
+                  {reportData.platformStats.youtube}
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Globe className="h-8 w-8 text-blue-500" />
+                  <div>
+                    <p className="font-medium">その他</p>
+                    <p className="text-sm text-gray-600">外部プラットフォーム</p>
+                  </div>
+                </div>
+                <div className="text-2xl font-bold text-blue-600">
+                  {reportData.platformStats.other}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Error Display */}
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Uploaded Content List */}
+        <Card>
+          <CardHeader>
+            <CardTitle>アップロード済みコンテンツ一覧</CardTitle>
+            <CardDescription>
+              クリエイターがアップロードしたSNSコンテンツの詳細
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {applications.map((application) => {
+                const profile = userProfiles[application.user_id]
+                const videoLinks = application.video_links || {}
+                
+                return (
+                  <div key={application.id} className="border rounded-lg p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-lg font-semibold">{profile?.name || 'N/A'}</h3>
+                        <p className="text-sm text-gray-600">
+                          アップロード日: {application.video_uploaded_at ? new Date(application.video_uploaded_at).toLocaleDateString('ja-JP') : 'N/A'}
+                        </p>
+                      </div>
+                      <Badge className="bg-blue-100 text-blue-800">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        完了
+                      </Badge>
+                    </div>
+                    
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {videoLinks.instagram_url && (
+                        <div className="flex items-center justify-between p-4 bg-pink-50 rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <Instagram className="h-6 w-6 text-pink-500" />
+                            <div>
+                              <p className="font-medium">Instagram</p>
+                              <p className="text-sm text-gray-600">リール動画</p>
+                            </div>
+                          </div>
+                          <Button variant="outline" size="sm" asChild>
+                            <a href={videoLinks.instagram_url} target="_blank" rel="noopener noreferrer">
+                              <Play className="h-4 w-4 mr-2" />
+                              視聴
+                            </a>
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {videoLinks.tiktok_url && (
+                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <Hash className="h-6 w-6 text-black" />
+                            <div>
+                              <p className="font-medium">TikTok</p>
+                              <p className="text-sm text-gray-600">ショート動画</p>
+                            </div>
+                          </div>
+                          <Button variant="outline" size="sm" asChild>
+                            <a href={videoLinks.tiktok_url} target="_blank" rel="noopener noreferrer">
+                              <Play className="h-4 w-4 mr-2" />
+                              視聴
+                            </a>
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {videoLinks.youtube_url && (
+                        <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <Youtube className="h-6 w-6 text-red-500" />
+                            <div>
+                              <p className="font-medium">YouTube</p>
+                              <p className="text-sm text-gray-600">動画</p>
+                            </div>
+                          </div>
+                          <Button variant="outline" size="sm" asChild>
+                            <a href={videoLinks.youtube_url} target="_blank" rel="noopener noreferrer">
+                              <Play className="h-4 w-4 mr-2" />
+                              視聴
+                            </a>
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {videoLinks.other_url && (
+                        <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <Globe className="h-6 w-6 text-blue-500" />
+                            <div>
+                              <p className="font-medium">その他</p>
+                              <p className="text-sm text-gray-600">外部プラットフォーム</p>
+                            </div>
+                          </div>
+                          <Button variant="outline" size="sm" asChild>
+                            <a href={videoLinks.other_url} target="_blank" rel="noopener noreferrer">
+                              <Play className="h-4 w-4 mr-2" />
+                              視聴
+                            </a>
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {videoLinks.notes && (
+                      <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                        <p className="text-sm font-medium text-gray-700 mb-1">備考:</p>
+                        <p className="text-sm text-gray-600">{videoLinks.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+              
+              {applications.length === 0 && (
+                <div className="text-center py-8">
+                  <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-600 mb-2">アップロードされたコンテンツがありません</h3>
+                  <p className="text-gray-500">まだSNSにアップロードされたコンテンツがありません。</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }

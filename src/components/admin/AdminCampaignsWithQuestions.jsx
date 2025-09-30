@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { database } from '../../lib/supabase'
 import AdminNavigation from './AdminNavigation'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Search, Filter } from 'lucide-react'
 
 const AdminCampaignsWithQuestions = () => {
   const navigate = useNavigate()
@@ -12,6 +16,8 @@ const AdminCampaignsWithQuestions = () => {
   const [applications, setApplications] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [activeTab, setActiveTab] = useState('all')
 
   useEffect(() => {
     loadData()
@@ -111,6 +117,26 @@ const AdminCampaignsWithQuestions = () => {
     )
   }
 
+  // 필터링된 캠페인 목록
+  const filteredCampaigns = campaigns
+    .filter(campaign => {
+      // 검색어 필터링
+      if (searchTerm && !campaign.brand?.toLowerCase().includes(searchTerm.toLowerCase()) && 
+          !campaign.title?.toLowerCase().includes(searchTerm.toLowerCase())) {
+        return false;
+      }
+      
+      // 상태 필터링
+      if (activeTab === 'active' && campaign.status !== 'active') {
+        return false;
+      }
+      if (activeTab === 'completed' && campaign.status !== 'completed') {
+        return false;
+      }
+      
+      return true;
+    });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <AdminNavigation />
@@ -141,6 +167,36 @@ const AdminCampaignsWithQuestions = () => {
           </div>
         </div>
 
+        {/* 검색 및 필터링 UI */}
+        <div className="mb-6">
+          <div className="flex gap-4 items-center mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="브랜드명 또는 캠페인명으로 검색"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => setSearchTerm('')}
+              className="border-gray-300"
+            >
+              초기화
+            </Button>
+          </div>
+          
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="all">전체 캠페인</TabsTrigger>
+              <TabsTrigger value="active">활성 캠페인</TabsTrigger>
+              <TabsTrigger value="completed">완료된 캠페인</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+
         {/* Error Message */}
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
@@ -155,7 +211,7 @@ const AdminCampaignsWithQuestions = () => {
         {/* 캠페인 목록 */}
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           <ul className="divide-y divide-gray-200">
-            {campaigns.map((campaign) => (
+            {filteredCampaigns.map((campaign) => (
               <li key={campaign.id}>
                 <div className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between">
@@ -246,10 +302,14 @@ const AdminCampaignsWithQuestions = () => {
               </li>
             ))}
             
-            {campaigns.length === 0 && (
+            {filteredCampaigns.length === 0 && (
               <li>
                 <div className="px-4 py-8 text-center">
-                  <p className="text-gray-500">등록된 캠페인이 없습니다.</p>
+                  <p className="text-gray-500">
+                    {searchTerm || activeTab !== 'all' 
+                      ? '검색 조건에 맞는 캠페인이 없습니다.' 
+                      : '등록된 캠페인이 없습니다.'}
+                  </p>
                 </div>
               </li>
             )}
