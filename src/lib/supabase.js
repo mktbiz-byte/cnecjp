@@ -418,22 +418,47 @@ export const database = {
 
     async updateStatus(id, status) {
       return safeQuery(async () => {
+        console.log('상태 업데이트 시작:', id, status)
+        
+        const updateData = { 
+          status,
+          updated_at: new Date().toISOString()
+        }
+
+        // 상태별 타임스탬프 추가 (컬럼이 존재하는 경우에만)
+        if (status === 'virtual_selected') {
+          updateData.virtual_selected_at = new Date().toISOString()
+        } else if (status === 'approved') {
+          updateData.approved_at = new Date().toISOString()
+        } else if (status === 'rejected') {
+          updateData.rejected_at = new Date().toISOString()
+        } else if (status === 'pending') {
+          // 가상선택 취소 시 타임스탬프 제거
+          updateData.virtual_selected_at = null
+          updateData.approved_at = null
+          updateData.rejected_at = null
+        }
+
         const { data, error } = await supabase
           .from('campaign_applications')
-          .update({ 
-            status,
-            updated_at: new Date().toISOString()
-          })
+          .update(updateData)
           .eq('id', id)
           .select()
-          .single()
-        if (error) throw error
-        return data
+        
+        if (error) {
+          console.error('상태 업데이트 오류:', error)
+          throw error
+        }
+        
+        console.log('상태 업데이트 성공:', data)
+        return data && data.length > 0 ? data[0] : null
       })
     },
 
     async update(id, updateData) {
       return safeQuery(async () => {
+        console.log('신청서 업데이트 시작:', id, updateData)
+        
         const { data, error } = await supabase
           .from('campaign_applications')
           .update({
@@ -442,9 +467,14 @@ export const database = {
           })
           .eq('id', id)
           .select()
-          .single()
-        if (error) throw error
-        return data
+        
+        if (error) {
+          console.error('신청서 업데이트 오류:', error)
+          throw error
+        }
+        
+        console.log('신청서 업데이트 성공:', data)
+        return data && data.length > 0 ? data[0] : null
       })
     },
 
