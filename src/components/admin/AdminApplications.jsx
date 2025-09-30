@@ -132,17 +132,25 @@ const AdminApplications = () => {
     if (!selectedApplication) return
     
     try {
+      const isApprovedCancellation = selectedApplication.status === 'approved'
+      
       const updateData = {
-        status: 'rejected',
+        status: isApprovedCancellation ? 'cancelled' : 'rejected',
         admin_notes: reason,
         rejected_at: new Date().toISOString()
       }
       
       await database.applications.update(selectedApplication.id, updateData)
       
-      setSuccess(language === 'ko' 
-        ? '지원자가 거절되었습니다.'
-        : '応募者が拒否されました。'
+      setSuccess(isApprovedCancellation
+        ? (language === 'ko' 
+            ? '크리에이터 확정이 취소되었습니다.'
+            : 'クリエイター確定がキャンセルされました。'
+          )
+        : (language === 'ko' 
+            ? '지원자가 거절되었습니다.'
+            : '応募者が拒否されました。'
+          )
       )
       setRejectModal(false)
       setSelectedApplication(null)
@@ -474,6 +482,12 @@ const AdminApplications = () => {
                                   size="sm"
                                   onClick={() => {
                                     setSelectedApplication(application)
+                                    setApprovalData({
+                                      google_drive_link: '',
+                                      google_slides_link: '',
+                                      shipping_info_required: false,
+                                      notes: ''
+                                    })
                                     setApproveModal(true)
                                   }}
                                   className="bg-green-600 hover:bg-green-700"
@@ -492,6 +506,20 @@ const AdminApplications = () => {
                                   <X className="h-4 w-4" />
                                 </Button>
                               </>
+                            )}
+                            
+                            {application.status === 'approved' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedApplication(application)
+                                  setRejectModal(true)
+                                }}
+                                className="border-red-300 text-red-600 hover:bg-red-50"
+                              >
+                                {language === 'ko' ? '취소' : 'キャンセル'}
+                              </Button>
                             )}
                           </div>
                         </TableCell>
@@ -707,17 +735,26 @@ const AdminApplications = () => {
           </DialogContent>
         </Dialog>
 
-        {/* 거절 모달 */}
+        {/* 거절/취소 모달 */}
         <Dialog open={rejectModal} onOpenChange={setRejectModal}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {language === 'ko' ? '지원자 거절' : '応募者拒否'}
+                {selectedApplication?.status === 'approved' 
+                  ? (language === 'ko' ? '크리에이터 확정 취소' : 'クリエイター確定キャンセル')
+                  : (language === 'ko' ? '지원자 거절' : '応募者拒否')
+                }
               </DialogTitle>
               <DialogDescription>
-                {language === 'ko' 
-                  ? '거절 사유를 입력해주세요.'
-                  : '拒否理由を入力してください。'
+                {selectedApplication?.status === 'approved'
+                  ? (language === 'ko' 
+                      ? '확정된 크리에이터를 취소하는 사유를 입력해주세요.'
+                      : '確定されたクリエイターをキャンセルする理由を入力してください。'
+                    )
+                  : (language === 'ko' 
+                      ? '거절 사유를 입력해주세요.'
+                      : '拒否理由を入力してください。'
+                    )
                 }
               </DialogDescription>
             </DialogHeader>
@@ -745,7 +782,10 @@ const AdminApplications = () => {
                 }}
               >
                 <X className="h-4 w-4 mr-2" />
-                {language === 'ko' ? '거절' : '拒否'}
+                {selectedApplication?.status === 'approved'
+                  ? (language === 'ko' ? '취소' : 'キャンセル')
+                  : (language === 'ko' ? '거절' : '拒否')
+                }
               </Button>
             </div>
           </DialogContent>
