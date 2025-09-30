@@ -186,17 +186,41 @@ const MyPageWithWithdrawal = () => {
       setWithdrawals([])
       
       // 포인트 거래 내역 로드
-      const { data: pointData } = await database.supabase
-        .from('point_transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-      
-      setPointTransactions(pointData || [])
+      try {
+        const { data: pointData, error: pointError } = await database.supabase
+          .from('point_transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+        
+        if (pointError) {
+          console.warn('포인트 거래 내역 로드 실패:', pointError)
+          setPointTransactions([])
+        } else {
+          setPointTransactions(pointData || [])
+        }
+      } catch (pointErr) {
+        console.warn('포인트 거래 내역 로드 중 오류:', pointErr)
+        setPointTransactions([])
+      }
       
     } catch (error) {
       console.error('사용자 데이터 로드 오류:', error)
-      setError(t.messages.error)
+      // 프로필 데이터가 없어도 페이지는 표시되도록 함
+      if (!profile) {
+        setProfile({
+          name: user?.user_metadata?.full_name || user?.email || '',
+          email: user?.email || '',
+          phone_number: '',
+          address: '',
+          created_at: new Date().toISOString(),
+          user_role: 'user',
+          points: 0
+        })
+      }
+      // 오류 메시지는 콘솔에만 표시하고 UI에는 표시하지 않음
+      console.warn('일부 데이터 로드에 실패했지만 페이지는 계속 표시됩니다.')
+      setError('') // 오류 상태 초기화
     } finally {
       setLoading(false)
     }
@@ -312,7 +336,7 @@ const MyPageWithWithdrawal = () => {
         </div>
 
         {/* 알림 메시지 */}
-        {error && (
+        {error && error !== t.messages?.error && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
             <div className="flex">
               <AlertTriangle className="h-5 w-5 text-red-400" />
