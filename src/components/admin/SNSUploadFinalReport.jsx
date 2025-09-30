@@ -44,19 +44,23 @@ const SNSUploadFinalReport = () => {
       setError('')
       
       // 특정 캠페인 또는 전체 캠페인 로드
-      if (campaignId) {
+      if (campaignId && campaignId !== 'undefined') {
         const campaignData = await database.campaigns.getById(campaignId)
         if (!campaignData) {
           setError('キャンペーンが見つかりません。')
           return
         }
         setCampaign(campaignData)
+      } else {
+        // campaignId가 없으면 전체 SNS 업로드 보기
+        console.log('전체 SNS 업로드 보기 모드')
+        setCampaign(null)
       }
       
       // SNS 업로드 데이터 로드
       let applicationsData
-      if (campaignId) {
-        applicationsData = await database.applications.getByCampaignId(campaignId)
+      if (campaignId && campaignId !== 'undefined') {
+        applicationsData = await database.applications.getByCampaign(campaignId)
       } else {
         applicationsData = await database.applications.getAll()
       }
@@ -87,7 +91,7 @@ const SNSUploadFinalReport = () => {
         const profiles = {}
         
         for (const userId of userIds) {
-          const profile = await database.userProfiles.getByUserId(userId)
+          const profile = await database.userProfiles.get(userId)
           if (profile) {
             profiles[userId] = profile
           }

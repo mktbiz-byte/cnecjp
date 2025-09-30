@@ -43,19 +43,23 @@ const ConfirmedCreatorsReport = () => {
       setError('')
       
       // 특정 캠페인 또는 전체 캠페인 로드
-      if (campaignId) {
+      if (campaignId && campaignId !== 'undefined') {
         const campaignData = await database.campaigns.getById(campaignId)
         if (!campaignData) {
           setError('キャンペーンが見つかりません。')
           return
         }
         setCampaign(campaignData)
+      } else {
+        // campaignId가 없으면 전체 확정 크리에이터 보기
+        console.log('전체 확정 크리에이터 보기 모드')
+        setCampaign(null)
       }
       
       // 승인된 신청서들 로드 (확정 크리에이터)
       let applicationsData
-      if (campaignId) {
-        applicationsData = await database.applications.getByCampaignId(campaignId)
+      if (campaignId && campaignId !== 'undefined') {
+        applicationsData = await database.applications.getByCampaign(campaignId)
       } else {
         applicationsData = await database.applications.getAll()
       }
@@ -72,7 +76,7 @@ const ConfirmedCreatorsReport = () => {
       // 신청자들의 프로필 정보 로드
       const profiles = {}
       for (const app of approvedApplications) {
-        const profile = await database.userProfiles.getByUserId(app.user_id)
+        const profile = await database.userProfiles.get(app.user_id)
         if (profile) {
           profiles[app.user_id] = profile
         }
