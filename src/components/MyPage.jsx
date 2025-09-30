@@ -629,43 +629,48 @@ const MyPage = () => {
           </TabsContent>
 
           {/* 보상 내역 탭 */}
-          <TabsContent value="rewards">
+           <TabsContent value="rewards">
             <Card className="shadow-xl border-0">
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Award className="h-5 w-5" />
-                      <span>{language === 'ko' ? '보상 내역' : '報酬履歴'}</span>
-                    </CardTitle>
-                    <CardDescription>
-                      {language === 'ko' 
-                        ? '완료된 캠페인의 보상 내역을 확인할 수 있습니다.'
-                        : '完了したキャンペーンの報酬履歴を確認できます。'
-                      }
-                    </CardDescription>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <div className="text-right">
-                      <p className="text-sm text-gray-500">
-                        {language === 'ko' ? '보유 포인트' : '保有ポイント'}
-                      </p>
-                      <p className="text-xl font-bold text-purple-600">
-                        {userProfile?.total_points || 0} {language === 'ko' ? '포인트' : 'ポイント'}
-                      </p>
+                <CardTitle className="flex items-center space-x-2">
+                  <Award className="h-5 w-5" />
+                  <span>{language === 'ko' ? '보상 및 포인트' : '報酬・ポイント'}</span>
+                </CardTitle>
+                <CardDescription>
+                  {language === 'ko' 
+                    ? '캠페인 참여로 획득한 포인트 및 출금 내역입니다.'
+                    : 'キャンペーン参加で獲得したポイントと出金履歴です。'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="p-6 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">{language === 'ko' ? '현재 보유 포인트' : '現在の保有ポイント'}</p>
+                      <p className="text-3xl font-bold text-purple-600">{formatCurrency(userProfile?.points || 0)}</p>
                     </div>
                     <Button 
                       onClick={() => setWithdrawalModalOpen(true)}
                       className="bg-purple-600 hover:bg-purple-700"
                     >
+                      <DollarSign className="h-4 w-4 mr-2" />
                       {language === 'ko' ? '출금 신청' : '出金申請'}
                     </Button>
                   </div>
                 </div>
-              </CardHeader>
-              
-              <CardContent>
+                
+                <Separator />
+
+                <WithdrawalHistory userId={user?.id} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <WithdrawalModal 
+            isOpen={withdrawalModalOpen}
+            onClose={() => setWithdrawalModalOpen(false)}
+            currentPoints={userProfile?.points || 0}
+          />CardContent>
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">
                     {language === 'ko' ? '출금 신청 내역' : '出金申請履歴'}

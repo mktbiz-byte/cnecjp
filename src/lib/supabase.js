@@ -347,7 +347,25 @@ export const database = {
           
           if (!campaignAppsError && campaignAppsData && campaignAppsData.length > 0) {
             console.log('Campaign Applications에서 사용자 데이터 발견:', campaignAppsData.length, '개')
-            return campaignAppsData
+            const campaignIds = campaignAppsData.map(app => app.campaign_id)
+            const { data: campaigns, error: campaignsError } = await supabase
+              .from('campaigns')
+              .select('id, title')
+              .in('id', campaignIds)
+
+            if (campaignsError) {
+              console.error('Error fetching campaigns:', campaignsError)
+              return campaignAppsData // Return applications without campaign titles
+            }
+
+            const applicationsWithCampaigns = campaignAppsData.map(app => {
+              const campaign = campaigns.find(c => c.id === app.campaign_id)
+              return {
+                ...app,
+                campaign_title: campaign ? campaign.title : 'Unknown Campaign'
+              }
+            })
+            return applicationsWithCampaigns
           }
           
           // campaign_applications가 비어있으면 기존 applications 테이블 확인

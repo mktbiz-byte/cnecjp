@@ -5,13 +5,31 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CNEC Japan - K-Beauty × ショート動画の専門プラットフォーム</title>
-    <script type="module" crossorigin src="/assets/index-BfvliZ-M.js"></script>
+    <script>
+      // EmailJS 더미 객체 - EM.init 오류 방지용
+      window.EM = {
+        init: function(publicKey) {
+          console.log('EmailJS dummy init called with key:', publicKey);
+          return Promise.resolve();
+        },
+        send: function(serviceId, templateId, templateParams) {
+          console.log('EmailJS dummy send called:', { serviceId, templateId, templateParams });
+          return Promise.resolve({ status: 200, text: 'OK' });
+        },
+        sendForm: function(serviceId, templateId, form) {
+          console.log('EmailJS dummy sendForm called:', { serviceId, templateId, form });
+          return Promise.resolve({ status: 200, text: 'OK' });
+        }
+      };
+      window.emailjs = window.EM;
+    </script>
+    <script type="module" crossorigin src="/assets/index-CEv41gSI.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/vendor-nui1KCZ3.js">
-    <link rel="modulepreload" crossorigin href="/assets/ui-BrqScYn1.js">
+    <link rel="modulepreload" crossorigin href="/assets/ui-l9bt6M9N.js">
     <link rel="modulepreload" crossorigin href="/assets/supabase-CLFfzjd8.js">
     <link rel="modulepreload" crossorigin href="/assets/utils-Dx8rIIiD.js">
-    <link rel="modulepreload" crossorigin href="/assets/icons-C3Gpn_4Y.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-7-qx_tL8.css">
+    <link rel="modulepreload" crossorigin href="/assets/icons-BZu0m-T6.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-B743Lo1j.css">
   </head>
   <body>
     <div id="root"></div>
