@@ -34,6 +34,42 @@ const CampaignReport = () => {
     }
   }
 
+  const handleVirtualSelect = async (applicationId) => {
+    try {
+      await database.applications.updateStatus(applicationId, 'virtual_selected')
+      
+      // 상태 업데이트 후 목록 새로고침
+      setApplications(prevApplications => 
+        prevApplications.map(app => 
+          app.id === applicationId 
+            ? { ...app, status: 'virtual_selected' }
+            : app
+        )
+      )
+    } catch (error) {
+      console.error('가상 선택 처리 오류:', error)
+      alert('가상 선택 처리 중 오류가 발생했습니다.')
+    }
+  }
+
+  const handleCancelVirtualSelect = async (applicationId) => {
+    try {
+      await database.applications.updateStatus(applicationId, 'pending')
+      
+      // 상태 업데이트 후 목록 새로고침
+      setApplications(prevApplications => 
+        prevApplications.map(app => 
+          app.id === applicationId 
+            ? { ...app, status: 'pending' }
+            : app
+        )
+      )
+    } catch (error) {
+      console.error('가상 선택 취소 처리 오류:', error)
+      alert('가상 선택 취소 처리 중 오류가 발생했습니다.')
+    }
+  }
+
   const formatDate = (dateString) => {
     if (!dateString) return '-'
     return new Date(dateString).toLocaleDateString('ko-KR')
@@ -184,19 +220,25 @@ const CampaignReport = () => {
                       이름
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      이메일
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       나이
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       피부타입
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      SNS 주소
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      신청서 답변
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       신청일
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       상태
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      액션
                     </th>
                   </tr>
                 </thead>
@@ -207,13 +249,76 @@ const CampaignReport = () => {
                         {application.applicant_name || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {application.user_email || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {application.age || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {application.skin_type || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <div className="space-y-1">
+                          {application.instagram_url && (
+                            <div>
+                              <a href={application.instagram_url} target="_blank" rel="noopener noreferrer" 
+                                 className="text-pink-600 hover:text-pink-800">
+                                Instagram
+                              </a>
+                            </div>
+                          )}
+                          {application.tiktok_url && (
+                            <div>
+                              <a href={application.tiktok_url} target="_blank" rel="noopener noreferrer" 
+                                 className="text-black hover:text-gray-800">
+                                TikTok
+                              </a>
+                            </div>
+                          )}
+                          {application.youtube_url && (
+                            <div>
+                              <a href={application.youtube_url} target="_blank" rel="noopener noreferrer" 
+                                 className="text-red-600 hover:text-red-800">
+                                YouTube
+                              </a>
+                            </div>
+                          )}
+                          {application.other_sns_url && (
+                            <div>
+                              <a href={application.other_sns_url} target="_blank" rel="noopener noreferrer" 
+                                 className="text-blue-600 hover:text-blue-800">
+                                기타 SNS
+                              </a>
+                            </div>
+                          )}
+                          {!application.instagram_url && !application.tiktok_url && !application.youtube_url && !application.other_sns_url && '-'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        <div className="space-y-2 max-w-xs">
+                          {application.question1_answer && (
+                            <div>
+                              <div className="font-medium text-gray-700">Q1:</div>
+                              <div className="text-xs">{application.question1_answer}</div>
+                            </div>
+                          )}
+                          {application.question2_answer && (
+                            <div>
+                              <div className="font-medium text-gray-700">Q2:</div>
+                              <div className="text-xs">{application.question2_answer}</div>
+                            </div>
+                          )}
+                          {application.question3_answer && (
+                            <div>
+                              <div className="font-medium text-gray-700">Q3:</div>
+                              <div className="text-xs">{application.question3_answer}</div>
+                            </div>
+                          )}
+                          {application.question4_answer && (
+                            <div>
+                              <div className="font-medium text-gray-700">Q4:</div>
+                              <div className="text-xs">{application.question4_answer}</div>
+                            </div>
+                          )}
+                          {!application.question1_answer && !application.question2_answer && !application.question3_answer && !application.question4_answer && '-'}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDate(application.created_at)}
@@ -222,6 +327,24 @@ const CampaignReport = () => {
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(application.status)}`}>
                           {getStatusText(application.status)}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        {application.status === 'pending' && (
+                          <button
+                            onClick={() => handleVirtualSelect(application.id)}
+                            className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                          >
+                            가상 선택
+                          </button>
+                        )}
+                        {application.status === 'virtual_selected' && (
+                          <button
+                            onClick={() => handleCancelVirtualSelect(application.id)}
+                            className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                          >
+                            선택 취소
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
