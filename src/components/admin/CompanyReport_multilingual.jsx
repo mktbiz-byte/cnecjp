@@ -12,11 +12,13 @@ import {
   DollarSign, Activity, TrendingUp, BarChart3
 } from 'lucide-react'
 import i18n from '../../lib/i18n'
+import { useLanguage } from '../../contexts/LanguageContext'
 import LanguageSelector from '../LanguageSelector'
 
 const CompanyReport = () => {
   const { companyId } = useParams()
   const navigate = useNavigate()
+  const { language } = useLanguage()
   
   const [company, setCompany] = useState(null)
   const [campaigns, setCampaigns] = useState([])
@@ -194,9 +196,9 @@ const CompanyReport = () => {
   }
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat(i18n.getCurrentLanguage() === 'en' ? 'en-US' : 'ja-JP', {
+    return new Intl.NumberFormat(language === 'en' ? 'en-US' : language === 'ko' ? 'ko-KR' : 'ja-JP', {
       style: 'currency',
-      currency: 'JPY'
+      currency: language === 'ko' ? 'KRW' : 'JPY'
     }).format(amount || 0)
   }
 
@@ -204,8 +206,8 @@ const CompanyReport = () => {
     if (!dateString) return 'N/A'
     
     const date = new Date(dateString)
-    const locale = i18n.getCurrentLanguage() === 'en' ? 'en-US' : 
-                  i18n.getCurrentLanguage() === 'ko' ? 'ko-KR' : 'ja-JP'
+    const locale = language === 'en' ? 'en-US' : 
+                  language === 'ko' ? 'ko-KR' : 'ja-JP'
     
     return date.toLocaleDateString(locale)
   }
@@ -476,27 +478,6 @@ const CompanyReport = () => {
                   style={{ 
                     width: `${reportData.totalApplications > 0 
                       ? (reportData.statusDistribution.pending / reportData.totalApplications) * 100 
-                      : 0}%` 
-                  }}
-                ></div>
-              </div>
-            </div>
-            
-            {/* 승인됨 */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                  <span className="text-sm font-medium">{i18n.t('companyReport.status.approved')}</span>
-                </div>
-                <span className="text-sm font-medium">{reportData.statusDistribution.approved}</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-green-500 h-2 rounded-full" 
-                  style={{ 
-                    width: `${reportData.totalApplications > 0 
-                      ? (reportData.statusDistribution.approved / reportData.totalApplications) * 100 
                       : 0}%` 
                   }}
                 ></div>
