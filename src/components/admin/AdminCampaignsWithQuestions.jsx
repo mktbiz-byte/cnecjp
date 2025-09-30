@@ -18,6 +18,7 @@ import {
   Users, AlertCircle, CheckCircle, Clock, Target, FileText,
   Settings, Save, X, RefreshCw
 } from 'lucide-react'
+import TranslationHelper from '../TranslationHelper'
 
 const AdminCampaignsWithQuestions = () => {
   const navigate = useNavigate()
@@ -899,6 +900,11 @@ const AdminCampaignsWithQuestions = () => {
                 ))}
               </div>
 
+              {/* 번역 도우미 */}
+              <div className="mt-8">
+                <TranslationHelper />
+              </div>
+
               {/* 버튼 */}
               <div className="flex justify-end space-x-2 pt-6">
                 <Button
@@ -1097,6 +1103,11 @@ const AdminCampaignsWithQuestions = () => {
                     />
                   </div>
                 ))}
+              </div>
+
+              {/* 번역 도우미 */}
+              <div className="mt-8">
+                <TranslationHelper />
               </div>
 
               {/* 버튼 */}
