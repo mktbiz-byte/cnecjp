@@ -193,6 +193,24 @@ const CampaignCreationWithTranslator = () => {
         throw new Error('제목, 브랜드, 참가조건은 필수 입력 항목입니다.')
       }
 
+      // 날짜 필드 유효성 검사
+      if (!campaignForm.application_deadline || !campaignForm.start_date || !campaignForm.end_date) {
+        throw new Error('모집 마감일, 모집 발표일, 촬영 마감일을 모두 입력해주세요.')
+      }
+
+      // 날짜 논리 검증
+      const applicationDeadline = new Date(campaignForm.application_deadline)
+      const startDate = new Date(campaignForm.start_date)
+      const endDate = new Date(campaignForm.end_date)
+
+      if (applicationDeadline >= startDate) {
+        throw new Error('모집 마감일은 모집 발표일보다 이전이어야 합니다.')
+      }
+
+      if (startDate >= endDate) {
+        throw new Error('모집 발표일은 촬영 마감일보다 이전이어야 합니다.')
+      }
+
       // SNS 플랫폼 검증
       const hasSelectedPlatform = Object.values(campaignForm.target_platforms).some(Boolean)
       if (!hasSelectedPlatform) {
@@ -397,6 +415,55 @@ const CampaignCreationWithTranslator = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="0"
                   />
+                </div>
+              </div>
+
+              {/* 날짜 설정 */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-gray-900 border-b pb-2">📅 일정 설정</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      모집 마감일 *
+                    </label>
+                    <input
+                      type="date"
+                      value={campaignForm.application_deadline}
+                      onChange={(e) => setCampaignForm({...campaignForm, application_deadline: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      모집 발표일 *
+                    </label>
+                    <input
+                      type="date"
+                      value={campaignForm.start_date}
+                      onChange={(e) => setCampaignForm({...campaignForm, start_date: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      촬영 마감일 *
+                    </label>
+                    <input
+                      type="date"
+                      value={campaignForm.end_date}
+                      onChange={(e) => setCampaignForm({...campaignForm, end_date: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                  <p className="text-sm text-blue-800">
+                    💡 <strong>일정 가이드:</strong> 모집 마감일 → 모집 발표일 → 촬영 마감일 순서로 설정해주세요.
+                  </p>
                 </div>
               </div>
 
