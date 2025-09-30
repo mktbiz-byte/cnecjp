@@ -939,16 +939,8 @@ const CampaignApplicationUpdated = () => {
                               ...prev,
                               answer_3: e.target.value
                             }))}
-                          </div>
-                        ) : (
-                          <textarea
-                            value={applicationData.answer_3 || ''}
-                            onChange={(e) => setApplicationData(prev => ({
-                              ...prev,
-                              answer_3: e.target.value
-                            }))}
                             rows={campaign.question3_type === 'long' ? 5 : 3}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                             placeholder="답변을 입력하세요"
                             required
                           />
