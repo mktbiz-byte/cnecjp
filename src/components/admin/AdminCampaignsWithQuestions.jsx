@@ -42,6 +42,34 @@ const AdminCampaignsWithQuestions = () => {
     }
   }
 
+  // 캠페인 상태 변경
+  const handleStatusChange = async (campaignId, newStatus) => {
+    try {
+      await database.campaigns.update(campaignId, { status: newStatus })
+      await loadData() // 데이터 새로고침
+      alert(`캠페인 상태가 ${newStatus === 'active' ? '활성' : newStatus === 'completed' ? '완료' : '비활성'}으로 변경되었습니다.`)
+    } catch (error) {
+      console.error('상태 변경 오류:', error)
+      alert('상태 변경에 실패했습니다.')
+    }
+  }
+
+  // 캠페인 삭제
+  const handleDelete = async (campaignId, campaignTitle) => {
+    if (!confirm(`"${campaignTitle}" 캠페인을 정말 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
+      return
+    }
+
+    try {
+      await database.campaigns.delete(campaignId)
+      await loadData() // 데이터 새로고침
+      alert('캠페인이 삭제되었습니다.')
+    } catch (error) {
+      console.error('삭제 오류:', error)
+      alert('캠페인 삭제에 실패했습니다.')
+    }
+  }
+
   const formatDate = (dateString) => {
     if (!dateString) return '-'
     return new Date(dateString).toLocaleDateString('ko-KR')
@@ -176,6 +204,18 @@ const AdminCampaignsWithQuestions = () => {
                       </div>
                     </div>
                     <div className="flex space-x-2">
+                      {/* 상태 변경 드롭다운 */}
+                      <select
+                        value={campaign.status || 'inactive'}
+                        onChange={(e) => handleStatusChange(campaign.id, e.target.value)}
+                        className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="active">활성</option>
+                        <option value="inactive">임시</option>
+                        <option value="completed">완료</option>
+                        <option value="suspended">중단</option>
+                      </select>
+                      
                       <button
                         onClick={() => navigate(`/admin/applications?campaign=${campaign.id}`)}
                         className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
@@ -187,6 +227,12 @@ const AdminCampaignsWithQuestions = () => {
                         className="inline-flex items-center px-3 py-1 border border-blue-300 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100"
                       >
                         수정
+                      </button>
+                      <button
+                        onClick={() => handleDelete(campaign.id, campaign.title)}
+                        className="inline-flex items-center px-3 py-1 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100"
+                      >
+                        삭제
                       </button>
                     </div>
                   </div>
