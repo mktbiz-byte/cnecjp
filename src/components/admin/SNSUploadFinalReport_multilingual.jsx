@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { database } from '../../lib/supabase'
+import { useLanguage } from '../../contexts/LanguageContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -16,9 +17,10 @@ import {
 import i18n from '../../lib/i18n'
 import LanguageSelector from '../LanguageSelector'
 
-const SNSUploadFinalReport = () => {
+const SNSUploadFinalReport_multilingual = () => {
   const { campaignId } = useParams()
   const navigate = useNavigate()
+  const { language, t } = useLanguage()
   
   const [campaign, setCampaign] = useState(null)
   const [applications, setApplications] = useState([])
@@ -49,7 +51,7 @@ const SNSUploadFinalReport = () => {
       if (campaignId && campaignId !== 'undefined') {
         const campaignData = await database.campaigns.getById(campaignId)
         if (!campaignData) {
-          setError(i18n.t('common.error'))
+          setError(t('common.error'))
           return
         }
         setCampaign(campaignData)
@@ -68,7 +70,7 @@ const SNSUploadFinalReport = () => {
       }
       
       if (!applicationsData) {
-        setError(i18n.t('common.error'))
+        setError(t('common.error'))
         return
       }
       
@@ -103,7 +105,7 @@ const SNSUploadFinalReport = () => {
       
     } catch (error) {
       console.error('SNS 업로드 데이터 로드 오류:', error)
-      setError(i18n.t('common.error'))
+      setError(t('common.error'))
     } finally {
       setLoading(false)
     }
@@ -148,7 +150,7 @@ const SNSUploadFinalReport = () => {
   }
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat(i18n.getCurrentLanguage() === 'en' ? 'en-US' : 'ja-JP', {
+    return new Intl.NumberFormat(language === 'en' ? 'en-US' : language === 'ko' ? 'ko-KR' : 'ja-JP', {
       style: 'currency',
       currency: 'JPY'
     }).format(amount || 0)
@@ -158,20 +160,20 @@ const SNSUploadFinalReport = () => {
     if (!dateString) return 'N/A'
     
     const date = new Date(dateString)
-    const locale = i18n.getCurrentLanguage() === 'en' ? 'en-US' : 
-                  i18n.getCurrentLanguage() === 'ko' ? 'ko-KR' : 'ja-JP'
+    const locale = language === 'en' ? 'en-US' : 
+                  language === 'ko' ? 'ko-KR' : 'ja-JP'
     
     return date.toLocaleDateString(locale)
   }
 
   const exportToExcel = () => {
     const headers = [
-      i18n.t('common.name'), 
+      t('common.name'), 
       'Instagram URL', 
       'TikTok URL', 
       'YouTube URL', 
-      i18n.t('snsUploadReport.notes'), 
-      i18n.t('snsUploadReport.uploadDate')
+      t('snsUploadReport.notes'), 
+      t('snsUploadReport.uploadDate')
     ]
     
     const rows = applications.map(app => {
@@ -201,7 +203,7 @@ const SNSUploadFinalReport = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-purple-600 mx-auto mb-4" />
-          <p className="text-gray-600">{i18n.t('common.loading')}</p>
+          <p className="text-gray-600">{t('common.loading')}</p>
         </div>
       </div>
     )
@@ -211,10 +213,10 @@ const SNSUploadFinalReport = () => {
     return (
       <div className="text-center py-8">
         <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-gray-600 mb-2">{i18n.t('common.error')}</h3>
+        <h3 className="text-lg font-semibold text-gray-600 mb-2">{t('common.error')}</h3>
         <Button onClick={() => navigate('/admin/campaigns')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          {i18n.t('common.back')}
+          {t('common.back')}
         </Button>
       </div>
     )
@@ -234,17 +236,17 @@ const SNSUploadFinalReport = () => {
           <div>
             <Button variant="outline" onClick={() => navigate('/admin/campaigns')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              {i18n.t('common.back')}
+              {t('common.back')}
             </Button>
           </div>
           <div className="flex space-x-2">
             <Button onClick={exportToExcel} variant="outline">
               <Download className="h-4 w-4 mr-2" />
-              {i18n.t('common.download')}
+              {t('common.download')}
             </Button>
             <Button onClick={() => window.print()}>
               <FileText className="h-4 w-4 mr-2" />
-              {i18n.t('common.print')}
+              {t('common.print')}
             </Button>
           </div>
         </div>
@@ -254,9 +256,9 @@ const SNSUploadFinalReport = () => {
           <CardHeader>
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle className="text-3xl mb-2">{i18n.t('snsUploadReport.title')}</CardTitle>
+                <CardTitle className="text-3xl mb-2">{t('snsUploadReport.title')}</CardTitle>
                 <CardDescription className="text-xl text-purple-600 font-medium">
-                  {i18n.t('snsUploadReport.description')}
+                  {t('snsUploadReport.description')}
                 </CardDescription>
               </div>
             </div>
@@ -269,7 +271,7 @@ const SNSUploadFinalReport = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">{i18n.t('snsUploadReport.completedCreators')}</p>
+                  <p className="text-sm font-medium text-gray-600">{t('snsUploadReport.completedCreators')}</p>
                   <p className="text-3xl font-bold text-blue-600">{applications.length}</p>
                 </div>
                 <Users className="h-8 w-8 text-blue-600" />
@@ -281,7 +283,7 @@ const SNSUploadFinalReport = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">{i18n.t('snsUploadReport.totalUploads')}</p>
+                  <p className="text-sm font-medium text-gray-600">{t('snsUploadReport.totalUploads')}</p>
                   <p className="text-3xl font-bold text-green-600">{reportData.totalUploads}</p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-green-600" />
@@ -295,7 +297,7 @@ const SNSUploadFinalReport = () => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <BarChart3 className="h-5 w-5" />
-              <span>{i18n.t('snsUploadReport.platformStats')}</span>
+              <span>{t('snsUploadReport.platformStats')}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -304,8 +306,8 @@ const SNSUploadFinalReport = () => {
                 <div className="flex items-center space-x-3">
                   <Instagram className="h-8 w-8 text-pink-500" />
                   <div>
-                    <p className="font-medium">{i18n.t('sns.instagram')}</p>
-                    <p className="text-sm text-gray-600">{i18n.t('sns.reels')}</p>
+                    <p className="font-medium">{t('sns.instagram')}</p>
+                    <p className="text-sm text-gray-600">{t('sns.reels')}</p>
                   </div>
                 </div>
                 <div className="text-2xl font-bold text-pink-600">
@@ -317,8 +319,8 @@ const SNSUploadFinalReport = () => {
                 <div className="flex items-center space-x-3">
                   <Hash className="h-8 w-8 text-black" />
                   <div>
-                    <p className="font-medium">{i18n.t('sns.tiktok')}</p>
-                    <p className="text-sm text-gray-600">{i18n.t('sns.shorts')}</p>
+                    <p className="font-medium">{t('sns.tiktok')}</p>
+                    <p className="text-sm text-gray-600">{t('sns.shorts')}</p>
                   </div>
                 </div>
                 <div className="text-2xl font-bold text-gray-800">
@@ -330,8 +332,8 @@ const SNSUploadFinalReport = () => {
                 <div className="flex items-center space-x-3">
                   <Youtube className="h-8 w-8 text-red-500" />
                   <div>
-                    <p className="font-medium">{i18n.t('sns.youtube')}</p>
-                    <p className="text-sm text-gray-600">{i18n.t('sns.videos')}</p>
+                    <p className="font-medium">{t('sns.youtube')}</p>
+                    <p className="text-sm text-gray-600">{t('sns.videos')}</p>
                   </div>
                 </div>
                 <div className="text-2xl font-bold text-red-600">
@@ -343,8 +345,8 @@ const SNSUploadFinalReport = () => {
                 <div className="flex items-center space-x-3">
                   <Globe className="h-8 w-8 text-blue-500" />
                   <div>
-                    <p className="font-medium">{i18n.t('sns.other')}</p>
-                    <p className="text-sm text-gray-600">{i18n.t('sns.externalPlatform')}</p>
+                    <p className="font-medium">{t('sns.other')}</p>
+                    <p className="text-sm text-gray-600">{t('sns.externalPlatform')}</p>
                   </div>
                 </div>
                 <div className="text-2xl font-bold text-blue-600">
@@ -366,9 +368,9 @@ const SNSUploadFinalReport = () => {
         {/* Uploaded Content List */}
         <Card>
           <CardHeader>
-            <CardTitle>{i18n.t('snsUploadReport.uploadedContentList')}</CardTitle>
+            <CardTitle>{t('snsUploadReport.uploadedContentList')}</CardTitle>
             <CardDescription>
-              {i18n.t('snsUploadReport.uploadedContentDescription')}
+              {t('snsUploadReport.uploadedContentDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -383,12 +385,12 @@ const SNSUploadFinalReport = () => {
                       <div>
                         <h3 className="text-lg font-semibold">{profile?.name || 'N/A'}</h3>
                         <p className="text-sm text-gray-600">
-                          {i18n.t('snsUploadReport.uploadDate')}: {application.video_uploaded_at ? formatDate(application.video_uploaded_at) : 'N/A'}
+                          {t('snsUploadReport.uploadDate')}: {application.video_uploaded_at ? formatDate(application.video_uploaded_at) : 'N/A'}
                         </p>
                       </div>
                       <Badge className="bg-blue-100 text-blue-800">
                         <CheckCircle className="h-3 w-3 mr-1" />
-                        {i18n.t('snsUploadReport.completed')}
+                        {t('snsUploadReport.completed')}
                       </Badge>
                     </div>
                     
@@ -398,14 +400,14 @@ const SNSUploadFinalReport = () => {
                           <div className="flex items-center space-x-3">
                             <Instagram className="h-6 w-6 text-pink-500" />
                             <div>
-                              <p className="font-medium">{i18n.t('sns.instagram')}</p>
-                              <p className="text-sm text-gray-600">{i18n.t('sns.reels')}</p>
+                              <p className="font-medium">{t('sns.instagram')}</p>
+                              <p className="text-sm text-gray-600">{t('sns.reels')}</p>
                             </div>
                           </div>
                           <Button variant="outline" size="sm" asChild>
                             <a href={videoLinks.instagram_url} target="_blank" rel="noopener noreferrer">
                               <Play className="h-4 w-4 mr-2" />
-                              {i18n.t('snsUploadReport.watch')}
+                              {t('snsUploadReport.watch')}
                             </a>
                           </Button>
                         </div>
@@ -416,14 +418,14 @@ const SNSUploadFinalReport = () => {
                           <div className="flex items-center space-x-3">
                             <Hash className="h-6 w-6 text-black" />
                             <div>
-                              <p className="font-medium">{i18n.t('sns.tiktok')}</p>
-                              <p className="text-sm text-gray-600">{i18n.t('sns.shorts')}</p>
+                              <p className="font-medium">{t('sns.tiktok')}</p>
+                              <p className="text-sm text-gray-600">{t('sns.shorts')}</p>
                             </div>
                           </div>
                           <Button variant="outline" size="sm" asChild>
                             <a href={videoLinks.tiktok_url} target="_blank" rel="noopener noreferrer">
                               <Play className="h-4 w-4 mr-2" />
-                              {i18n.t('snsUploadReport.watch')}
+                              {t('snsUploadReport.watch')}
                             </a>
                           </Button>
                         </div>
@@ -434,14 +436,14 @@ const SNSUploadFinalReport = () => {
                           <div className="flex items-center space-x-3">
                             <Youtube className="h-6 w-6 text-red-500" />
                             <div>
-                              <p className="font-medium">{i18n.t('sns.youtube')}</p>
-                              <p className="text-sm text-gray-600">{i18n.t('sns.videos')}</p>
+                              <p className="font-medium">{t('sns.youtube')}</p>
+                              <p className="text-sm text-gray-600">{t('sns.videos')}</p>
                             </div>
                           </div>
                           <Button variant="outline" size="sm" asChild>
                             <a href={videoLinks.youtube_url} target="_blank" rel="noopener noreferrer">
                               <Play className="h-4 w-4 mr-2" />
-                              {i18n.t('snsUploadReport.watch')}
+                              {t('snsUploadReport.watch')}
                             </a>
                           </Button>
                         </div>
@@ -452,14 +454,14 @@ const SNSUploadFinalReport = () => {
                           <div className="flex items-center space-x-3">
                             <Globe className="h-6 w-6 text-blue-500" />
                             <div>
-                              <p className="font-medium">{i18n.t('sns.other')}</p>
-                              <p className="text-sm text-gray-600">{i18n.t('sns.externalPlatform')}</p>
+                              <p className="font-medium">{t('sns.other')}</p>
+                              <p className="text-sm text-gray-600">{t('sns.externalPlatform')}</p>
                             </div>
                           </div>
                           <Button variant="outline" size="sm" asChild>
                             <a href={videoLinks.other_url} target="_blank" rel="noopener noreferrer">
                               <ExternalLink className="h-4 w-4 mr-2" />
-                              {i18n.t('common.view')}
+                              {t('snsUploadReport.visit')}
                             </a>
                           </Button>
                         </div>
@@ -467,22 +469,14 @@ const SNSUploadFinalReport = () => {
                     </div>
                     
                     {videoLinks.notes && (
-                      <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                        <p className="text-sm font-medium text-gray-700 mb-1">{i18n.t('snsUploadReport.notes')}:</p>
-                        <p className="text-sm text-gray-600">{videoLinks.notes}</p>
+                      <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                        <p className="text-sm font-medium text-gray-700 mb-1">{t('snsUploadReport.notes')}:</p>
+                        <p className="text-gray-600">{videoLinks.notes}</p>
                       </div>
                     )}
                   </div>
                 )
               })}
-              
-              {applications.length === 0 && (
-                <div className="text-center py-8">
-                  <Play className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-600 mb-2">{i18n.t('common.error')}</h3>
-                  <p className="text-gray-500">{i18n.t('common.error')}</p>
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>
@@ -503,17 +497,17 @@ const SNSUploadFinalReport = () => {
         <div>
           <Button variant="outline" onClick={() => navigate('/admin/campaigns')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            {i18n.t('common.back')}
+            {t('common.back')}
           </Button>
         </div>
         <div className="flex space-x-2">
           <Button onClick={exportToExcel} variant="outline">
             <Download className="h-4 w-4 mr-2" />
-            {i18n.t('common.download')}
+            {t('common.download')}
           </Button>
           <Button onClick={() => window.print()}>
             <FileText className="h-4 w-4 mr-2" />
-            {i18n.t('common.print')}
+            {t('common.print')}
           </Button>
         </div>
       </div>
@@ -525,27 +519,48 @@ const SNSUploadFinalReport = () => {
             <div>
               <CardTitle className="text-3xl mb-2">{campaign.title}</CardTitle>
               <CardDescription className="text-xl text-purple-600 font-medium">
-                {i18n.t('snsUploadReport.description')}
+                {campaign.brand}
               </CardDescription>
             </div>
-            <div className="flex flex-col items-end">
-              <div className="flex items-center space-x-1 text-sm text-gray-600 mb-1">
-                <Calendar className="h-4 w-4" />
-                <span>{formatDate(campaign.start_date)} - {formatDate(campaign.end_date)}</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <Activity className="h-4 w-4" />
-                <span>{i18n.t('snsUploadReport.completed')}</span>
-              </div>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-3xl font-bold text-green-600">
-              {formatCurrency(applications.length * campaign.reward_amount)}
-            </div>
-            <div className="text-sm text-gray-600">{i18n.t('companyReport.metrics.totalReward')}</div>
+            <Badge className="bg-green-100 text-green-800 text-lg px-4 py-2">
+              {t('snsUploadReport.finalReport')}
+            </Badge>
           </div>
         </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="flex items-center space-x-4">
+              <Calendar className="h-5 w-5 text-gray-600" />
+              <div>
+                <p className="text-sm text-gray-600">{t('campaign.period')}</p>
+                <p className="font-medium">
+                  {formatDate(campaign.start_date)} - {formatDate(campaign.end_date)}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <DollarSign className="h-5 w-5 text-gray-600" />
+              <div>
+                <p className="text-sm text-gray-600">{t('campaign.reward')}</p>
+                <p className="font-medium">{formatCurrency(campaign.reward_amount)}</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <Activity className="h-5 w-5 text-gray-600" />
+              <div>
+                <p className="text-sm text-gray-600">{t('campaign.status')}</p>
+                <p className="font-medium">
+                  {campaign.status === 'active' ? t('campaign.active') : 
+                   campaign.status === 'completed' ? t('campaign.completed') : 
+                   campaign.status === 'draft' ? t('campaign.draft') : 
+                   t('campaign.closed')}
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
       </Card>
 
       {/* Key Metrics */}
@@ -554,7 +569,7 @@ const SNSUploadFinalReport = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">{i18n.t('snsUploadReport.completedCreators')}</p>
+                <p className="text-sm font-medium text-gray-600">{t('snsUploadReport.completedCreators')}</p>
                 <p className="text-3xl font-bold text-blue-600">{applications.length}</p>
               </div>
               <Users className="h-8 w-8 text-blue-600" />
@@ -566,7 +581,7 @@ const SNSUploadFinalReport = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">{i18n.t('snsUploadReport.totalUploads')}</p>
+                <p className="text-sm font-medium text-gray-600">{t('snsUploadReport.totalUploads')}</p>
                 <p className="text-3xl font-bold text-green-600">{reportData.totalUploads}</p>
               </div>
               <TrendingUp className="h-8 w-8 text-green-600" />
@@ -578,22 +593,12 @@ const SNSUploadFinalReport = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">{i18n.t('companyReport.metrics.totalReward')}</p>
-                <p className="text-3xl font-bold text-purple-600">{formatCurrency(applications.length * campaign.reward_amount)}</p>
+                <p className="text-sm font-medium text-gray-600">{t('snsUploadReport.totalReward')}</p>
+                <p className="text-3xl font-bold text-purple-600">
+                  {formatCurrency(campaign.reward_amount * applications.length)}
+                </p>
               </div>
-              <DollarSign className="h-8 w-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">{i18n.t('companyReport.campaignPerformance.completionRate')}</p>
-                <p className="text-3xl font-bold text-orange-600">100%</p>
-              </div>
-              <Award className="h-8 w-8 text-orange-600" />
+              <Award className="h-8 w-8 text-purple-600" />
             </div>
           </CardContent>
         </Card>
@@ -604,7 +609,7 @@ const SNSUploadFinalReport = () => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <BarChart3 className="h-5 w-5" />
-            <span>{i18n.t('snsUploadReport.platformStats')}</span>
+            <span>{t('snsUploadReport.platformStats')}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -613,8 +618,8 @@ const SNSUploadFinalReport = () => {
               <div className="flex items-center space-x-3">
                 <Instagram className="h-8 w-8 text-pink-500" />
                 <div>
-                  <p className="font-medium">{i18n.t('sns.instagram')}</p>
-                  <p className="text-sm text-gray-600">{i18n.t('sns.reels')}</p>
+                  <p className="font-medium">{t('sns.instagram')}</p>
+                  <p className="text-sm text-gray-600">{t('sns.reels')}</p>
                 </div>
               </div>
               <div className="text-2xl font-bold text-pink-600">
@@ -626,8 +631,8 @@ const SNSUploadFinalReport = () => {
               <div className="flex items-center space-x-3">
                 <Hash className="h-8 w-8 text-black" />
                 <div>
-                  <p className="font-medium">{i18n.t('sns.tiktok')}</p>
-                  <p className="text-sm text-gray-600">{i18n.t('sns.shorts')}</p>
+                  <p className="font-medium">{t('sns.tiktok')}</p>
+                  <p className="text-sm text-gray-600">{t('sns.shorts')}</p>
                 </div>
               </div>
               <div className="text-2xl font-bold text-gray-800">
@@ -639,8 +644,8 @@ const SNSUploadFinalReport = () => {
               <div className="flex items-center space-x-3">
                 <Youtube className="h-8 w-8 text-red-500" />
                 <div>
-                  <p className="font-medium">{i18n.t('sns.youtube')}</p>
-                  <p className="text-sm text-gray-600">{i18n.t('sns.videos')}</p>
+                  <p className="font-medium">{t('sns.youtube')}</p>
+                  <p className="text-sm text-gray-600">{t('sns.videos')}</p>
                 </div>
               </div>
               <div className="text-2xl font-bold text-red-600">
@@ -652,8 +657,8 @@ const SNSUploadFinalReport = () => {
               <div className="flex items-center space-x-3">
                 <Globe className="h-8 w-8 text-blue-500" />
                 <div>
-                  <p className="font-medium">{i18n.t('sns.other')}</p>
-                  <p className="text-sm text-gray-600">{i18n.t('sns.externalPlatform')}</p>
+                  <p className="font-medium">{t('sns.other')}</p>
+                  <p className="text-sm text-gray-600">{t('sns.externalPlatform')}</p>
                 </div>
               </div>
               <div className="text-2xl font-bold text-blue-600">
@@ -675,9 +680,9 @@ const SNSUploadFinalReport = () => {
       {/* Uploaded Content List */}
       <Card>
         <CardHeader>
-          <CardTitle>{i18n.t('snsUploadReport.uploadedContentList')}</CardTitle>
+          <CardTitle>{t('snsUploadReport.uploadedContentList')}</CardTitle>
           <CardDescription>
-            {i18n.t('snsUploadReport.uploadedContentDescription')}
+            {t('snsUploadReport.uploadedContentDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -692,12 +697,12 @@ const SNSUploadFinalReport = () => {
                     <div>
                       <h3 className="text-lg font-semibold">{profile?.name || 'N/A'}</h3>
                       <p className="text-sm text-gray-600">
-                        {i18n.t('snsUploadReport.uploadDate')}: {application.video_uploaded_at ? formatDate(application.video_uploaded_at) : 'N/A'}
+                        {t('snsUploadReport.uploadDate')}: {application.video_uploaded_at ? formatDate(application.video_uploaded_at) : 'N/A'}
                       </p>
                     </div>
                     <Badge className="bg-blue-100 text-blue-800">
                       <CheckCircle className="h-3 w-3 mr-1" />
-                      {i18n.t('snsUploadReport.completed')}
+                      {t('snsUploadReport.completed')}
                     </Badge>
                   </div>
                   
@@ -707,14 +712,14 @@ const SNSUploadFinalReport = () => {
                         <div className="flex items-center space-x-3">
                           <Instagram className="h-6 w-6 text-pink-500" />
                           <div>
-                            <p className="font-medium">{i18n.t('sns.instagram')}</p>
-                            <p className="text-sm text-gray-600">{i18n.t('sns.reels')}</p>
+                            <p className="font-medium">{t('sns.instagram')}</p>
+                            <p className="text-sm text-gray-600">{t('sns.reels')}</p>
                           </div>
                         </div>
                         <Button variant="outline" size="sm" asChild>
                           <a href={videoLinks.instagram_url} target="_blank" rel="noopener noreferrer">
                             <Play className="h-4 w-4 mr-2" />
-                            {i18n.t('snsUploadReport.watch')}
+                            {t('snsUploadReport.watch')}
                           </a>
                         </Button>
                       </div>
@@ -725,14 +730,14 @@ const SNSUploadFinalReport = () => {
                         <div className="flex items-center space-x-3">
                           <Hash className="h-6 w-6 text-black" />
                           <div>
-                            <p className="font-medium">{i18n.t('sns.tiktok')}</p>
-                            <p className="text-sm text-gray-600">{i18n.t('sns.shorts')}</p>
+                            <p className="font-medium">{t('sns.tiktok')}</p>
+                            <p className="text-sm text-gray-600">{t('sns.shorts')}</p>
                           </div>
                         </div>
                         <Button variant="outline" size="sm" asChild>
                           <a href={videoLinks.tiktok_url} target="_blank" rel="noopener noreferrer">
                             <Play className="h-4 w-4 mr-2" />
-                            {i18n.t('snsUploadReport.watch')}
+                            {t('snsUploadReport.watch')}
                           </a>
                         </Button>
                       </div>
@@ -743,14 +748,14 @@ const SNSUploadFinalReport = () => {
                         <div className="flex items-center space-x-3">
                           <Youtube className="h-6 w-6 text-red-500" />
                           <div>
-                            <p className="font-medium">{i18n.t('sns.youtube')}</p>
-                            <p className="text-sm text-gray-600">{i18n.t('sns.videos')}</p>
+                            <p className="font-medium">{t('sns.youtube')}</p>
+                            <p className="text-sm text-gray-600">{t('sns.videos')}</p>
                           </div>
                         </div>
                         <Button variant="outline" size="sm" asChild>
                           <a href={videoLinks.youtube_url} target="_blank" rel="noopener noreferrer">
                             <Play className="h-4 w-4 mr-2" />
-                            {i18n.t('snsUploadReport.watch')}
+                            {t('snsUploadReport.watch')}
                           </a>
                         </Button>
                       </div>
@@ -761,14 +766,14 @@ const SNSUploadFinalReport = () => {
                         <div className="flex items-center space-x-3">
                           <Globe className="h-6 w-6 text-blue-500" />
                           <div>
-                            <p className="font-medium">{i18n.t('sns.other')}</p>
-                            <p className="text-sm text-gray-600">{i18n.t('sns.externalPlatform')}</p>
+                            <p className="font-medium">{t('sns.other')}</p>
+                            <p className="text-sm text-gray-600">{t('sns.externalPlatform')}</p>
                           </div>
                         </div>
                         <Button variant="outline" size="sm" asChild>
                           <a href={videoLinks.other_url} target="_blank" rel="noopener noreferrer">
                             <ExternalLink className="h-4 w-4 mr-2" />
-                            {i18n.t('common.view')}
+                            {t('snsUploadReport.visit')}
                           </a>
                         </Button>
                       </div>
@@ -776,86 +781,19 @@ const SNSUploadFinalReport = () => {
                   </div>
                   
                   {videoLinks.notes && (
-                    <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                      <p className="text-sm font-medium text-gray-700 mb-1">{i18n.t('snsUploadReport.notes')}:</p>
-                      <p className="text-sm text-gray-600">{videoLinks.notes}</p>
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                      <p className="text-sm font-medium text-gray-700 mb-1">{t('snsUploadReport.notes')}:</p>
+                      <p className="text-gray-600">{videoLinks.notes}</p>
                     </div>
                   )}
                 </div>
               )
             })}
-            
-            {applications.length === 0 && (
-              <div className="text-center py-8">
-                <Play className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-600 mb-2">{i18n.t('common.error')}</h3>
-                <p className="text-gray-500">{i18n.t('common.error')}</p>
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>
-
-      {/* Summary */}
-      {applications.length > 0 && (
-        <Card className="border-l-4 border-l-green-500">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-green-800">
-              <Award className="h-5 w-5" />
-              <span>{i18n.t('companyReport.campaignPerformance.title')}</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="font-medium mb-3">{i18n.t('companyReport.metrics.totalApplications')}</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>{i18n.t('snsUploadReport.completedCreators')}:</span>
-                    <span className="font-medium">{applications.length}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>{i18n.t('snsUploadReport.totalUploads')}:</span>
-                    <span className="font-medium">{reportData.totalUploads}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>{i18n.t('companyReport.metrics.totalReward')}:</span>
-                    <span className="font-medium">{formatCurrency(applications.length * campaign.reward_amount)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>{i18n.t('companyReport.campaignPerformance.completionRate')}:</span>
-                    <span className="font-medium text-green-600">100%</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <h4 className="font-medium mb-3">{i18n.t('companyReport.campaignPerformance.platformDistribution')}</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>{i18n.t('sns.instagram')}:</span>
-                    <span className="font-medium">{reportData.platformStats.instagram}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>{i18n.t('sns.tiktok')}:</span>
-                    <span className="font-medium">{reportData.platformStats.tiktok}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>{i18n.t('sns.youtube')}:</span>
-                    <span className="font-medium">{reportData.platformStats.youtube}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>{i18n.t('sns.other')}:</span>
-                    <span className="font-medium">{reportData.platformStats.other}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   )
 }
 
-export default SNSUploadFinalReport
+export default SNSUploadFinalReport_multilingual
