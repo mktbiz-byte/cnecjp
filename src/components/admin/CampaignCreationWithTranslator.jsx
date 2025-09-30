@@ -39,7 +39,11 @@ const CampaignCreationWithTranslator = () => {
     question3_options: '',
     question4: '',
     question4_type: 'short',
-    question4_options: ''
+    question4_options: '',
+    // 참가 조건 필드
+    age_requirement: '',
+    skin_type_requirement: '',
+    offline_visit_requirement: ''
   })
 
   const [processing, setProcessing] = useState(false)
@@ -148,7 +152,11 @@ const CampaignCreationWithTranslator = () => {
               question3_options: campaign.question3_options || '',
               question4: campaign.question4 || '',
               question4_type: campaign.question4_type || 'short',
-              question4_options: campaign.question4_options || ''
+              question4_options: campaign.question4_options || '',
+              // 참가 조건 필드 매핑
+              age_requirement: campaign.age_requirement || '',
+              skin_type_requirement: campaign.skin_type_requirement || '',
+              offline_visit_requirement: campaign.offline_visit_requirement || ''
             })
           }
         } catch (error) {
@@ -258,7 +266,11 @@ const CampaignCreationWithTranslator = () => {
         question3_options: '',
         question4: '',
         question4_type: 'short',
-        question4_options: ''
+        question4_options: '',
+        // 참가 조건 필드
+        age_requirement: '',
+        skin_type_requirement: '',
+        offline_visit_requirement: ''
         })
       }
 
@@ -462,8 +474,8 @@ const CampaignCreationWithTranslator = () => {
                     피부타입
                   </label>
                   <select
-                    value={campaignForm.skin_type || ''}
-                    onChange={(e) => setCampaignForm({...campaignForm, skin_type: e.target.value})}
+                    value={campaignForm.skin_type_requirement || ''}
+                    onChange={(e) => setCampaignForm({...campaignForm, skin_type_requirement: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">선택하세요</option>
