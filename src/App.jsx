@@ -40,8 +40,13 @@ const AppContent = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    // 이메일 스케줄러 초기화
-    emailScheduler.init();
+    // 이메일 스케줄러 시작
+    emailScheduler.start();
+    
+    // 컴포넌트 언마운트 시 스케줄러 중지
+    return () => {
+      emailScheduler.stop();
+    };
   }, []);
 
   return (
