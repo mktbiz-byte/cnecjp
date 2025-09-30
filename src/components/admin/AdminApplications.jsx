@@ -67,26 +67,19 @@ const AdminApplications = () => {
       
       // 사용자 프로필 정보도 함께 로드
       if (allApplicationsData && allApplicationsData.length > 0) {
-        console.log('전체 신청서에서 사용자 프로필 로드 시작, 신청서 수:', allApplicationsData.length)
         const profiles = {}
         for (const app of allApplicationsData) {
-          console.log('신청서 데이터:', { id: app.id, user_id: app.user_id, user_name: app.user_name, user_email: app.user_email })
           if (app.user_id) {
             try {
-              console.log('프로필 로드 시도:', app.user_id)
               const profile = await database.userProfiles.get(app.user_id)
-              console.log('프로필 로드 결과:', profile)
               if (profile) {
                 profiles[app.user_id] = profile
               }
             } catch (profileError) {
               console.warn('프로필 로드 실패:', app.user_id, profileError)
             }
-          } else {
-            console.log('user_id가 없음:', app)
           }
         }
-        console.log('최종 프로필 데이터:', profiles)
         setUserProfiles(profiles)
       }
       
@@ -114,26 +107,19 @@ const AdminApplications = () => {
       
       // 사용자 프로필 정보도 함께 로드
       if (applicationsData && applicationsData.length > 0) {
-        console.log('사용자 프로필 로드 시작, 신청서 수:', applicationsData.length)
         const profiles = {}
         for (const app of applicationsData) {
-          console.log('신청서 데이터:', { id: app.id, user_id: app.user_id, user_name: app.user_name, user_email: app.user_email })
           if (app.user_id) {
             try {
-              console.log('프로필 로드 시도:', app.user_id)
               const profile = await database.userProfiles.get(app.user_id)
-              console.log('프로필 로드 결과:', profile)
               if (profile) {
                 profiles[app.user_id] = profile
               }
             } catch (profileError) {
               console.warn('프로필 로드 실패:', app.user_id, profileError)
             }
-          } else {
-            console.log('user_id가 없음:', app)
           }
         }
-        console.log('최종 프로필 데이터:', profiles)
         setUserProfiles(profiles)
       }
     } catch (error) {
