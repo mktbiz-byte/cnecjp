@@ -86,35 +86,37 @@ const TranslationHelper = () => {
         캠페인 내용을 한글로 작성하시면 자연스러운 일본어로 번역해드립니다.
       </p>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="space-y-6">
         {/* 한글 입력 */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-base font-semibold text-gray-800 mb-3 flex items-center">
+            <span className="mr-2">📝</span>
             한국어 입력
           </label>
           <textarea
             value={koreanText}
             onChange={(e) => setKoreanText(e.target.value)}
             placeholder="번역할 한국어 텍스트를 입력하세요..."
-            className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 resize-none"
+            className="w-full h-40 px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none text-base"
+            maxLength={500}
           />
-          <div className="mt-2 flex justify-between items-center">
-            <span className="text-xs text-gray-500">
+          <div className="mt-3 flex justify-between items-center">
+            <span className="text-sm text-gray-500">
               {koreanText.length} / 500자
             </span>
             <button
               onClick={() => translateText(koreanText)}
               disabled={!koreanText.trim() || isTranslating}
-              className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center px-6 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isTranslating ? (
                 <>
-                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   번역 중...
                 </>
               ) : (
                 <>
-                  <ArrowRight className="w-3 h-3 mr-1" />
+                  <ArrowRight className="w-4 h-4 mr-2" />
                   번역하기
                 </>
               )}
@@ -124,7 +126,8 @@ const TranslationHelper = () => {
 
         {/* 일본어 출력 */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-base font-semibold text-gray-800 mb-3 flex items-center">
+            <span className="mr-2">🇯🇵</span>
             일본어 번역 결과
           </label>
           <div className="relative">
@@ -132,28 +135,28 @@ const TranslationHelper = () => {
               value={japaneseText}
               onChange={(e) => setJapaneseText(e.target.value)}
               placeholder="번역 결과가 여기에 표시됩니다..."
-              className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 resize-none bg-gray-50"
+              className="w-full h-40 px-4 py-3 border-2 border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none bg-green-50 text-base"
             />
             {japaneseText && (
               <button
                 onClick={() => copyToClipboard(japaneseText)}
-                className="absolute top-2 right-2 p-1.5 text-gray-500 hover:text-gray-700 hover:bg-white rounded"
+                className="absolute top-3 right-3 p-2 text-gray-500 hover:text-gray-700 hover:bg-white rounded-lg transition-colors"
                 title="클립보드에 복사"
               >
-                <Copy className="w-4 h-4" />
+                <Copy className="w-5 h-5" />
               </button>
             )}
           </div>
-          <div className="mt-2 flex justify-between items-center">
-            <span className="text-xs text-gray-500">
+          <div className="mt-3 flex justify-between items-center">
+            <span className="text-sm text-gray-500">
               {japaneseText.length}자
             </span>
             {japaneseText && (
               <button
                 onClick={() => copyToClipboard(japaneseText)}
-                className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+                className="inline-flex items-center px-6 py-2.5 border-2 border-green-300 text-sm font-medium rounded-lg text-green-700 bg-green-50 hover:bg-green-100 transition-colors"
               >
-                <Copy className="w-3 h-3 mr-1" />
+                <Copy className="w-4 h-4 mr-2" />
                 복사하기
               </button>
             )}
