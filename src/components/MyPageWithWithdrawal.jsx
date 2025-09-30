@@ -28,6 +28,16 @@ const MyPageWithWithdrawal = () => {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
+  // 프로필 편집 관련 상태
+  const [isEditing, setIsEditing] = useState(false)
+  const [editForm, setEditForm] = useState({
+    name: '',
+    phone: '',
+    postal_code: '',
+    address: '',
+    skin_type: ''
+  })
+
   // 다국어 텍스트
   const texts = {
     ko: {
@@ -77,6 +87,10 @@ const MyPageWithWithdrawal = () => {
       logout: '로그아웃',
       goHome: '홈으로 가기',
       noData: '데이터가 없습니다',
+      edit: '수정',
+      save: '저장',
+      skinType: '피부타입',
+      postalCode: '우편번호',
       roles: {
         user: '일반 사용자',
         vip: 'VIP 사용자',
@@ -143,6 +157,10 @@ const MyPageWithWithdrawal = () => {
       logout: 'ログアウト',
       goHome: 'ホームに戻る',
       noData: 'データがありません',
+      edit: '編集',
+      save: '保存',
+      skinType: '肌タイプ',
+      postalCode: '郵便番号',
       roles: {
         user: '一般ユーザー',
         vip: 'VIPユーザー',
@@ -179,6 +197,17 @@ const MyPageWithWithdrawal = () => {
       // 프로필 정보 로드
       const profileData = await database.userProfiles.get(user.id)
       setProfile(profileData)
+      
+      // 편집 폼 초기화
+      if (profileData) {
+        setEditForm({
+          name: profileData.name || '',
+          phone: profileData.phone || '',
+          postal_code: profileData.postal_code || '',
+          address: profileData.address || '',
+          skin_type: profileData.skin_type || ''
+        })
+      }
       
       // 신청 내역 로드
       const applicationsData = await database.applications.getByUser(user.id)
@@ -225,6 +254,34 @@ const MyPageWithWithdrawal = () => {
       setError('') // 오류 상태 초기화
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleProfileSave = async () => {
+    try {
+      setProcessing(true)
+      setError('')
+      
+      const updateData = {
+        name: editForm.name,
+        phone: editForm.phone,
+        postal_code: editForm.postal_code,
+        address: editForm.address,
+        skin_type: editForm.skin_type
+      }
+      
+      await database.userProfiles.update(user.id, updateData)
+      
+      setSuccess(language === 'ko' ? '프로필이 성공적으로 업데이트되었습니다.' : 'プロフィールが正常に更新されました。')
+      setIsEditing(false)
+      loadUserData() // 데이터 새로고침
+      
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (error) {
+      console.error('프로필 업데이트 오류:', error)
+      setError(language === 'ko' ? '프로필 업데이트에 실패했습니다.' : 'プロフィールの更新に失敗しました。')
+    } finally {
+      setProcessing(false)
     }
   }
 
@@ -406,13 +463,49 @@ const MyPageWithWithdrawal = () => {
         <div className="bg-white rounded-lg shadow">
           {activeTab === 'profile' && (
             <div className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">{t.personalInfo}</h2>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">{t.personalInfo}</h2>
+                <button
+                  onClick={() => {
+                    if (isEditing) {
+                      handleProfileSave()
+                    } else {
+                      setIsEditing(true)
+                    }
+                  }}
+                  disabled={processing}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {processing ? t.processing : (isEditing ? t.save : t.edit)}
+                </button>
+              </div>
+              
+              {/* 성공/오류 메시지 */}
+              {success && (
+                <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
+                  <p className="text-green-800">{success}</p>
+                </div>
+              )}
+              {error && (
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-red-800">{error}</p>
+                </div>
+              )}
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">{t.name}</label>
-                    <p className="mt-1 text-sm text-gray-900">{profile?.name || '이름 없음'}</p>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editForm.name}
+                        onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">{profile?.name || '이름 없음'}</p>
+                    )}
                   </div>
                   
                   <div>
@@ -422,25 +515,75 @@ const MyPageWithWithdrawal = () => {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700">{t.phone}</label>
-                    <p className="mt-1 text-sm text-gray-900">{profile?.phone || '등록되지 않음'}</p>
+                    {isEditing ? (
+                      <input
+                        type="tel"
+                        value={editForm.phone}
+                        onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
+                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="080-1234-5678"
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">{profile?.phone || '등록되지 않음'}</p>
+                    )}
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{t.address}</label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {profile?.postal_code && profile?.address 
-                        ? `${profile.postal_code} ${profile.address}`
-                        : '등록되지 않음'
-                      }
-                    </p>
+                    <label className="block text-sm font-medium text-gray-700">{t.skinType}</label>
+                    {isEditing ? (
+                      <select
+                        value={editForm.skin_type}
+                        onChange={(e) => setEditForm({...editForm, skin_type: e.target.value})}
+                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">選択してください</option>
+                        <option value="乾燥肌">乾燥肌</option>
+                        <option value="脂性肌">脂性肌</option>
+                        <option value="混合肌">混合肌</option>
+                        <option value="敏感肌">敏感肌</option>
+                        <option value="普通肌">普通肌</option>
+                      </select>
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">{profile?.skin_type || '未設定'}</p>
+                    )}
                   </div>
                 </div>
                 
                 <div className="space-y-4">
                   <div>
+                    <label className="block text-sm font-medium text-gray-700">{t.postalCode}</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editForm.postal_code}
+                        onChange={(e) => setEditForm({...editForm, postal_code: e.target.value})}
+                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="123-4567"
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">{profile?.postal_code || '未設定'}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">{t.address}</label>
+                    {isEditing ? (
+                      <textarea
+                        value={editForm.address}
+                        onChange={(e) => setEditForm({...editForm, address: e.target.value})}
+                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        rows="2"
+                        placeholder="東京都渋谷区..."
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">{profile?.address || '未設定'}</p>
+                    )}
+                  </div>
+                  
+                  <div>
                     <label className="block text-sm font-medium text-gray-700">{t.joinDate}</label>
                     <p className="mt-1 text-sm text-gray-900">
-                      {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('ko-KR') : '-'}
+                      {profile?.created_at ? new Date(profile.created_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'ja-JP') : '-'}
                     </p>
                   </div>
                   
@@ -453,17 +596,6 @@ const MyPageWithWithdrawal = () => {
                     <label className="block text-sm font-medium text-gray-700">{t.currentPoints}</label>
                     <p className="mt-1 text-lg font-semibold text-purple-600">
                       {profile?.points?.toLocaleString() || 0}P
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">{t.totalEarned}</label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {pointTransactions
-                        .filter(t => ['earn', 'bonus', 'admin_add'].includes(t.transaction_type))
-                        .reduce((sum, t) => sum + t.amount, 0)
-                        .toLocaleString()
-                      }P
                     </p>
                   </div>
                 </div>
@@ -518,13 +650,13 @@ const MyPageWithWithdrawal = () => {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        캠페인
+                        {language === 'ko' ? '캠페인' : 'キャンペーン'}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        상태
+                        {language === 'ko' ? '상태' : 'ステータス'}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        신청일
+                        {language === 'ko' ? '신청일' : '応募日'}
                       </th>
                     </tr>
                   </thead>
@@ -540,7 +672,7 @@ const MyPageWithWithdrawal = () => {
                         <tr key={application.id}>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">
-                              {application.campaign_title || '캠페인 정보 없음'}
+                              {application.campaign_title || (language === 'ko' ? '캠페인 정보 없음' : 'キャンペーン情報なし')}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -549,12 +681,13 @@ const MyPageWithWithdrawal = () => {
                               application.status === 'rejected' ? 'bg-red-100 text-red-800' :
                               'bg-yellow-100 text-yellow-800'
                             }`}>
-                              {application.status === 'approved' ? '승인됨' :
-                               application.status === 'rejected' ? '거절됨' : '대기중'}
+                              {application.status === 'approved' ? (language === 'ko' ? '승인됨' : '承認済み') :
+                               application.status === 'rejected' ? (language === 'ko' ? '거절됨' : '拒否済み') : 
+                               (language === 'ko' ? '대기중' : '待機中')}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {new Date(application.created_at).toLocaleDateString('ko-KR')}
+                            {new Date(application.created_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'ja-JP')}
                           </td>
                         </tr>
                       ))
