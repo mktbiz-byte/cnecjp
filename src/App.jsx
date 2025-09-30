@@ -95,6 +95,7 @@ const MainContent = () => {
         <Route path="/admin/sns-uploads" element={<SNSUploadFinalReport />} />
         <Route path="/admin/email-templates" element={<EmailTemplateManager />} />
         <Route path="/admin/users" element={<UserApprovalManagerEnhanced />} />
+        <Route path="/admin/user-approval" element={<UserApprovalManagerEnhanced />} />
         <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
         <Route path="/admin/system-settings" element={<SystemSettings />} />
       </Routes>
