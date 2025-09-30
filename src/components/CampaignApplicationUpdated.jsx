@@ -650,6 +650,47 @@ const CampaignApplicationUpdated = () => {
                       required
                     />
                   </div>
+
+                  {/* 오프라인 방문 가능 여부 */}
+                  {campaign?.offline_visit_requirement && (
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-blue-900 mb-2">오프라인 방문 조건</h4>
+                      <p className="text-blue-800 text-sm mb-3">{campaign.offline_visit_requirement}</p>
+                      
+                      <div className="space-y-3">
+                        <div>
+                          <label className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={applicationData.offline_visit_available || false}
+                              onChange={(e) => setApplicationData(prev => ({ 
+                                ...prev, 
+                                offline_visit_available: e.target.checked 
+                              }))}
+                              className="mr-2"
+                            />
+                            <span className="text-sm">위 조건에 따른 오프라인 방문이 가능합니다</span>
+                          </label>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            오프라인 방문 관련 메모 (선택사항)
+                          </label>
+                          <textarea
+                            value={applicationData.offline_visit_notes || ''}
+                            onChange={(e) => setApplicationData(prev => ({ 
+                              ...prev, 
+                              offline_visit_notes: e.target.value 
+                            }))}
+                            placeholder="방문 가능한 시간대, 특이사항 등을 작성해주세요"
+                            rows={2}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

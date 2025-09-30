@@ -386,18 +386,28 @@ const CampaignCreationWithTranslator = () => {
                 </div>
               </div>
 
-              {/* 주소지 */}
+              {/* 오프라인 방문 조건 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  주소지 조건
+                  오프라인 방문 조건
+                  <button
+                    type="button"
+                    onClick={() => setCampaignForm({...campaignForm, offline_visit_requirement: ''})}
+                    className="ml-2 text-xs text-red-600 hover:text-red-800"
+                  >
+                    [조건 없애기]
+                  </button>
                 </label>
-                <input
-                  type="text"
-                  value={campaignForm.location_requirement || ''}
-                  onChange={(e) => setCampaignForm({...campaignForm, location_requirement: e.target.value})}
+                <textarea
+                  value={campaignForm.offline_visit_requirement || ''}
+                  onChange={(e) => setCampaignForm({...campaignForm, offline_visit_requirement: e.target.value})}
+                  rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="예: 서울, 경기 지역"
+                  placeholder="예: 서울 강남구 오프라인 매장 방문 필수, 체험 후기 작성 등 (선택사항)"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  오프라인 방문이 필요한 경우에만 작성하세요. 비워두면 온라인 전용 캠페인이 됩니다.
+                </p>
               </div>
 
               {/* 질문 4가지 */}
