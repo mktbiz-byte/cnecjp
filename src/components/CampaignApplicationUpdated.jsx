@@ -206,6 +206,8 @@ const CampaignApplicationUpdated = () => {
       if (profileData) {
         setApplicationData(prev => ({
           ...prev,
+          age: profileData.age || '',
+          skin_type: profileData.skin_type || '',
           instagram_url: profileData.instagram_url || '',
           youtube_url: profileData.youtube_url || '',
           tiktok_url: profileData.tiktok_url || ''
@@ -251,10 +253,10 @@ const CampaignApplicationUpdated = () => {
     const errors = []
 
     // 개인정보 필수 필드 검증
-    if (!applicationData.age || applicationData.age < 1) {
+    if (!applicationData.age || applicationData.age.toString().trim() === '' || applicationData.age < 1) {
       errors.push('年齢を正しく入力してください')
     }
-    if (!applicationData.skin_type.trim()) {
+    if (!applicationData.skin_type || applicationData.skin_type.trim() === '') {
       errors.push('肌タイプを選択してください')
     }
 
