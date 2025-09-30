@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { database } from '../../lib/supabase'
@@ -603,9 +603,14 @@ const ApplicationsReportSimple = () => {
                         </div>
                         <div className="ml-4">
                           <div className="flex items-center">
-                            <p className="text-sm font-medium text-indigo-600 truncate">
-                              {application.user_name || '이름 없음'}
-                            </p>
+                            <div>
+                              <p className="text-sm font-medium text-indigo-600 truncate">
+                                {application.user_name || '이름 없음'}
+                              </p>
+                              <p className="text-xs text-gray-500 truncate">
+                                {application.user_email || '이메일 없음'}
+                              </p>
+                            </div>
                             <div className="ml-2">
                               {getStatusBadge(application.status)}
                             </div>
