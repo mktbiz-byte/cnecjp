@@ -352,6 +352,173 @@ const CampaignCreationWithTranslator = () => {
                 </div>
               </div>
 
+              {/* 나이 및 피부타입 */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    나이 조건
+                  </label>
+                  <input
+                    type="text"
+                    value={campaignForm.age_requirement || ''}
+                    onChange={(e) => setCampaignForm({...campaignForm, age_requirement: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="예: 20-30세"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    피부타입
+                  </label>
+                  <select
+                    value={campaignForm.skin_type || ''}
+                    onChange={(e) => setCampaignForm({...campaignForm, skin_type: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">선택하세요</option>
+                    <option value="건성">건성</option>
+                    <option value="지성">지성</option>
+                    <option value="복합성">복합성</option>
+                    <option value="민감성">민감성</option>
+                    <option value="모든타입">모든타입</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* 주소지 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  주소지 조건
+                </label>
+                <input
+                  type="text"
+                  value={campaignForm.location_requirement || ''}
+                  onChange={(e) => setCampaignForm({...campaignForm, location_requirement: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="예: 서울, 경기 지역"
+                />
+              </div>
+
+              {/* 질문 4가지 */}
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">질문</h3>
+                
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        질문 1
+                      </label>
+                      <input
+                        type="text"
+                        value={campaignForm.question1 || ''}
+                        onChange={(e) => setCampaignForm({...campaignForm, question1: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="질문 1을 입력하세요"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        답수
+                      </label>
+                      <input
+                        type="number"
+                        value={campaignForm.question1_answers || ''}
+                        onChange={(e) => setCampaignForm({...campaignForm, question1_answers: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        질문 2
+                      </label>
+                      <input
+                        type="text"
+                        value={campaignForm.question2 || ''}
+                        onChange={(e) => setCampaignForm({...campaignForm, question2: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="질문 2를 입력하세요"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        답수
+                      </label>
+                      <input
+                        type="number"
+                        value={campaignForm.question2_answers || ''}
+                        onChange={(e) => setCampaignForm({...campaignForm, question2_answers: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        질문 3
+                      </label>
+                      <input
+                        type="text"
+                        value={campaignForm.question3 || ''}
+                        onChange={(e) => setCampaignForm({...campaignForm, question3: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="질문 3을 입력하세요"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        답수
+                      </label>
+                      <input
+                        type="number"
+                        value={campaignForm.question3_answers || ''}
+                        onChange={(e) => setCampaignForm({...campaignForm, question3_answers: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        질문 4
+                      </label>
+                      <input
+                        type="text"
+                        value={campaignForm.question4 || ''}
+                        onChange={(e) => setCampaignForm({...campaignForm, question4: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="질문 4를 입력하세요"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        답수
+                      </label>
+                      <input
+                        type="number"
+                        value={campaignForm.question4_answers || ''}
+                        onChange={(e) => setCampaignForm({...campaignForm, question4_answers: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* 저장 버튼 */}
               <div className="pt-4">
                 <button
