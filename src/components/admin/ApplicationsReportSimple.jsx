@@ -729,13 +729,23 @@ const ApplicationsReportSimple = () => {
                         )}
 
                         {application.status === 'approved' && (
-                          <button
-                            onClick={() => openDriveModal(application)}
-                            className="inline-flex items-center px-3 py-1.5 border border-blue-300 shadow-sm text-xs font-medium rounded text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                          >
-                            <Link className="h-3 w-3 mr-1" />
-                            {t.provideDriveAccess}
-                          </button>
+                          <>
+                            <button
+                              onClick={() => openDriveModal(application)}
+                              className="inline-flex items-center px-3 py-1.5 border border-blue-300 shadow-sm text-xs font-medium rounded text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            >
+                              <Link className="h-3 w-3 mr-1" />
+                              {t.provideDriveAccess}
+                            </button>
+                            <button
+                              onClick={() => handleStatusChange(application, 'pending')}
+                              disabled={processing}
+                              className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                            >
+                              <XCircle className="h-3 w-3 mr-1" />
+                              승인 취소
+                            </button>
+                          </>
                         )}
                       </div>
                     </div>

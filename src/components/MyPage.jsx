@@ -1,18 +1,21 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
+import { useAuth } from '../contexts/AuthContext'
 import { database } from '../lib/supabase'
-import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Separator } from '@/components/ui/separator'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
-import { Loader2, User, Settings, FileText, Award, ArrowLeft, Edit, Save, X, Instagram, Youtube, Hash, Calendar, Palette, Mail, Phone } from 'lucide-react'
+import { User, Settings, Award, AlertCircle, Loader2, CheckCircle2, Palette, Mail, Phone } from 'lucide-react'
+import WithdrawalModal from './WithdrawalModal'
+import WithdrawalHistory from './WithdrawalHistory'
 
 const MyPage = () => {
   const { user, userProfile, updateProfile, signOut } = useAuth()
@@ -20,11 +23,11 @@ const MyPage = () => {
   const navigate = useNavigate()
   
   const [applications, setApplications] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [updating, setUpdating] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [editMode, setEditMode] = useState(false)
+  const [activeTab, setActiveTab] = useState('profile')
+  const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false)
   
   const [profileData, setProfileData] = useState({
     name: '',
@@ -629,33 +632,82 @@ const MyPage = () => {
           <TabsContent value="rewards">
             <Card className="shadow-xl border-0">
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Award className="h-5 w-5" />
-                  <span>{language === 'ko' ? '보상 내역' : '報酬履歴'}</span>
-                </CardTitle>
-                <CardDescription>
-                  {language === 'ko' 
-                    ? '완료된 캠페인의 보상 내역을 확인할 수 있습니다.'
-                    : '完了したキャンペーンの報酬履歴を確認できます。'
-                  }
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Award className="h-5 w-5" />
+                      <span>{language === 'ko' ? '보상 내역' : '報酬履歴'}</span>
+                    </CardTitle>
+                    <CardDescription>
+                      {language === 'ko' 
+                        ? '완료된 캠페인의 보상 내역을 확인할 수 있습니다.'
+                        : '完了したキャンペーンの報酬履歴を確認できます。'
+                      }
+                    </CardDescription>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <div className="text-right">
+                      <p className="text-sm text-gray-500">
+                        {language === 'ko' ? '보유 포인트' : '保有ポイント'}
+                      </p>
+                      <p className="text-xl font-bold text-purple-600">
+                        {userProfile?.total_points || 0} {language === 'ko' ? '포인트' : 'ポイント'}
+                      </p>
+                    </div>
+                    <Button 
+                      onClick={() => setWithdrawalModalOpen(true)}
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      {language === 'ko' ? '출금 신청' : '出金申請'}
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               
               <CardContent>
-                <div className="text-center py-12">
-                  <div className="text-gray-400 text-6xl mb-4">💰</div>
-                  <h3 className="text-lg font-semibold text-gray-600 mb-2">
-                    {language === 'ko' ? '보상 내역이 없습니다' : '報酬履歴はありません'}
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                    {language === 'ko' ? '출금 신청 내역' : '出金申請履歴'}
                   </h3>
-                  <p className="text-gray-500">
-                    {language === 'ko' 
-                      ? '캠페인을 완료하면 보상 내역이 여기에 표시됩니다.'
-                      : 'キャンペーンを完了すると報酬履歴がここに表示されます。'
-                    }
-                  </p>
+                  <WithdrawalHistory userId={user.id} />
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                    {language === 'ko' ? '보상 내역' : '報酬履歴'}
+                  </h3>
+                  <div className="text-center py-8">
+                    <div className="text-gray-400 text-4xl mb-4">💰</div>
+                    <h3 className="text-base font-semibold text-gray-600 mb-2">
+                      {language === 'ko' ? '보상 내역이 없습니다' : '報酬履歴はありません'}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {language === 'ko' 
+                        ? '캠페인을 완료하면 보상 내역이 여기에 표시됩니다.'
+                        : 'キャンペーンを完了すると報酬履歴がここに表示されます。'
+                      }
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
+            
+            {/* 출금 신청 모달 */}
+            <WithdrawalModal 
+              isOpen={withdrawalModalOpen}
+              onClose={() => setWithdrawalModalOpen(false)}
+              userId={user.id}
+              availablePoints={userProfile?.total_points || 0}
+              onSuccess={() => {
+                setSuccess(language === 'ko' 
+                  ? '출금 신청이 완료되었습니다. 처리까지 영업일 기준 3-5일이 소요됩니다.'
+                  : '出金申請が完了しました。処理まで営業日基準3-5日かかります。'
+                )
+                setTimeout(() => setSuccess(''), 5000)
+                loadPageData()
+              }}
+            />
           </TabsContent>
         </Tabs>
       </div>

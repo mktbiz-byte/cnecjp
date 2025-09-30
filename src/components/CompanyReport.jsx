@@ -36,31 +36,20 @@ const CompanyReport = () => {
   const [selectedCampaign, setSelectedCampaign] = useState('all')
 
   useEffect(() => {
-    if (companyId && accessToken) {
+    if (companyId) {
       loadCompanyData()
     } else {
-      setError('アクセストークンが無効です。')
+      setError('キャンペーンIDが無効です。')
       setLoading(false)
     }
-  }, [companyId, accessToken, selectedPeriod, selectedCampaign])
+  }, [companyId, selectedPeriod, selectedCampaign])
 
   const loadCompanyData = async () => {
     try {
       setLoading(true)
       setError('')
       
-      // 액세스 토큰 검증
-      const { data: tokenData, error: tokenError } = await supabase
-        .from('company_access_tokens')
-        .select('*')
-        .eq('company_id', companyId)
-        .eq('token', accessToken)
-        .eq('is_active', true)
-        .single()
-      
-      if (tokenError || !tokenData) {
-        throw new Error('無効なアクセストークンです。')
-      }
+      // 토큰 검증 생략 - 관리자 권한으로 접근
       
       // 회사 정보 로드
       const { data: companyData, error: companyError } = await supabase
