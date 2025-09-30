@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { database } from '../../lib/supabase'
 import AdminNavigation from './AdminNavigation'
@@ -7,6 +7,8 @@ import AdminNavigation from './AdminNavigation'
 const CampaignCreationWithTranslator = () => {
   const navigate = useNavigate()
   const { language } = useLanguage()
+  const [searchParams] = useSearchParams()
+  const editId = searchParams.get('edit')
 
   const [campaignForm, setCampaignForm] = useState({
     title: '',
@@ -25,12 +27,19 @@ const CampaignCreationWithTranslator = () => {
       youtube: false,
       tiktok: false
     },
-    questions: [
-      { text: '', required: true },
-      { text: '', required: false },
-      { text: '', required: false },
-      { text: '', required: false }
-    ]
+    // 질문 개별 필드
+    question1: '',
+    question1_type: 'short',
+    question1_options: '',
+    question2: '',
+    question2_type: 'short',
+    question2_options: '',
+    question3: '',
+    question3_type: 'short',
+    question3_options: '',
+    question4: '',
+    question4_type: 'short',
+    question4_options: ''
   })
 
   const [processing, setProcessing] = useState(false)
@@ -101,6 +110,59 @@ const CampaignCreationWithTranslator = () => {
     }
   }
 
+  // 수정 모드일 때 기존 캠페인 데이터 로드
+  useEffect(() => {
+    const loadCampaignForEdit = async () => {
+      if (editId) {
+        try {
+          setProcessing(true)
+          const campaign = await database.campaigns.getById(editId)
+          
+          if (campaign) {
+            setCampaignForm({
+              title: campaign.title || '',
+              brand: campaign.brand || '',
+              description: campaign.description || '',
+              requirements: campaign.requirements || '',
+              category: campaign.category || 'beauty',
+              reward_amount: campaign.reward_amount || '',
+              max_participants: campaign.max_participants || '',
+              application_deadline: campaign.application_deadline || '',
+              start_date: campaign.start_date || '',
+              end_date: campaign.end_date || '',
+              status: campaign.status || 'active',
+              target_platforms: campaign.target_platforms || {
+                instagram: true,
+                youtube: false,
+                tiktok: false
+              },
+              // 개별 질문 필드 매핑
+              question1: campaign.question1 || '',
+              question1_type: campaign.question1_type || 'short',
+              question1_options: campaign.question1_options || '',
+              question2: campaign.question2 || '',
+              question2_type: campaign.question2_type || 'short',
+              question2_options: campaign.question2_options || '',
+              question3: campaign.question3 || '',
+              question3_type: campaign.question3_type || 'short',
+              question3_options: campaign.question3_options || '',
+              question4: campaign.question4 || '',
+              question4_type: campaign.question4_type || 'short',
+              question4_options: campaign.question4_options || ''
+            })
+          }
+        } catch (error) {
+          console.error('캠페인 로드 오류:', error)
+          setError('캠페인 데이터를 불러오는데 실패했습니다.')
+        } finally {
+          setProcessing(false)
+        }
+      }
+    }
+
+    loadCampaignForEdit()
+  }, [editId])
+
   // 클립보드에 복사
   const copyToClipboard = async (text) => {
     try {
@@ -135,19 +197,39 @@ const CampaignCreationWithTranslator = () => {
         reward_amount: parseInt(campaignForm.reward_amount) || 0,
         max_participants: parseInt(campaignForm.max_participants) || 0,
         target_platforms: campaignForm.target_platforms,
-        questions: campaignForm.questions.filter(q => q.text.trim())
+        // questions 배열 대신 개별 필드로 저장
+        question1: campaignForm.question1 || '',
+        question1_type: campaignForm.question1_type || 'short',
+        question1_options: campaignForm.question1_options || '',
+        question2: campaignForm.question2 || '',
+        question2_type: campaignForm.question2_type || 'short',
+        question2_options: campaignForm.question2_options || '',
+        question3: campaignForm.question3 || '',
+        question3_type: campaignForm.question3_type || 'short',
+        question3_options: campaignForm.question3_options || '',
+        question4: campaignForm.question4 || '',
+        question4_type: campaignForm.question4_type || 'short',
+        question4_options: campaignForm.question4_options || ''
       }
 
-      const result = await database.campaigns.create(campaignData)
+      let result
+      if (editId) {
+        // 수정 모드
+        result = await database.campaigns.update(editId, campaignData)
+      } else {
+        // 생성 모드
+        result = await database.campaigns.create(campaignData)
+      }
       
       if (result.error) {
         throw new Error(result.error.message)
       }
 
-      setSuccess('캠페인이 성공적으로 생성되었습니다!')
+      setSuccess(editId ? '캠페인이 성공적으로 수정되었습니다!' : '캠페인이 성공적으로 생성되었습니다!')
       
-      // 폼 초기화
-      setCampaignForm({
+      // 생성 모드일 때만 폼 초기화
+      if (!editId) {
+        setCampaignForm({
         title: '',
         brand: '',
         description: '',
@@ -164,13 +246,21 @@ const CampaignCreationWithTranslator = () => {
           youtube: false,
           tiktok: false
         },
-        questions: [
-          { text: '', required: true },
-          { text: '', required: false },
-          { text: '', required: false },
-          { text: '', required: false }
-        ]
-      })
+        // 질문 개별 필드
+        question1: '',
+        question1_type: 'short',
+        question1_options: '',
+        question2: '',
+        question2_type: 'short',
+        question2_options: '',
+        question3: '',
+        question3_type: 'short',
+        question3_options: '',
+        question4: '',
+        question4_type: 'short',
+        question4_options: ''
+        })
+      }
 
       // 3초 후 캠페인 관리 페이지로 이동
       setTimeout(() => {

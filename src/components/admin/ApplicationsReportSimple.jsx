@@ -896,15 +896,15 @@ const ApplicationsReportSimple = () => {
                         <h4 className="text-md font-semibold mb-3">{t.questionsAndAnswers}</h4>
                         <div className="space-y-4">
                           {[1, 2, 3, 4].map((num) => {
-                            const question = selectedApplication[`question_${num}`]
+                            const campaignQuestion = campaign?.[`question${num}`]
                             const answer = selectedApplication[`answer_${num}`]
                             
-                            if (!question && !answer) return null
+                            if (!campaignQuestion && !answer) return null
                             
                             return (
                               <div key={num} className="bg-gray-50 p-4 rounded-lg">
                                 <p className="text-sm text-gray-600 mb-1">질문 {num}:</p>
-                                <p className="font-medium mb-2">{question || '질문 없음'}</p>
+                                <p className="font-medium mb-2">{campaignQuestion || '질문 없음'}</p>
                                 <p className="text-sm text-gray-600 mb-1">답변:</p>
                                 <p className="text-gray-800">{answer || '답변 없음'}</p>
                               </div>

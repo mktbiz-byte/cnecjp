@@ -277,13 +277,18 @@ const CampaignApplicationUpdated = () => {
       errors.push(t.instagramRequired)
     }
 
-    // 질문 답변 검증
-    if (campaign?.questions) {
-      campaign.questions.forEach((question, index) => {
-        if (question.required && !applicationData[`answer_${index + 1}`]?.trim()) {
-          errors.push(`질문 ${index + 1}은 필수입니다`)
-        }
-      })
+    // 질문 답변 검증 (개별 질문 필드 사용)
+    if (campaign?.question1 && !applicationData.answer_1?.trim()) {
+      errors.push('질문 1은 필수입니다')
+    }
+    if (campaign?.question2 && !applicationData.answer_2?.trim()) {
+      errors.push('질문 2는 필수입니다')
+    }
+    if (campaign?.question3 && !applicationData.answer_3?.trim()) {
+      errors.push('질문 3은 필수입니다')
+    }
+    if (campaign?.question4 && !applicationData.answer_4?.trim()) {
+      errors.push('질문 4는 필수입니다')
     }
 
     return errors
@@ -801,82 +806,204 @@ const CampaignApplicationUpdated = () => {
               </div>
 
               {/* 질문 답변 섹션 */}
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">질문</h3>
-                <div className="space-y-4">
-                  {/* 질문 1 */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      질문 1 <span className="text-red-500 ml-1">*</span>
-                    </label>
-                    <textarea
-                      value={applicationData.answer_1 || ''}
-                      onChange={(e) => setApplicationData(prev => ({
-                        ...prev,
-                        answer_1: e.target.value
-                      }))}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                      placeholder="질문 1에 대한 답변을 입력하세요"
-                      required
-                    />
-                  </div>
+              {(campaign?.question1 || campaign?.question2 || campaign?.question3 || campaign?.question4) && (
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">질문</h3>
+                  <div className="space-y-4">
+                    {/* 질문 1 */}
+                    {campaign?.question1 && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {campaign.question1} <span className="text-red-500 ml-1">*</span>
+                        </label>
+                        {campaign.question1_type === 'checkbox' ? (
+                          <div className="space-y-2">
+                            {campaign.question1_options?.split(',').map((option, idx) => (
+                              <label key={idx} className="flex items-center">
+                                <input
+                                  type="checkbox"
+                                  value={option.trim()}
+                                  checked={applicationData.answer_1?.includes(option.trim()) || false}
+                                  onChange={(e) => {
+                                    const currentAnswers = applicationData.answer_1?.split(',').map(a => a.trim()).filter(Boolean) || []
+                                    const newAnswers = e.target.checked 
+                                      ? [...currentAnswers, option.trim()]
+                                      : currentAnswers.filter(a => a !== option.trim())
+                                    setApplicationData(prev => ({
+                                      ...prev,
+                                      answer_1: newAnswers.join(', ')
+                                    }))
+                                  }}
+                                  className="mr-2"
+                                />
+                                {option.trim()}
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <textarea
+                            value={applicationData.answer_1 || ''}
+                            onChange={(e) => setApplicationData(prev => ({
+                              ...prev,
+                              answer_1: e.target.value
+                            }))}
+                            rows={campaign.question1_type === 'long' ? 5 : 3}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="답변을 입력하세요"
+                            required
+                          />
+                        )}
+                      </div>
+                    )}
 
-                  {/* 질문 2 */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      질문 2 <span className="text-red-500 ml-1">*</span>
-                    </label>
-                    <textarea
-                      value={applicationData.answer_2 || ''}
-                      onChange={(e) => setApplicationData(prev => ({
-                        ...prev,
-                        answer_2: e.target.value
-                      }))}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                      placeholder="질문 2에 대한 답변을 입력하세요"
-                      required
-                    />
-                  </div>
+                    {/* 질문 2 */}
+                    {campaign?.question2 && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {campaign.question2} <span className="text-red-500 ml-1">*</span>
+                        </label>
+                        {campaign.question2_type === 'checkbox' ? (
+                          <div className="space-y-2">
+                            {campaign.question2_options?.split(',').map((option, idx) => (
+                              <label key={idx} className="flex items-center">
+                                <input
+                                  type="checkbox"
+                                  value={option.trim()}
+                                  checked={applicationData.answer_2?.includes(option.trim()) || false}
+                                  onChange={(e) => {
+                                    const currentAnswers = applicationData.answer_2?.split(',').map(a => a.trim()).filter(Boolean) || []
+                                    const newAnswers = e.target.checked 
+                                      ? [...currentAnswers, option.trim()]
+                                      : currentAnswers.filter(a => a !== option.trim())
+                                    setApplicationData(prev => ({
+                                      ...prev,
+                                      answer_2: newAnswers.join(', ')
+                                    }))
+                                  }}
+                                  className="mr-2"
+                                />
+                                {option.trim()}
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <textarea
+                            value={applicationData.answer_2 || ''}
+                            onChange={(e) => setApplicationData(prev => ({
+                              ...prev,
+                              answer_2: e.target.value
+                            }))}
+                            rows={campaign.question2_type === 'long' ? 5 : 3}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="답변을 입력하세요"
+                            required
+                          />
+                        )}
+                      </div>
+                    )}
 
-                  {/* 질문 3 */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      질문 3 <span className="text-red-500 ml-1">*</span>
-                    </label>
-                    <textarea
-                      value={applicationData.answer_3 || ''}
-                      onChange={(e) => setApplicationData(prev => ({
-                        ...prev,
-                        answer_3: e.target.value
-                      }))}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                      placeholder="질문 3에 대한 답변을 입력하세요"
-                      required
-                    />
-                  </div>
+                    {/* 질문 3 */}
+                    {campaign?.question3 && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {campaign.question3} <span className="text-red-500 ml-1">*</span>
+                        </label>
+                        {campaign.question3_type === 'checkbox' ? (
+                          <div className="space-y-2">
+                            {campaign.question3_options?.split(',').map((option, idx) => (
+                              <label key={idx} className="flex items-center">
+                                <input
+                                  type="checkbox"
+                                  value={option.trim()}
+                                  checked={applicationData.answer_3?.includes(option.trim()) || false}
+                                  onChange={(e) => {
+                                    const currentAnswers = applicationData.answer_3?.split(',').map(a => a.trim()).filter(Boolean) || []
+                                    const newAnswers = e.target.checked 
+                                      ? [...currentAnswers, option.trim()]
+                                      : currentAnswers.filter(a => a !== option.trim())
+                                    setApplicationData(prev => ({
+                                      ...prev,
+                                      answer_3: newAnswers.join(', ')
+                                    }))
+                                  }}
+                                  className="mr-2"
+                                />
+                                {option.trim()}
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <textarea
+                            value={applicationData.answer_3 || ''}
+                            onChange={(e) => setApplicationData(prev => ({
+                              ...prev,
+                              answer_3: e.target.value
+                            }))}
+                          </div>
+                        ) : (
+                          <textarea
+                            value={applicationData.answer_3 || ''}
+                            onChange={(e) => setApplicationData(prev => ({
+                              ...prev,
+                              answer_3: e.target.value
+                            }))}
+                            rows={campaign.question3_type === 'long' ? 5 : 3}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="답변을 입력하세요"
+                            required
+                          />
+                        )}
+                      </div>
+                    )}
 
-                  {/* 질문 4 */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      질문 4 <span className="text-red-500 ml-1">*</span>
-                    </label>
-                    <textarea
-                      value={applicationData.answer_4 || ''}
-                      onChange={(e) => setApplicationData(prev => ({
-                        ...prev,
-                        answer_4: e.target.value
-                      }))}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                      placeholder="질문 4에 대한 답변을 입력하세요"
-                      required
-                    />
+                    {/* 질문 4 */}
+                    {campaign?.question4 && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {campaign.question4} <span className="text-red-500 ml-1">*</span>
+                        </label>
+                        {campaign.question4_type === 'checkbox' ? (
+                          <div className="space-y-2">
+                            {campaign.question4_options?.split(',').map((option, idx) => (
+                              <label key={idx} className="flex items-center">
+                                <input
+                                  type="checkbox"
+                                  value={option.trim()}
+                                  checked={applicationData.answer_4?.includes(option.trim()) || false}
+                                  onChange={(e) => {
+                                    const currentAnswers = applicationData.answer_4?.split(',').map(a => a.trim()).filter(Boolean) || []
+                                    const newAnswers = e.target.checked 
+                                      ? [...currentAnswers, option.trim()]
+                                      : currentAnswers.filter(a => a !== option.trim())
+                                    setApplicationData(prev => ({
+                                      ...prev,
+                                      answer_4: newAnswers.join(', ')
+                                    }))
+                                  }}
+                                  className="mr-2"
+                                />
+                                {option.trim()}
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <textarea
+                            value={applicationData.answer_4 || ''}
+                            onChange={(e) => setApplicationData(prev => ({
+                              ...prev,
+                              answer_4: e.target.value
+                            }))}
+                            rows={campaign.question4_type === 'long' ? 5 : 3}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="답변을 입력하세요"
+                            required
+                          />
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* 추가 정보 섹션 */}
               <div>

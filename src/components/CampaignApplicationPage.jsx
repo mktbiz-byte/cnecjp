@@ -84,17 +84,17 @@ const CampaignApplicationPage = () => {
       const campaignData = await database.campaigns.getById(campaignId)
       setCampaign(campaignData)
       
-      // 캠페인 질문들로 answers 초기화
-      if (campaignData.questions) {
-        const initialAnswers = {}
-        campaignData.questions.forEach(question => {
-          initialAnswers[question.id] = ''
-        })
-        setFormData(prev => ({
-          ...prev,
-          answers: initialAnswers
-        }))
-      }
+      // 캠페인 질문들로 answers 초기화 (개별 질문 필드 사용)
+      const initialAnswers = {}
+      if (campaignData.question1) initialAnswers['1'] = ''
+      if (campaignData.question2) initialAnswers['2'] = ''
+      if (campaignData.question3) initialAnswers['3'] = ''
+      if (campaignData.question4) initialAnswers['4'] = ''
+      
+      setFormData(prev => ({
+        ...prev,
+        answers: initialAnswers
+      }))
     } catch (error) {
       console.error('Load campaign error:', error)
       setError(language === 'ko' 
@@ -158,14 +158,15 @@ const CampaignApplicationPage = () => {
         : '正しい年齢を入力してください。（13-100歳）'
     }
 
-    // 캠페인 질문 답변 검증
-    if (campaign?.questions) {
-      for (const question of campaign.questions) {
-        if (question.required && !formData.answers[question.id]) {
-          return language === 'ko' 
-            ? '필수 질문에 답변해주세요.'
-            : '必須質問に回答してください。'
-        }
+    // 캠페인 질문 답변 검증 (개별 질문 필드 사용)
+    for (let i = 1; i <= 4; i++) {
+      const question = campaign?.[`question${i}`]
+      const answer = formData.answers[i.toString()]
+      
+      if (question && !answer) {
+        return language === 'ko' 
+          ? '필수 질문에 답변해주세요.'
+          : '必須質問に回答してください。'
       }
     }
 
@@ -535,38 +536,72 @@ const CampaignApplicationPage = () => {
               </div>
 
               {/* 캠페인 질문 */}
-              {campaign.questions && campaign.questions.length > 0 && (
+              {(campaign.question1 || campaign.question2 || campaign.question3 || campaign.question4) && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-800">
                     {language === 'ko' ? '캠페인 질문' : 'キャンペーン質問'}
                   </h3>
                   
-                  {campaign.questions.map((question, index) => (
-                    <div key={question.id} className="space-y-2">
-                      <Label htmlFor={`question_${question.id}`}>
-                        {index + 1}. {question.question || question.text}
-                        {question.required && ' *'}
-                      </Label>
-                      
-                      {question.type === 'textarea' ? (
-                        <Textarea
-                          id={`question_${question.id}`}
-                          value={formData.answers[question.id] || ''}
-                          onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-                          placeholder={language === 'ko' ? '답변을 입력하세요' : '回答を入力してください'}
-                          required={question.required}
-                        />
-                      ) : (
-                        <Input
-                          id={`question_${question.id}`}
-                          value={formData.answers[question.id] || ''}
-                          onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-                          placeholder={language === 'ko' ? '답변을 입력하세요' : '回答を入力してください'}
-                          required={question.required}
-                        />
-                      )}
-                    </div>
-                  ))}
+                  {[1, 2, 3, 4].map((num) => {
+                    const question = campaign[`question${num}`]
+                    const questionType = campaign[`question${num}_type`] || 'short'
+                    const questionOptions = campaign[`question${num}_options`]
+                    
+                    if (!question) return null
+                    
+                    return (
+                      <div key={num} className="space-y-2">
+                        <Label htmlFor={`question_${num}`}>
+                          {num}. {question} *
+                        </Label>
+                        
+                        {questionType === 'long' ? (
+                          <Textarea
+                            id={`question_${num}`}
+                            value={formData.answers[num.toString()] || ''}
+                            onChange={(e) => handleAnswerChange(num.toString(), e.target.value)}
+                            placeholder={language === 'ko' ? '답변을 입력하세요' : '回答を入力してください'}
+                            required
+                          />
+                        ) : questionType === 'checkbox' && questionOptions ? (
+                          <div className="space-y-2">
+                            {questionOptions.split(',').map((option, optionIndex) => (
+                              <label key={optionIndex} className="flex items-center space-x-2">
+                                <input
+                                  type="checkbox"
+                                  value={option.trim()}
+                                  checked={(formData.answers[num.toString()] || '').includes(option.trim())}
+                                  onChange={(e) => {
+                                    const currentAnswers = formData.answers[num.toString()] || ''
+                                    const answerArray = currentAnswers ? currentAnswers.split(', ') : []
+                                    
+                                    if (e.target.checked) {
+                                      answerArray.push(option.trim())
+                                    } else {
+                                      const index = answerArray.indexOf(option.trim())
+                                      if (index > -1) answerArray.splice(index, 1)
+                                    }
+                                    
+                                    handleAnswerChange(num.toString(), answerArray.join(', '))
+                                  }}
+                                  className="rounded border-gray-300"
+                                />
+                                <span className="text-sm">{option.trim()}</span>
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <Input
+                            id={`question_${num}`}
+                            value={formData.answers[num.toString()] || ''}
+                            onChange={(e) => handleAnswerChange(num.toString(), e.target.value)}
+                            placeholder={language === 'ko' ? '답변을 입력하세요' : '回答を入力してください'}
+                            required
+                          />
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               )}
 

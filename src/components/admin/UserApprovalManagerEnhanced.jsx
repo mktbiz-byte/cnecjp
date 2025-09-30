@@ -187,13 +187,13 @@ const UserApprovalManagerEnhanced = () => {
 
   const loadWithdrawalRequests = async () => {
     try {
-      const { data, error } = await database.supabase
+      const { data, error } = await supabase
         .from('withdrawal_requests')
         .select(`
           *,
           user_profiles!inner(name, email)
         `)
-        .order('requested_at', { ascending: false })
+        .order('created_at', { ascending: false })
       
       if (error) throw error
       setWithdrawalRequests(data || [])
@@ -942,7 +942,7 @@ const UserApprovalManagerEnhanced = () => {
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {new Date(request.requested_at).toLocaleDateString('ko-KR')}
+                              {new Date(request.created_at).toLocaleDateString('ko-KR')}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               {getStatusBadge(request.status)}
