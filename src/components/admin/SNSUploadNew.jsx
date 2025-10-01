@@ -173,7 +173,7 @@ const SNSUploadNew = () => {
         console.log('캠페인 데이터:', campaignData)
       }
       
-      // 완료된 크리에이터의 SNS 업로드 데이터 로드 (실제 데이터베이스 구조에 맞게)
+      // 완료된 크리에이터의 SNS 업로드 데이터 로드 (사용자 프로필 정보 포함)
       let query = supabase
         .from('applications')
         .select(`
@@ -183,6 +183,16 @@ const SNSUploadNew = () => {
             title,
             brand,
             reward_amount
+          ),
+          user_profiles (
+            user_id,
+            name,
+            email,
+            phone,
+            instagram_handle,
+            tiktok_handle,
+            youtube_handle,
+            follower_count
           )
         `)
         .eq('status', 'completed')
@@ -263,7 +273,8 @@ const SNSUploadNew = () => {
       return
     }
 
-    const confirmMessage = `${application.applicant_name}님에게 ${application.campaigns.reward_amount.toLocaleString()}P를 지급하시겠습니까?`
+    const userName = application.user_profiles?.name || application.applicant_name || '사용자'
+    const confirmMessage = `${userName}님에게 ${application.campaigns.reward_amount.toLocaleString()}P를 지급하시겠습니까?`
     
     if (!window.confirm(confirmMessage)) {
       return
@@ -317,7 +328,7 @@ const SNSUploadNew = () => {
           : app
       ))
 
-      setSuccess(`${application.applicant_name}님에게 ${application.campaigns.reward_amount.toLocaleString()}P가 지급되었습니다.`)
+      setSuccess(`${userName}님에게 ${application.campaigns.reward_amount.toLocaleString()}P가 지급되었습니다.`)
       setTimeout(() => setSuccess(''), 5000)
 
     } catch (error) {
@@ -358,15 +369,17 @@ const SNSUploadNew = () => {
 
   const exportToExcel = () => {
     const data = applications.map(app => ({
-      '이름': app.user_profiles?.name || '',
+      '이름': app.user_profiles?.name || app.applicant_name || '',
       '이메일': app.user_profiles?.email || '',
+      '전화번호': app.user_profiles?.phone || '',
+      '인스타그램 핸들': app.user_profiles?.instagram_handle || '',
+      '팔로워 수': app.user_profiles?.follower_count || '',
       '캠페인': app.campaigns?.title || '',
       '브랜드': app.campaigns?.brand || '',
       '상태': app.status,
-      'Instagram URL': app.user_profiles?.instagram_url || '',
-      'TikTok URL': app.user_profiles?.tiktok_url || '',
-      'YouTube URL': app.user_profiles?.youtube_url || '',
-      'Twitter URL': app.user_profiles?.twitter_url || '',
+      'Instagram URL': app.instagram_url || '',
+      'TikTok URL': app.tiktok_url || '',
+      'YouTube URL': app.youtube_url || '',
       'SNS 업로드 URL': app.sns_upload_url || '',
       '관리자 피드백': app.admin_feedback || '',
       '완료일': app.completed_at ? new Date(app.completed_at).toLocaleDateString() : '',
@@ -485,10 +498,42 @@ const SNSUploadNew = () => {
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-3">
                           <h3 className="text-lg font-semibold text-gray-800">
-                            {application.applicant_name || '이름 없음'}
+                            {application.user_profiles?.name || application.applicant_name || '이름 없음'}
                           </h3>
                           {getStatusBadge(application)}
                         </div>
+                        
+                        {/* 사용자 정보 */}
+                        {application.user_profiles && (
+                          <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                              {application.user_profiles.email && (
+                                <div className="flex items-center space-x-2">
+                                  <Mail className="h-4 w-4 text-gray-500" />
+                                  <span>{application.user_profiles.email}</span>
+                                </div>
+                              )}
+                              {application.user_profiles.phone && (
+                                <div className="flex items-center space-x-2">
+                                  <Phone className="h-4 w-4 text-gray-500" />
+                                  <span>{application.user_profiles.phone}</span>
+                                </div>
+                              )}
+                              {application.user_profiles.instagram_handle && (
+                                <div className="flex items-center space-x-2">
+                                  <Instagram className="h-4 w-4 text-pink-500" />
+                                  <span>@{application.user_profiles.instagram_handle}</span>
+                                </div>
+                              )}
+                              {application.user_profiles.follower_count && (
+                                <div className="flex items-center space-x-2">
+                                  <Users className="h-4 w-4 text-blue-500" />
+                                  <span>{application.user_profiles.follower_count.toLocaleString()} 팔로워</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
                         
                         {/* 캠페인 정보 */}
                         {!campaignId && (
