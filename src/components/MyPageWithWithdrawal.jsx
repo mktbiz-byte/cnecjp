@@ -875,10 +875,72 @@ const MyPageWithWithdrawal = () => {
             <div className="p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">{t.withdrawalHistory}</h2>
               
-              <div className="text-center py-12 text-gray-500">
-                <CreditCard className="mx-auto h-12 w-12 text-gray-400" />
-                <p className="mt-4">{t.noData}</p>
-              </div>
+              {withdrawals.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <CreditCard className="mx-auto h-12 w-12 text-gray-400" />
+                  <p className="mt-4">{t.noData}</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          {language === 'ko' ? '출금 방법' : '出金方法'}
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          {language === 'ko' ? '금액' : '金額'}
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          {language === 'ko' ? '상태' : 'ステータス'}
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          {language === 'ko' ? '신청일' : '申請日'}
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          {language === 'ko' ? '처리일' : '処理日'}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {withdrawals.map((withdrawal) => (
+                        <tr key={withdrawal.id}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {withdrawal.withdrawal_method === 'paypal' ? 'PayPal' : 
+                             withdrawal.withdrawal_method === 'bank' ? (language === 'ko' ? '은행 송금' : '銀行振込') : 
+                             withdrawal.withdrawal_method}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ¥{withdrawal.amount?.toLocaleString() || '0'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              withdrawal.status === 'completed' ? 'bg-green-100 text-green-800' :
+                              withdrawal.status === 'approved' ? 'bg-blue-100 text-blue-800' :
+                              withdrawal.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {withdrawal.status === 'completed' ? (language === 'ko' ? '완료' : '完了') :
+                               withdrawal.status === 'approved' ? (language === 'ko' ? '승인됨' : '承認済み') :
+                               withdrawal.status === 'rejected' ? (language === 'ko' ? '거절됨' : '拒否済み') : 
+                               (language === 'ko' ? '대기중' : '待機中')}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(withdrawal.created_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'ja-JP')}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {withdrawal.processed_at ? 
+                              new Date(withdrawal.processed_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'ja-JP') : 
+                              '-'
+                            }
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 

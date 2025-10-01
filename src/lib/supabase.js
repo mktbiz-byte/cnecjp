@@ -824,12 +824,12 @@ export const database = {
     async getAll() {
       return safeQuery(async () => {
         const { data, error } = await supabase
-          .from('withdrawals')
+          .from('withdrawal_requests')
           .select(`
             *,
-            user_profiles!withdrawals_user_id_fkey(name, email)
+            user_profiles!withdrawal_requests_user_id_fkey(name, email)
           `)
-          .order('requested_at', { ascending: false })
+          .order('created_at', { ascending: false })
         if (error) throw error
         return data || []
       })
@@ -838,10 +838,10 @@ export const database = {
     async getByUser(userId) {
       return safeQuery(async () => {
         const { data, error } = await supabase
-          .from('withdrawals')
+          .from('withdrawal_requests')
           .select('*')
           .eq('user_id', userId)
-          .order('requested_at', { ascending: false })
+          .order('created_at', { ascending: false })
         if (error) throw error
         return data || []
       })
@@ -851,10 +851,11 @@ export const database = {
       return safeQuery(async () => {
         console.log('출금 신청 데이터:', withdrawalData)
         
-        // PayPal 컬럼이 존재한다면 PayPal 정보 포함하여 삽입
+        // withdrawal_requests 테이블에 맞는 데이터 구조
         const insertData = {
           user_id: withdrawalData.user_id,
           amount: withdrawalData.amount,
+          withdrawal_method: 'paypal',
           paypal_email: withdrawalData.paypal_email,
           paypal_name: withdrawalData.paypal_name,
           reason: withdrawalData.reason || 'ポイント出金申請',
@@ -864,7 +865,7 @@ export const database = {
         console.log('삽입할 데이터:', insertData)
         
         const { data, error } = await supabase
-          .from('withdrawals')
+          .from('withdrawal_requests')
           .insert([insertData])
           .select()
           
@@ -893,7 +894,7 @@ export const database = {
         if (notes) updateData.notes = notes
 
         const { data, error } = await supabase
-          .from('withdrawals')
+          .from('withdrawal_requests')
           .update(updateData)
           .eq('id', id)
           .select()

@@ -13,6 +13,7 @@ import CampaignApplicationPage from './components/CampaignApplicationPage';
 // import CompanyReport from './components/CompanyReport';
 // import CompanyReport from './components/CompanyReport_fixed';
 import CompanyReport_multilingual from './components/admin/CompanyReport_multilingual';
+import CompanyReportNew from './components/CompanyReportNew';
 import MyPageWithWithdrawal from './components/MyPageWithWithdrawal';
 import PayPalWithdrawal from './components/PayPalWithdrawal';
 import JapanWithdrawalRequest from './components/JapanWithdrawalRequest';
@@ -76,7 +77,7 @@ const AppContent = () => {
         <Route path="/mypage" element={<MyPageWithWithdrawal />} />
         <Route path="/profile" element={<ProfileSettings />} />
         <Route path="/paypal-withdrawal" element={<PayPalWithdrawal />} />
-        <Route path="/company-report/:campaignId" element={<CompanyReport_multilingual />} />
+        <Route path="/company-report/:campaignId" element={<CompanyReportNew />} />
         <Route path="/profile-settings" element={<ProfileSettings />} />
         
         {/* 관리자 페이지 */}
