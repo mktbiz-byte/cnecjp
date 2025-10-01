@@ -746,7 +746,7 @@ const CampaignApplicationUpdated = () => {
                         
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            {language === 'ja' ? 'オフライン訪問関連メモ（任意）' : '오프라인 방문 관련 메모 (선택사항)'}
+                            {language === 'ja' ? 'オフライン訪問関連メモ' : '오프라인 방문 관련 메모'}
                           </label>
                           <textarea
                             value={applicationData.offline_visit_notes || ''}
@@ -786,7 +786,7 @@ const CampaignApplicationUpdated = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {t.youtubeUrl} <span className="text-gray-400">({t.optionalField})</span>
+                        {t.youtubeUrl}
                       </label>
                       <input
                         type="url"
@@ -799,7 +799,7 @@ const CampaignApplicationUpdated = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {t.tiktokUrl} <span className="text-gray-400">({t.optionalField})</span>
+                        {t.tiktokUrl}
                       </label>
                       <input
                         type="url"
@@ -1008,7 +1008,7 @@ const CampaignApplicationUpdated = () => {
               {/* 추가 정보 섹션 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t.additionalInfo} <span className="text-gray-400">({t.optionalField})</span>
+                  {t.additionalInfo}
                 </label>
                 <textarea
                   value={applicationData.additional_info}
