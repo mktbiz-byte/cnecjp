@@ -237,95 +237,60 @@ export const database = {
   applications: {
     async getAll() {
       return safeQuery(async () => {
-        console.log('Applications getAll() 호출 - 사용자 정보와 함께 조회')
+        console.log('Applications getAll() 호출 - applications 테이블 직접 조회')
         
         try {
-          // campaign_applications 테이블에서 기본 데이터 조회
-          const { data: campaignAppsData, error: campaignAppsError } = await supabase
-            .from('campaign_applications')
-            .select('*')
-            .order('created_at', { ascending: false })
-          
-          if (!campaignAppsError && campaignAppsData && campaignAppsData.length > 0) {
-            console.log('Campaign Applications 데이터 로드 성공:', campaignAppsData.length, '개')
-            
-            // 사용자 프로필 정보 별도 조회
-            const { data: userProfiles } = await supabase
-              .from('user_profiles')
-              .select('*')
-            
-            // 캠페인 정보 별도 조회
-            const { data: campaigns } = await supabase
-              .from('campaigns')
-              .select('id, title')
-            
-            // 데이터 병합
-            const enrichedData = campaignAppsData.map(application => {
-              const userProfile = userProfiles?.find(up => up.user_id === application.user_id)
-              const campaign = campaigns?.find(c => c.id === application.campaign_id)
-              
-              return {
-                ...application,
-                user_name: userProfile?.name || application.applicant_name || '-',
-                user_email: userProfile?.email || '-',
-                user_age: userProfile?.age || application.age || '-',
-                user_skin_type: userProfile?.skin_type || application.skin_type || '-',
-                user_instagram_url: userProfile?.instagram_url || application.instagram_url || '',
-                user_tiktok_url: userProfile?.tiktok_url || application.tiktok_url || '',
-                user_youtube_url: userProfile?.youtube_url || application.youtube_url || '',
-                user_bio: userProfile?.bio || application.bio || '',
-                campaign_title: campaign?.title || '캠페인 정보 없음'
-              }
-            })
-            
-            return enrichedData
-          }
-          
-          // campaign_applications가 비어있으면 기존 applications 테이블 확인
-          console.log('Campaign Applications 테이블이 비어있음, 기존 applications 테이블 확인')
+          // applications 테이블에서 직접 데이터 조회
           const { data: appsData, error: appsError } = await supabase
             .from('applications')
             .select('*')
             .order('created_at', { ascending: false })
           
-          if (!appsError && appsData) {
-            console.log('기존 Applications 데이터 로드 성공:', appsData.length, '개')
-            
-            // 사용자 프로필 정보 별도 조회
-            const { data: userProfiles } = await supabase
-              .from('user_profiles')
-              .select('*')
-            
-            // 데이터 병합
-            const enrichedData = appsData.map(application => {
-              const userProfile = userProfiles?.find(up => up.user_id === application.user_id)
-              
-              return {
-                ...application,
-                user_name: userProfile?.name || application.applicant_name || '-',
-                user_email: userProfile?.email || '-',
-                user_age: userProfile?.age || application.age || '-',
-                user_skin_type: userProfile?.skin_type || application.skin_type || '-',
-                user_instagram_url: userProfile?.instagram_url || application.instagram_url || '',
-                user_tiktok_url: userProfile?.tiktok_url || application.tiktok_url || '',
-                user_youtube_url: userProfile?.youtube_url || application.youtube_url || '',
-                user_bio: userProfile?.bio || application.bio || ''
-              }
-            })
-            
-            return enrichedData
-          }
-          
-          // 둘 다 실패하면 오류 처리
-          if (campaignAppsError && appsError) {
-            console.error('두 테이블 모두 접근 실패:', { campaignAppsError, appsError })
-            if (campaignAppsError.message.includes('permission denied') || appsError.message.includes('permission denied')) {
+          if (appsError) {
+            console.error('Applications 테이블 조회 오류:', appsError)
+            if (appsError.message.includes('permission denied')) {
               return []
             }
-            throw campaignAppsError
+            throw appsError
           }
           
-          return []
+          if (!appsData || appsData.length === 0) {
+            console.log('Applications 테이블에 데이터 없음')
+            return []
+          }
+          
+          console.log('Applications 데이터 로드 성공:', appsData.length, '개')
+          
+          // 사용자 프로필 정보 별도 조회
+          const { data: userProfiles } = await supabase
+            .from('user_profiles')
+            .select('*')
+          
+          // 캠페인 정보 별도 조회
+          const { data: campaigns } = await supabase
+            .from('campaigns')
+            .select('id, title')
+          
+          // 데이터 병합
+          const enrichedData = appsData.map(application => {
+            const userProfile = userProfiles?.find(up => up.user_id === application.user_id)
+            const campaign = campaigns?.find(c => c.id === application.campaign_id)
+            
+            return {
+              ...application,
+              user_name: userProfile?.name || application.applicant_name || '-',
+              user_email: userProfile?.email || '-',
+              user_age: userProfile?.age || application.age || '-',
+              user_skin_type: userProfile?.skin_type || application.skin_type || '-',
+              user_instagram_url: userProfile?.instagram_url || application.instagram_url || '',
+              user_tiktok_url: userProfile?.tiktok_url || application.tiktok_url || '',
+              user_youtube_url: userProfile?.youtube_url || application.youtube_url || '',
+              user_bio: userProfile?.bio || application.bio || '',
+              campaign_title: campaign?.title || '캠페인 정보 없음'
+            }
+          })
+          
+          return enrichedData
         } catch (error) {
           console.error('Applications getAll 함수 오류:', error)
           return []

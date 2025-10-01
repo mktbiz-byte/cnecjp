@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useLanguage } from '../../contexts/LanguageContext'
-import { database } from '../../lib/supabase_enhanced'
+import { database } from '../../lib/supabase'
 import AdminNavigation from './AdminNavigation'
 import { 
   Loader2, Eye, CheckCircle, XCircle, Clock, Search, Filter,

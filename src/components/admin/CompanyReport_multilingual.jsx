@@ -140,18 +140,9 @@ const CompanyReport = () => {
     const approvalRate = totalApplications > 0 ? (approvedCount / totalApplications) * 100 : 0
     const completionRate = approvedCount > 0 ? (completedCount / approvedCount) * 100 : 0
     
-    // 보상금 계산
-    let totalReward = 0
-    filteredApps.forEach(app => {
-      if (app.status === 'completed') {
-        const campaign = campaigns.find(c => c.id === app.campaign_id)
-        if (campaign) {
-          totalReward += campaign.reward_amount || 0
-        }
-      }
-    })
-    
-    const averageReward = completedCount > 0 ? totalReward / completedCount : 0
+    // 기업 보고서에서는 리워드 정보 숨김
+    const totalReward = 0
+    const averageReward = 0
     
     // 상태별 분포
     const statusDistribution = {
@@ -220,8 +211,7 @@ const CompanyReport = () => {
     const headers = [
       i18n.t('common.date'),
       i18n.t('common.name'),
-      i18n.t('common.status'),
-      i18n.t('common.reward')
+      i18n.t('common.status')
     ]
     
     const rows = applications.map(app => {
@@ -229,8 +219,7 @@ const CompanyReport = () => {
       return [
         formatDate(app.created_at),
         campaign?.title || 'N/A',
-        i18n.t(`companyReport.status.${app.status}`),
-        app.status === 'completed' ? formatCurrency(campaign?.reward_amount || 0) : '0'
+        i18n.t(`companyReport.status.${app.status}`)
       ]
     })
     
@@ -258,10 +247,7 @@ const CompanyReport = () => {
       <div className="text-center py-8">
         <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-gray-600 mb-2">{i18n.t('common.error')}</h3>
-        <Button onClick={() => navigate('/admin/companies')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {i18n.t('common.back')}
-        </Button>
+        {/* 기업 보고서에서는 뒤로가기 버튼 제거 */}
       </div>
     )
   }
@@ -276,10 +262,7 @@ const CompanyReport = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <Button variant="outline" onClick={() => navigate('/admin/companies')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {i18n.t('common.back')}
-          </Button>
+          {/* 기업 보고서에서는 뒤로가기 버튼 제거 */}
         </div>
         <div className="flex space-x-2">
           <Button onClick={exportToExcel} variant="outline">
