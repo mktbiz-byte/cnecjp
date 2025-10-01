@@ -47,6 +47,12 @@ const translations = {
       campaign: {
         label: "캠페인",
         all: "전체 캠페인",
+        period: "기간",
+        status: "상태",
+        active: "진행중",
+        completed: "완료",
+        draft: "초안",
+        closed: "종료",
       },
       tabs: {
         overview: "개요",
@@ -143,6 +149,7 @@ const translations = {
     snsUploadReport: {
       title: "전체 캠페인 SNS 업로드",
       description: "SNS 업로드 최종 보고서",
+      finalReport: "최종 보고서",
       completedCreators: "완료 크리에이터",
       totalUploads: "총 업로드 수",
       platformStats: "플랫폼별 업로드 통계",
@@ -151,6 +158,7 @@ const translations = {
       uploadDate: "업로드 날짜",
       completed: "완료",
       watch: "시청",
+      visit: "방문",
       notes: "비고",
     },
   },
@@ -202,6 +210,12 @@ const translations = {
       campaign: {
         label: "キャンペーン",
         all: "全キャンペーン",
+        period: "期間",
+        status: "ステータス",
+        active: "進行中",
+        completed: "完了",
+        draft: "下書き",
+        closed: "終了",
       },
       tabs: {
         overview: "概要",
@@ -298,6 +312,7 @@ const translations = {
     snsUploadReport: {
       title: "全キャンペーンSNSアップロード",
       description: "SNSアップロード最終報告書",
+      finalReport: "最終報告書",
       completedCreators: "完了クリエイター",
       totalUploads: "総アップロード数",
       platformStats: "プラットフォーム別アップロード統計",
@@ -306,6 +321,7 @@ const translations = {
       uploadDate: "アップロード日",
       completed: "完了",
       watch: "視聴",
+      visit: "訪問",
       notes: "備考",
     },
   },
@@ -357,6 +373,12 @@ const translations = {
       campaign: {
         label: "Campaign",
         all: "All Campaigns",
+        period: "Period",
+        status: "Status",
+        active: "Active",
+        completed: "Completed",
+        draft: "Draft",
+        closed: "Closed",
       },
       tabs: {
         overview: "Overview",
@@ -453,6 +475,7 @@ const translations = {
     snsUploadReport: {
       title: "All Campaign SNS Uploads",
       description: "SNS Upload Final Report",
+      finalReport: "Final Report",
       completedCreators: "Completed Creators",
       totalUploads: "Total Uploads",
       platformStats: "Platform Upload Statistics",
@@ -461,6 +484,7 @@ const translations = {
       uploadDate: "Upload Date",
       completed: "Completed",
       watch: "Watch",
+      visit: "Visit",
       notes: "Notes",
     },
   },

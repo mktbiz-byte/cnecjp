@@ -214,10 +214,7 @@ const SNSUploadFinalReport_multilingual = () => {
       <div className="text-center py-8">
         <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-gray-600 mb-2">{t('common.error')}</h3>
-        <Button onClick={() => navigate('/admin/campaigns')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {t('common.back')}
-        </Button>
+        {/* 기업 보고서에서는 뒤로가기 버튼 제거 */}
       </div>
     )
   }
@@ -232,13 +229,10 @@ const SNSUploadFinalReport_multilingual = () => {
         </div>
         
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <Button variant="outline" onClick={() => navigate('/admin/campaigns')}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              {t('common.back')}
-            </Button>
-          </div>
+      <div className="flex items-center justify-between">
+        <div>
+          {/* 기업 보고서에서는 뒤로가기 버튼 제거 */}
+        </div>
           <div className="flex space-x-2">
             <Button onClick={exportToExcel} variant="outline">
               <Download className="h-4 w-4 mr-2" />
@@ -495,10 +489,7 @@ const SNSUploadFinalReport_multilingual = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <Button variant="outline" onClick={() => navigate('/admin/campaigns')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t('common.back')}
-          </Button>
+          {/* 기업 보고서에서는 뒤로가기 버튼 제거 */}
         </div>
         <div className="flex space-x-2">
           <Button onClick={exportToExcel} variant="outline">
@@ -539,13 +530,7 @@ const SNSUploadFinalReport_multilingual = () => {
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
-              <DollarSign className="h-5 w-5 text-gray-600" />
-              <div>
-                <p className="text-sm text-gray-600">{t('campaign.reward')}</p>
-                <p className="font-medium">{formatCurrency(campaign.reward_amount)}</p>
-              </div>
-            </div>
+            {/* 기업 보고서에서는 리워드 정보 숨김 */}
             
             <div className="flex items-center space-x-4">
               <Activity className="h-5 w-5 text-gray-600" />
@@ -589,19 +574,7 @@ const SNSUploadFinalReport_multilingual = () => {
           </CardContent>
         </Card>
         
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">{t('snsUploadReport.totalReward')}</p>
-                <p className="text-3xl font-bold text-purple-600">
-                  {formatCurrency(campaign.reward_amount * applications.length)}
-                </p>
-              </div>
-              <Award className="h-8 w-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
+        {/* 기업 보고서에서는 총 리워드 카드 숨김 */}
       </div>
 
       {/* Platform Statistics */}
