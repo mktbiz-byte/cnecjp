@@ -600,7 +600,7 @@ const AdminCampaignsWithQuestions = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => navigate(`/admin/applications?campaign=${campaign.id}`)}
+                      onClick={() => navigate(`/applications-manage?campaign=${campaign.id}`)}
                     >
                       <Eye className="h-4 w-4 mr-1" />
                       {t.viewApplications}

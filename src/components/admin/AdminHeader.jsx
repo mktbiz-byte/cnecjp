@@ -71,14 +71,14 @@ const AdminHeader = ({ title, subtitle }) => {
   }
 
   const menuItems = [
-    { path: '/admin', label: currentTexts.dashboard, icon: Home },
-    { path: '/admin/campaigns', label: currentTexts.campaigns, icon: Settings },
-    { path: '/admin/applications', label: currentTexts.applications, icon: User },
-    { path: '/admin/user-approval', label: currentTexts.users, icon: User },
-    { path: '/admin/withdrawals', label: currentTexts.withdrawals, icon: Settings },
-    { path: '/admin/email-templates', label: currentTexts.emailTemplates, icon: Settings },
-    { path: '/admin/confirmed-creators', label: currentTexts.confirmedCreators, icon: User },
-    { path: '/admin/sns-uploads', label: currentTexts.snsUploads, icon: Settings }
+    { path: '/dashboard', label: currentTexts.dashboard, icon: Home },
+    { path: '/campaigns-manage', label: currentTexts.campaigns, icon: Settings },
+    { path: '/applications-manage', label: currentTexts.applications, icon: User },
+    { path: '/user-approval', label: currentTexts.users, icon: User },
+    { path: '/withdrawals-manage', label: currentTexts.withdrawals, icon: Settings },
+    { path: '/email-templates', label: currentTexts.emailTemplates, icon: Settings },
+    { path: '/confirmed-creators', label: currentTexts.confirmedCreators, icon: User },
+    { path: '/sns-uploads', label: currentTexts.snsUploads, icon: Settings }
   ]
 
   return (
@@ -87,7 +87,7 @@ const AdminHeader = ({ title, subtitle }) => {
         <div className="flex justify-between items-center h-16">
           {/* 로고 및 제목 */}
           <div className="flex items-center space-x-4">
-            <Link to="/admin" className="flex items-center space-x-2">
+            <Link to="/dashboard" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">C</span>
               </div>

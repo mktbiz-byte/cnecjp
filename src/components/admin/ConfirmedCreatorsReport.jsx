@@ -171,7 +171,7 @@ const ConfirmedCreatorsReport = () => {
       <div className="text-center py-8">
         <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-gray-600 mb-2">キャンペーンが見つかりません</h3>
-        <Button onClick={() => navigate('/admin/campaigns')}>
+        <Button onClick={() => navigate('/campaigns-manage')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           キャンペーン一覧に戻る
         </Button>
@@ -186,7 +186,7 @@ const ConfirmedCreatorsReport = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <Button variant="outline" onClick={() => navigate('/admin/campaigns')}>
+            <Button variant="outline" onClick={() => navigate('/campaigns-manage')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               キャンペーン一覧に戻る
             </Button>
@@ -353,7 +353,7 @@ const ConfirmedCreatorsReport = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <Button variant="outline" onClick={() => navigate('/admin/campaigns')}>
+          <Button variant="outline" onClick={() => navigate('/campaigns-manage')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             キャンペーン一覧に戻る
           </Button>

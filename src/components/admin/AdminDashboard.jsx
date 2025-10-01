@@ -152,16 +152,16 @@ const AdminDashboard = () => {
               </h1>
               
               <nav className="hidden md:flex space-x-6">
-                <Link to="/admin" className="text-purple-600 font-medium">
+                <Link to="/dashboard" className="text-purple-600 font-medium">
                   {language === 'ko' ? '대시보드' : 'ダッシュボード'}
                 </Link>
-                <Link to="/admin/campaigns" className="text-gray-600 hover:text-gray-800">
+                <Link to="/campaigns-manage" className="text-gray-600 hover:text-gray-800">
                   {language === 'ko' ? '캠페인 관리' : 'キャンペーン管理'}
                 </Link>
-                <Link to="/admin/users" className="text-gray-600 hover:text-gray-800">
+                <Link to="/user-approval" className="text-gray-600 hover:text-gray-800">
                   {language === 'ko' ? '사용자 관리' : 'ユーザー管理'}
                 </Link>
-                <Link to="/admin/applications" className="text-gray-600 hover:text-gray-800">
+                <Link to="/applications-manage" className="text-gray-600 hover:text-gray-800">
                   {language === 'ko' ? '신청 관리' : '応募管理'}
                 </Link>
               </nav>
@@ -353,7 +353,7 @@ const AdminDashboard = () => {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>{language === 'ko' ? '최근 캠페인' : '最近のキャンペーン'}</CardTitle>
-                <Link to="/admin/campaigns">
+                <Link to="/campaigns-manage">
                   <Button variant="outline" size="sm">
                     <Eye className="h-4 w-4 mr-2" />
                     {language === 'ko' ? '전체 보기' : '全て見る'}
@@ -393,7 +393,7 @@ const AdminDashboard = () => {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>{language === 'ko' ? '최근 신청' : '最近の応募'}</CardTitle>
-                <Link to="/admin/applications">
+                <Link to="/applications-manage">
                   <Button variant="outline" size="sm">
                     <Eye className="h-4 w-4 mr-2" />
                     {language === 'ko' ? '전체 보기' : '全て見る'}
@@ -437,28 +437,28 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Link to="/admin/campaigns/new">
+                <Link to="/campaign-create">
                   <Button className="w-full h-20 bg-purple-600 hover:bg-purple-700 flex flex-col items-center justify-center">
                     <Plus className="h-6 w-6 mb-2" />
                     {language === 'ko' ? '새 캠페인' : '新キャンペーン'}
                   </Button>
                 </Link>
                 
-                <Link to="/admin/applications?status=pending">
+                <Link to="/applications-manage?status=pending">
                   <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center">
                     <FileText className="h-6 w-6 mb-2" />
                     {language === 'ko' ? '대기 신청' : '待機応募'}
                   </Button>
                 </Link>
                 
-                <Link to="/admin/users">
+                <Link to="/user-approval">
                   <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center">
                     <Users className="h-6 w-6 mb-2" />
                     {language === 'ko' ? '사용자 관리' : 'ユーザー管理'}
                   </Button>
                 </Link>
                 
-                <Link to="/admin/settings">
+                <Link to="/system-settings">
                   <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center">
                     <Settings className="h-6 w-6 mb-2" />
                     {language === 'ko' ? '설정' : '設定'}

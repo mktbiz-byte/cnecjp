@@ -527,16 +527,28 @@ const MyPageWithWithdrawal = () => {
 
       console.log('출금 신청 성공:', withdrawalData)
 
+      // 실제 사용자 프로필의 포인트 차감
+      const newPoints = currentPoints - requestAmount
+      const { error: profileUpdateError } = await supabase
+        .from('user_profiles')
+        .update({ points: newPoints })
+        .eq('user_id', user.id)
+
+      if (profileUpdateError) {
+        console.error('프로필 포인트 업데이트 오류:', profileUpdateError)
+        throw new Error('포인트 차감에 실패했습니다.')
+      }
+
       // 포인트 차감 기록을 point_transactions에 추가
-        const { error: pointError } = await supabase
-          .from('point_transactions')
-          .insert([{
-            user_id: user.id,
-            amount: -requestAmount,
-            transaction_type: 'withdrawal',
-            description: language === 'ja' ? `出金申請: ${requestAmount}ポイント` : `출금 신청: ${requestAmount}포인트`,
-            created_at: new Date().toISOString()
-          }])
+      const { error: pointError } = await supabase
+        .from('point_transactions')
+        .insert([{
+          user_id: user.id,
+          amount: -requestAmount,
+          transaction_type: 'withdrawal',
+          description: language === 'ja' ? `出金申請: ${requestAmount}ポイント` : `출금 신청: ${requestAmount}포인트`,
+          created_at: new Date().toISOString()
+        }])
 
       if (pointError) {
         console.warn('포인트 차감 기록 실패:', pointError)
@@ -1427,7 +1439,7 @@ const MyPageWithWithdrawal = () => {
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {withdrawal.withdrawal_method === 'paypal' ? 'PayPal' : 
                              withdrawal.withdrawal_method === 'bank' ? (language === 'ko' ? '은행 송금' : '銀行振込') : 
-                             withdrawal.withdrawal_method}
+                             withdrawal.withdrawal_method || 'PayPal'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             ¥{withdrawal.amount?.toLocaleString() || '0'}
@@ -1605,6 +1617,16 @@ const MyPageWithWithdrawal = () => {
                   </div>
                 )}
                 
+                {/* 포인트 가치 안내 */}
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800 font-medium">
+                    💰 {language === 'ja' ? '1ポイント = 1円です' : '1포인트 = 1엔입니다'}
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    {language === 'ja' ? 'PayPalで日本円として出金されます' : 'PayPal로 일본 엔화로 출금됩니다'}
+                  </p>
+                </div>
+
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1620,6 +1642,11 @@ const MyPageWithWithdrawal = () => {
                     />
                     <p className="text-sm text-gray-500 mt-1">
                       {language === 'ja' ? '保有ポイント' : '보유 포인트'}: {profile?.points?.toLocaleString() || 0}P
+                      {withdrawForm.amount && (
+                        <span className="ml-2 text-green-600 font-medium">
+                          (≈ ¥{parseInt(withdrawForm.amount || 0).toLocaleString()})
+                        </span>
+                      )}
                     </p>
                   </div>
                   

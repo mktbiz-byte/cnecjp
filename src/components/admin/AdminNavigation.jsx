@@ -52,48 +52,48 @@ const AdminNavigation = () => {
   // 네비게이션 메뉴 항목들
   const navigationItems = [
     {
-      path: '/admin',
+      path: '/dashboard',
       label: t.dashboard,
       icon: Home,
       exact: true
     },
     {
-      path: '/admin/campaigns',
+      path: '/campaigns-manage',
       label: t.campaigns,
       icon: Award
     },
     {
-      path: '/admin/applications',
+      path: '/applications-manage',
       label: t.applications,
       icon: FileText
     },
     {
-      path: '/admin/confirmed-creators',
+      path: '/confirmed-creators',
       label: t.confirmedCreators,
       icon: Users
     },
     {
-      path: '/admin/sns-uploads',
+      path: '/sns-uploads',
       label: t.snsUploads,
       icon: BarChart3
     },
     {
-      path: '/admin/user-approval',
+      path: '/user-approval',
       label: t.users,
       icon: Users
     },
     {
-      path: '/admin/withdrawals',
+      path: '/withdrawals-manage',
       label: t.withdrawals,
       icon: CreditCard
     },
     {
-      path: '/admin/email-templates',
+      path: '/email-templates',
       label: t.emailTemplates,
       icon: Mail
     },
     {
-      path: '/admin/system-settings',
+      path: '/system-settings',
       label: t.settings,
       icon: Settings
     }

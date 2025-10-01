@@ -88,7 +88,7 @@ const AppContent = () => {
         <Route path="/dashboard" element={<AdminDashboardSimple />} />
         <Route path="/campaigns-manage" element={<AdminCampaignsWithQuestions />} />
         <Route path="/campaign-create" element={<CampaignCreationWithTranslator />} />
-        <Route path="/applications-report" element={<ApplicationsReportSimple />} />
+        <Route path="/applications-manage" element={<ApplicationsReportSimple />} />
         <Route path="/confirmed-creators" element={<ConfirmedCreatorsReport_multilingual />} />
         <Route path="/confirmed-creators/:campaignId" element={<ConfirmedCreatorsNew />} />
         <Route path="/sns-uploads" element={<SNSUploadNew />} />

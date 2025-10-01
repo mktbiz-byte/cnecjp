@@ -274,7 +274,7 @@ const CampaignReportEnhanced = () => {
             <h2 className="text-xl font-semibold text-gray-900 mb-2">오류 발생</h2>
             <p className="text-gray-600">{error}</p>
             <button
-              onClick={() => navigate('/admin/applications')}
+              onClick={() => navigate('/applications-manage')}
               className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
               신청서 목록으로 돌아가기
@@ -301,7 +301,7 @@ const CampaignReportEnhanced = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <button
-                onClick={() => navigate('/admin/applications')}
+                onClick={() => navigate('/applications-manage')}
                 className="mr-4 p-2 text-gray-600 hover:text-gray-900"
               >
                 <ArrowLeft className="h-5 w-5" />

@@ -294,7 +294,7 @@ const CampaignCreationWithTranslator = () => {
 
       // 3초 후 캠페인 관리 페이지로 이동
       setTimeout(() => {
-        navigate('/admin/campaigns')
+        navigate('/campaigns-manage')
       }, 3000)
 
     } catch (error) {
