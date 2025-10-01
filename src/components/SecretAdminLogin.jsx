@@ -38,7 +38,7 @@ const SecretAdminLogin = () => {
           // 관리자 또는 매니저 권한이 있는 경우에만 리다이렉트
           if (profile?.role === 'admin' || profile?.role === 'manager') {
             console.log('관리자 권한 확인됨, 관리자 페이지로 이동')
-            navigate('/admin')
+            navigate('/dashboard')
           } else {
             console.log('관리자 권한 없음:', profile?.role)
           }
@@ -67,7 +67,7 @@ const SecretAdminLogin = () => {
       await signInWithGoogle()
       
       // Google 로그인 성공 시 관리자 페이지로 이동
-      navigate('/admin')
+      navigate('/dashboard')
       
     } catch (error) {
       console.error('Google admin login error:', error)
@@ -94,7 +94,7 @@ const SecretAdminLogin = () => {
       
       // 로그인 성공 시 잠시 대기 후 관리자 페이지로 이동
       setTimeout(() => {
-        navigate('/admin')
+        navigate('/dashboard')
       }, 1000)
       
     } catch (error) {

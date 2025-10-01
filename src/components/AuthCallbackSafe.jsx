@@ -51,7 +51,7 @@ const AuthCallbackSafe = () => {
             
             setTimeout(() => {
               if (isAdmin) {
-                navigate('/admin', { replace: true })
+                navigate('/dashboard', { replace: true })
               } else {
                 navigate('/', { replace: true })
               }
@@ -76,7 +76,7 @@ const AuthCallbackSafe = () => {
                   const isAdmin = userEmail?.includes('mkt_biz@cnec.co.kr') || userEmail?.includes('admin@cnec.test')
                   
                   if (isAdmin) {
-                    navigate('/admin', { replace: true })
+                    navigate('/dashboard', { replace: true })
                   } else {
                     navigate('/', { replace: true })
                   }
