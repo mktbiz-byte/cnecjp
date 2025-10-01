@@ -54,10 +54,7 @@ const MyPageWithWithdrawal = () => {
     age: '',
     region: '',
     skin_type: '',
-    weight: '',
-    height: '',
-    has_children: false,
-    is_married: false,
+
     instagram_url: '',
     tiktok_url: '',
     youtube_url: '',
@@ -218,10 +215,7 @@ const MyPageWithWithdrawal = () => {
       age: '年齢',
       region: '地域',
       bio: '自己紹介',
-      weight: '体重',
-      height: '身長',
-      hasChildren: 'お子様の有無',
-      isMarried: '結婚の有無',
+ 
       instagramFollowers: 'Instagramフォロワー数',
       tiktokFollowers: 'TikTokフォロワー数',
       youtubeSubscribers: 'YouTube登録者数',
@@ -282,10 +276,7 @@ const MyPageWithWithdrawal = () => {
           age: profileData.age || '',
           region: profileData.region || '',
           skin_type: profileData.skin_type || '',
-          weight: profileData.weight || '',
-          height: profileData.height || '',
-          has_children: profileData.has_children || false,
-          is_married: profileData.is_married || false,
+
           instagram_url: profileData.instagram_url || '',
           tiktok_url: profileData.tiktok_url || '',
           youtube_url: profileData.youtube_url || '',
@@ -397,10 +388,7 @@ const MyPageWithWithdrawal = () => {
         age: validateNumber(editForm.age, language === 'ja' ? '年齢' : '나이'),
         region: editForm.region?.trim() || null,
         skin_type: editForm.skin_type?.trim() || null,
-        weight: validateNumber(editForm.weight, language === 'ja' ? '体重' : '체중'),
-        height: validateNumber(editForm.height, language === 'ja' ? '身長' : '신장'),
-        has_children: Boolean(editForm.has_children),
-        is_married: Boolean(editForm.is_married),
+
         instagram_url: editForm.instagram_url?.trim() || null,
         tiktok_url: editForm.tiktok_url?.trim() || null,
         youtube_url: editForm.youtube_url?.trim() || null,
@@ -1069,89 +1057,7 @@ const MyPageWithWithdrawal = () => {
                 </div>
               </div>
 
-              {/* 추가 프로필 정보 섹션 */}
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  {language === 'ja' ? '詳細情報' : '상세 정보'}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">{t.weight}</label>
-                    {isEditing ? (
-                      <input
-                        type="number"
-                        value={editForm.weight}
-                        onChange={(e) => setEditForm({...editForm, weight: e.target.value})}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="60"
-                        min="1"
-                        max="200"
-                        step="0.1"
-                      />
-                    ) : (
-                      <p className="mt-1 text-sm text-gray-900">
-                        {profile?.weight ? `${profile.weight}kg` : (language === 'ja' ? '未設定' : '설정되지 않음')}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">{t.height}</label>
-                    {isEditing ? (
-                      <input
-                        type="number"
-                        value={editForm.height}
-                        onChange={(e) => setEditForm({...editForm, height: e.target.value})}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="165"
-                        min="1"
-                        max="250"
-                        step="0.1"
-                      />
-                    ) : (
-                      <p className="mt-1 text-sm text-gray-900">
-                        {profile?.height ? `${profile.height}cm` : (language === 'ja' ? '未設定' : '설정되지 않음')}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">{t.hasChildren}</label>
-                    {isEditing ? (
-                      <select
-                        value={editForm.has_children}
-                        onChange={(e) => setEditForm({...editForm, has_children: e.target.value === 'true'})}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="false">{language === 'ja' ? 'いいえ' : '아니오'}</option>
-                        <option value="true">{language === 'ja' ? 'はい' : '예'}</option>
-                      </select>
-                    ) : (
-                      <p className="mt-1 text-sm text-gray-900">
-                        {profile?.has_children ? (language === 'ja' ? 'はい' : '예') : (language === 'ja' ? 'いいえ' : '아니오')}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">{t.isMarried}</label>
-                    {isEditing ? (
-                      <select
-                        value={editForm.is_married}
-                        onChange={(e) => setEditForm({...editForm, is_married: e.target.value === 'true'})}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="false">{language === 'ja' ? '未婚' : '미혼'}</option>
-                        <option value="true">{language === 'ja' ? '既婚' : '기혼'}</option>
-                      </select>
-                    ) : (
-                      <p className="mt-1 text-sm text-gray-900">
-                        {profile?.is_married ? (language === 'ja' ? '既婚' : '기혼') : (language === 'ja' ? '未婚' : '미혼')}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
+
 
               {/* SNS 팔로워 수 섹션 */}
               <div className="mt-8 pt-6 border-t border-gray-200">
