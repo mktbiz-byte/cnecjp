@@ -105,7 +105,7 @@ const ConfirmedCreatorsReport_multilingual = () => {
         shipped_at: trackingNum ? new Date().toISOString() : null
       })
       
-      setSuccess(t('confirmedCreators.trackingUpdated'))
+      setSuccess(t('confirmedCreatorsReport.trackingUpdated'))
       setTrackingModal(false)
       loadData()
       
@@ -146,11 +146,11 @@ const ConfirmedCreatorsReport_multilingual = () => {
       'Instagram', 
       'TikTok', 
       'YouTube', 
-      t('confirmedCreators.postalCode'), 
-      t('confirmedCreators.address'), 
-      t('confirmedCreators.trackingNumber'), 
-      t('confirmedCreators.shippingStatus'), 
-      t('confirmedCreators.approvalDate')
+      t('confirmedCreatorsReport.postalCode'), 
+      t('confirmedCreatorsReport.address'), 
+      t('confirmedCreatorsReport.trackingNumber'), 
+      t('confirmedCreatorsReport.shippingStatus'), 
+      t('confirmedCreatorsReport.approvalDate')
     ]
     
     const rows = applications.map(app => {
@@ -162,8 +162,8 @@ const ConfirmedCreatorsReport_multilingual = () => {
         profile?.youtube_url || 'N/A',
         profile?.postal_code || 'N/A',
         `${profile?.prefecture || ''} ${profile?.city || ''} ${profile?.address || ''}`.trim() || 'N/A',
-        app.tracking_number || t('confirmedCreators.notShipped'),
-        app.tracking_number ? t('confirmedCreators.shipped') : t('confirmedCreators.notShipped'),
+        app.tracking_number || t('confirmedCreatorsReport.notShipped'),
+        app.tracking_number ? t('confirmedCreatorsReport.shipped') : t('confirmedCreatorsReport.notShipped'),
         app.approved_at ? formatDate(app.approved_at) : 'N/A'
       ]
     })
@@ -196,10 +196,7 @@ const ConfirmedCreatorsReport_multilingual = () => {
       <div className="text-center py-8">
         <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-gray-600 mb-2">{t('common.error')}</h3>
-        <Button onClick={() => navigate('/admin/campaigns')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {t('common.back')}
-        </Button>
+        {/* 기업 보고서에서는 뒤로가기 버튼 제거 */}
       </div>
     )
   }
@@ -214,13 +211,10 @@ const ConfirmedCreatorsReport_multilingual = () => {
         </div>
         
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <Button variant="outline" onClick={() => navigate('/admin/campaigns')}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              {t('common.back')}
-            </Button>
-          </div>
+      <div className="flex items-center justify-between">
+        <div>
+          {/* 기업 보고서에서는 뒤로가기 버튼 제거 */}
+        </div>
           <div className="flex space-x-2">
             <Button onClick={exportToExcel} variant="outline">
               <Download className="h-4 w-4 mr-2" />
@@ -231,9 +225,9 @@ const ConfirmedCreatorsReport_multilingual = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">{t('confirmedCreators.title')}</CardTitle>
-            <CardDescription className="text-lg mt-2 text-purple-600">
-              {t('confirmedCreators.description')}
+            <CardTitle className="text-2xl">{t('confirmedCreatorsReport.title')}</CardTitle>
+            <CardDescription className="text-lg">
+              {t('confirmedCreatorsReport.description')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -241,13 +235,13 @@ const ConfirmedCreatorsReport_multilingual = () => {
               <div className="flex items-center space-x-2">
                 <Users className="h-5 w-5 text-green-500" />
                 <span className="text-sm">
-                  <strong>{t('confirmedCreators.confirmedCreators')}:</strong> {applications.length}{t('common.people')}
+                  <strong>{t('confirmedCreatorsReport.confirmedCreators')}:</strong> {applications.length}{t('common.people')}
                 </span>
               </div>
               <div className="flex items-center space-x-2">
                 <Package className="h-5 w-5 text-blue-500" />
                 <span className="text-sm">
-                  <strong>{t('confirmedCreators.shipped')}:</strong> {applications.filter(app => app.tracking_number).length}{t('common.people')}
+                  <strong>{t('confirmedCreatorsReport.shipped')}:</strong> {applications.filter(app => app.tracking_number).length}{t('common.people')}
                 </span>
               </div>
             </div>
@@ -268,12 +262,12 @@ const ConfirmedCreatorsReport_multilingual = () => {
                         <h3 className="text-lg font-semibold">{profile?.name || 'N/A'}</h3>
                         <Badge className="bg-green-100 text-green-800">
                           <CheckCircle className="h-3 w-3 mr-1" />
-                          {t('confirmedCreators.confirmed')}
+                          {t('confirmedCreatorsReport.confirmed')}
                         </Badge>
                         {application.tracking_number && (
                           <Badge className="bg-blue-100 text-blue-800">
                             <Package className="h-3 w-3 mr-1" />
-                            {t('confirmedCreators.shipped')}
+                            {t('confirmedCreatorsReport.shipped')}
                           </Badge>
                         )}
                       </div>
@@ -299,11 +293,11 @@ const ConfirmedCreatorsReport_multilingual = () => {
                       <div className="bg-blue-50 p-4 rounded-lg mb-4">
                         <div className="flex items-center space-x-2 mb-2">
                           <MapPin className="h-4 w-4 text-blue-600" />
-                          <span className="font-medium text-blue-800">{t('confirmedCreators.shippingAddress')}</span>
+                          <span className="font-medium text-blue-800">{t('confirmedCreatorsReport.shippingAddress')}</span>
                         </div>
                         <div className="text-sm text-blue-700">
-                          <p><strong>{t('confirmedCreators.postalCode')}:</strong> {profile?.postal_code || 'N/A'}</p>
-                          <p><strong>{t('confirmedCreators.address')}:</strong> {`${profile?.prefecture || ''} ${profile?.city || ''} ${profile?.address || ''}`.trim() || 'N/A'}</p>
+                          <p><strong>{t('confirmedCreatorsReport.postalCode')}:</strong> {profile?.postal_code || 'N/A'}</p>
+                          <p><strong>{t('confirmedCreatorsReport.address')}:</strong> {`${profile?.prefecture || ''} ${profile?.city || ''} ${profile?.address || ''}`.trim() || 'N/A'}</p>
                         </div>
                       </div>
                     </div>
@@ -315,7 +309,7 @@ const ConfirmedCreatorsReport_multilingual = () => {
                         onClick={() => openTrackingModal(application)}
                       >
                         <Edit className="h-4 w-4 mr-2" />
-                        {application.tracking_number ? t('confirmedCreators.editShipping') : t('confirmedCreators.enterTracking')}
+                        {application.tracking_number ? t('confirmedCreatorsReport.editShipping') : t('confirmedCreatorsReport.enterTracking')}
                       </Button>
                     </div>
                   </div>
@@ -330,8 +324,8 @@ const ConfirmedCreatorsReport_multilingual = () => {
             <CardContent className="pt-6">
               <div className="text-center py-8">
                 <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-600 mb-2">{t('confirmedCreators.noCreators')}</h3>
-                <p className="text-gray-500">{t('confirmedCreators.noCreatorsDescription')}</p>
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">{t('confirmedCreatorsReport.noCreators')}</h3>
+                <p className="text-gray-500">{t('confirmedCreatorsReport.noCreatorsDescription')}</p>
               </div>
             </CardContent>
           </Card>
@@ -356,14 +350,14 @@ const ConfirmedCreatorsReport_multilingual = () => {
         <Dialog open={trackingModal} onOpenChange={setTrackingModal}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{t('confirmedCreators.shippingManagement')}</DialogTitle>
+              <DialogTitle>{t('confirmedCreatorsReport.shippingManagement')}</DialogTitle>
               <DialogDescription>
-                {t('confirmedCreators.shippingDescription')}
+                {t('confirmedCreatorsReport.shippingDescription')}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="tracking">{t('confirmedCreators.trackingNumber')}</Label>
+                <Label htmlFor="tracking">{t('confirmedCreatorsReport.trackingNumber')}</Label>
                 <Input
                   id="tracking"
                   value={trackingNumber}
@@ -371,7 +365,7 @@ const ConfirmedCreatorsReport_multilingual = () => {
                   placeholder="例: 123456789012"
                 />
                 <p className="text-sm text-gray-500">
-                  {t('confirmedCreators.trackingHelp')}
+                  {t('confirmedCreatorsReport.trackingHelp')}
                 </p>
               </div>
             </div>
@@ -403,10 +397,7 @@ const ConfirmedCreatorsReport_multilingual = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <Button variant="outline" onClick={() => navigate('/admin/campaigns')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t('common.back')}
-          </Button>
+          {/* 기업 보고서에서는 뒤로가기 버튼 제거 */}
         </div>
         <div className="flex space-x-2">
           <Button onClick={exportToExcel} variant="outline">
@@ -423,15 +414,10 @@ const ConfirmedCreatorsReport_multilingual = () => {
             <div>
               <CardTitle className="text-2xl">{campaign.title}</CardTitle>
               <CardDescription className="text-lg mt-2 text-purple-600">
-                {campaign.brand} - {t('confirmedCreators.management')}
+                {campaign.brand} - {t('confirmedCreatorsReport.management')}
               </CardDescription>
             </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-green-600">
-                {formatCurrency(campaign.reward_amount)}
-              </div>
-              <div className="text-sm text-gray-600">{t('confirmedCreators.unitReward')}</div>
-            </div>
+            {/* 기업 보고서에서는 리워드 정보 숨김 */}
           </div>
         </CardHeader>
         <CardContent>
@@ -439,27 +425,22 @@ const ConfirmedCreatorsReport_multilingual = () => {
             <div className="flex items-center space-x-2">
               <Users className="h-5 w-5 text-green-500" />
               <span className="text-sm">
-                <strong>{t('confirmedCreators.confirmedCreators')}:</strong> {applications.length}{t('common.people')}
+                <strong>{t('confirmedCreatorsReport.confirmedCreators')}:</strong> {applications.length}{t('common.people')}
               </span>
             </div>
             <div className="flex items-center space-x-2">
               <Package className="h-5 w-5 text-blue-500" />
               <span className="text-sm">
-                <strong>{t('confirmedCreators.shipped')}:</strong> {applications.filter(app => app.tracking_number).length}{t('common.people')}
+                <strong>{t('confirmedCreatorsReport.shipped')}:</strong> {applications.filter(app => app.tracking_number).length}{t('common.people')}
               </span>
             </div>
             <div className="flex items-center space-x-2">
               <Truck className="h-5 w-5 text-orange-500" />
               <span className="text-sm">
-                <strong>{t('confirmedCreators.notShipped')}:</strong> {applications.filter(app => !app.tracking_number).length}{t('common.people')}
+                <strong>{t('confirmedCreatorsReport.notShipped')}:</strong> {applications.filter(app => !app.tracking_number).length}{t('common.people')}
               </span>
             </div>
-            <div className="flex items-center space-x-2">
-              <DollarSign className="h-5 w-5 text-purple-500" />
-              <span className="text-sm">
-                <strong>{t('confirmedCreators.totalReward')}:</strong> {formatCurrency(applications.length * campaign.reward_amount)}
-              </span>
-            </div>
+            {/* 기업 보고서에서는 총 리워드 정보 숨김 */}
           </div>
         </CardContent>
       </Card>
@@ -493,12 +474,12 @@ const ConfirmedCreatorsReport_multilingual = () => {
                       <h3 className="text-lg font-semibold">{profile?.name || 'N/A'}</h3>
                       <Badge className="bg-green-100 text-green-800">
                         <CheckCircle className="h-3 w-3 mr-1" />
-                        {t('confirmedCreators.confirmed')}
+                        {t('confirmedCreatorsReport.confirmed')}
                       </Badge>
                       {application.tracking_number && (
                         <Badge className="bg-blue-100 text-blue-800">
                           <Package className="h-3 w-3 mr-1" />
-                          {t('confirmedCreators.shipped')}
+                          {t('confirmedCreatorsReport.shipped')}
                         </Badge>
                       )}
                     </div>
@@ -552,12 +533,12 @@ const ConfirmedCreatorsReport_multilingual = () => {
                     <div className="bg-blue-50 p-4 rounded-lg mb-4">
                       <div className="flex items-center space-x-2 mb-2">
                         <MapPin className="h-4 w-4 text-blue-600" />
-                        <span className="font-medium text-blue-800">{t('confirmedCreators.shippingAddress')}</span>
+                        <span className="font-medium text-blue-800">{t('confirmedCreatorsReport.shippingAddress')}</span>
                       </div>
                       <div className="text-sm text-blue-700">
-                        <p><strong>{t('confirmedCreators.postalCode')}:</strong> {profile?.postal_code || 'N/A'}</p>
-                        <p><strong>{t('confirmedCreators.address')}:</strong> {`${profile?.prefecture || ''} ${profile?.city || ''} ${profile?.address || ''}`.trim() || 'N/A'}</p>
-                        <p><strong>{t('confirmedCreators.phone')}:</strong> {profile?.phone || 'N/A'}</p>
+                        <p><strong>{t('confirmedCreatorsReport.postalCode')}:</strong> {profile?.postal_code || 'N/A'}</p>
+                        <p><strong>{t('confirmedCreatorsReport.address')}:</strong> {`${profile?.prefecture || ''} ${profile?.city || ''} ${profile?.address || ''}`.trim() || 'N/A'}</p>
+                        <p><strong>{t('confirmedCreatorsReport.phone')}:</strong> {profile?.phone || 'N/A'}</p>
                       </div>
                     </div>
 
@@ -567,7 +548,7 @@ const ConfirmedCreatorsReport_multilingual = () => {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
                             <Package className="h-4 w-4 text-green-600" />
-                            <span className="font-medium text-green-800">{t('confirmedCreators.shippingInfo')}</span>
+                            <span className="font-medium text-green-800">{t('confirmedCreatorsReport.shippingInfo')}</span>
                           </div>
                           <div className="flex space-x-2">
                             <Button
@@ -581,14 +562,14 @@ const ConfirmedCreatorsReport_multilingual = () => {
                             <Button variant="outline" size="sm" asChild>
                               <a href={getJapanPostTrackingUrl(application.tracking_number)} target="_blank" rel="noopener noreferrer">
                                 <Search className="h-3 w-3 mr-1" />
-                                {t('confirmedCreators.track')}
+                                {t('confirmedCreatorsReport.track')}
                               </a>
                             </Button>
                           </div>
                         </div>
                         <div className="mt-2 text-sm text-green-700">
-                          <p><strong>{t('confirmedCreators.trackingNumber')}:</strong> {application.tracking_number}</p>
-                          <p><strong>{t('confirmedCreators.shippingDate')}:</strong> {application.shipped_at ? formatDate(application.shipped_at) : 'N/A'}</p>
+                          <p><strong>{t('confirmedCreatorsReport.trackingNumber')}:</strong> {application.tracking_number}</p>
+                          <p><strong>{t('confirmedCreatorsReport.shippingDate')}:</strong> {application.shipped_at ? formatDate(application.shipped_at) : 'N/A'}</p>
                         </div>
                       </div>
                     )}
@@ -601,7 +582,7 @@ const ConfirmedCreatorsReport_multilingual = () => {
                       onClick={() => openTrackingModal(application)}
                     >
                       <Edit className="h-4 w-4 mr-2" />
-                      {application.tracking_number ? t('confirmedCreators.editShipping') : t('confirmedCreators.enterTracking')}
+                      {application.tracking_number ? t('confirmedCreatorsReport.editShipping') : t('confirmedCreatorsReport.enterTracking')}
                     </Button>
                   </div>
                 </div>
@@ -616,8 +597,8 @@ const ConfirmedCreatorsReport_multilingual = () => {
           <CardContent className="pt-6">
             <div className="text-center py-8">
               <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-600 mb-2">{t('confirmedCreators.noCreators')}</h3>
-              <p className="text-gray-500">{t('confirmedCreators.noCreatorsDescription')}</p>
+              <h3 className="text-lg font-semibold text-gray-600 mb-2">{t('confirmedCreatorsReport.noCreators')}</h3>
+              <p className="text-gray-500">{t('confirmedCreatorsReport.noCreatorsDescription')}</p>
             </div>
           </CardContent>
         </Card>
@@ -627,9 +608,9 @@ const ConfirmedCreatorsReport_multilingual = () => {
       <Dialog open={trackingModal} onOpenChange={setTrackingModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('confirmedCreators.shippingManagement')}</DialogTitle>
+            <DialogTitle>{t('confirmedCreatorsReport.shippingManagement')}</DialogTitle>
             <DialogDescription>
-              {t('confirmedCreators.shippingDescription')}
+              {t('confirmedCreatorsReport.shippingDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -646,7 +627,7 @@ const ConfirmedCreatorsReport_multilingual = () => {
               <Label htmlFor="tracking_number">
                 <div className="flex items-center space-x-2">
                   <Package className="h-4 w-4 text-blue-600" />
-                  <span>{t('confirmedCreators.trackingNumber')}</span>
+                  <span>{t('confirmedCreatorsReport.trackingNumber')}</span>
                 </div>
               </Label>
               <Input
@@ -656,14 +637,14 @@ const ConfirmedCreatorsReport_multilingual = () => {
                 placeholder="例: 1234-5678-9012"
               />
               <p className="text-xs text-gray-500">
-                {t('confirmedCreators.trackingHelp')}
+                {t('confirmedCreatorsReport.trackingHelp')}
               </p>
             </div>
             
             {trackingNumber && (
               <div className="p-3 bg-blue-50 rounded-lg">
                 <p className="text-sm text-blue-800">
-                  <strong>{t('confirmedCreators.trackingUrl')}:</strong>
+                  <strong>{t('confirmedCreatorsReport.trackingUrl')}:</strong>
                 </p>
                 <a 
                   href={getJapanPostTrackingUrl(trackingNumber)} 
