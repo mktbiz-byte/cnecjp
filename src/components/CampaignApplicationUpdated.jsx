@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import { database } from '../lib/supabase'
-import VideoSubmissionTracker from './VideoSubmissionTracker'
+
 
 const CampaignApplicationUpdated = () => {
   const { id } = useParams()
@@ -1047,15 +1047,8 @@ const CampaignApplicationUpdated = () => {
             </form>
           </div>
 
-          {/* 영상 제출 섹션 - 신청이 승인된 경우에만 표시 */}
-          {existingApplication && existingApplication.status === 'approved' && (
-            <div className="bg-white rounded-lg shadow-md p-6 mt-6">
-              <VideoSubmissionTracker 
-                campaignId={campaignId}
-                applicationId={existingApplication.id}
-              />
-            </div>
-          )}
+
+
         </div>
       </div>
     </div>
