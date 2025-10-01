@@ -851,21 +851,20 @@ export const database = {
       return safeQuery(async () => {
         console.log('출금 신청 데이터:', withdrawalData)
         
-        // withdrawal_requests 테이블에 직접 삽입
+        // withdrawals 테이블에 직접 삽입
         const insertData = {
           user_id: withdrawalData.user_id,
           amount: withdrawalData.amount,
           paypal_email: withdrawalData.paypal_email,
           paypal_name: withdrawalData.paypal_name,
           reason: withdrawalData.reason || 'ポイント出金申請',
-          status: 'pending',
-          created_at: new Date().toISOString()
+          status: 'pending'
         }
         
         console.log('삽입할 데이터:', insertData)
         
         const { data, error } = await supabase
-          .from('withdrawal_requests')
+          .from('withdrawals')
           .insert([insertData])
           .select()
           
