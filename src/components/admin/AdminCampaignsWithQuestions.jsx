@@ -158,7 +158,7 @@ const AdminCampaignsWithQuestions = () => {
                 새로고침
               </button>
               <button
-                onClick={() => navigate('/admin/campaign-create')}
+                onClick={() => navigate('/campaign-create')}
                 className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
               >
                 새 캠페인 작성
@@ -273,13 +273,13 @@ const AdminCampaignsWithQuestions = () => {
                       </select>
                       
                       <button
-                        onClick={() => navigate(`/admin/applications?campaign=${campaign.id}`)}
+                        onClick={() => navigate(`/applications-report?campaign=${campaign.id}`)}
                         className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                       >
                         신청자 보기
                       </button>
                       <button
-                        onClick={() => navigate(`/admin/campaign-create?edit=${campaign.id}`)}
+                        onClick={() => navigate(`/campaign-create?edit=${campaign.id}`)}
                         className="inline-flex items-center px-3 py-1 border border-blue-300 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100"
                       >
                         수정
@@ -296,7 +296,7 @@ const AdminCampaignsWithQuestions = () => {
                           기업보고서
                         </button>
                         <button
-                          onClick={() => window.open(`/admin/confirmed-creators/${campaign.id}`, '_blank')}
+                          onClick={() => window.open(`/confirmed-creators/${campaign.id}`, '_blank')}
                           className="inline-flex items-center px-3 py-1 border border-green-300 shadow-sm text-sm leading-4 font-medium text-green-700 bg-green-50 hover:bg-green-100"
                           title="확정 크리에이터 보고서"
                         >
@@ -304,7 +304,7 @@ const AdminCampaignsWithQuestions = () => {
                           확정자
                         </button>
                         <button
-                          onClick={() => window.open(`/admin/sns-uploads/${campaign.id}`, '_blank')}
+                          onClick={() => window.open(`/sns-uploads/${campaign.id}`, '_blank')}
                           className="inline-flex items-center px-3 py-1 border border-blue-300 shadow-sm text-sm leading-4 font-medium rounded-r-md text-blue-700 bg-blue-50 hover:bg-blue-100"
                           title="SNS 업로드 보고서"
                         >

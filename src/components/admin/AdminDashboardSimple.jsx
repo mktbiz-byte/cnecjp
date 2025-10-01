@@ -285,7 +285,7 @@ const AdminDashboardSimple = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link to="/admin/campaigns">
+              <Link to="/campaigns-manage">
                 <Button className="w-full">
                   {language === 'ko' ? '캠페인 관리하기' : 'キャンペーン管理'}
                 </Button>
@@ -304,7 +304,7 @@ const AdminDashboardSimple = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link to="/admin/applications">
+              <Link to="/applications-report">
                 <Button className="w-full" variant="outline">
                   {language === 'ko' ? '신청서 검토하기' : '申請書を審査'}
                 </Button>
@@ -323,7 +323,7 @@ const AdminDashboardSimple = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link to="/admin/withdrawals">
+              <Link to="/withdrawals-manage">
                 <Button className="w-full" variant="outline">
                   {language === 'ko' ? '출금 처리하기' : '出금処리'}
                 </Button>
@@ -342,7 +342,7 @@ const AdminDashboardSimple = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link to="/admin/user-approval">
+              <Link to="/user-approval">
                 <Button className="w-full" variant="outline">
                   {language === 'ko' ? '사용자 승인하기' : 'ユーザー承認'}
                 </Button>
@@ -378,7 +378,7 @@ const AdminDashboardSimple = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link to="/admin/email-templates">
+              <Link to="/email-templates">
                 <Button className="w-full" variant="outline">
                   {language === 'ko' ? '템플릿 관리하기' : 'テンプレート管理'}
                 </Button>

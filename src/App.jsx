@@ -82,24 +82,24 @@ const AppContent = () => {
         <Route path="/company-report/:campaignId" element={<CompanyReportNew />} />
         <Route path="/profile-settings" element={<ProfileSettings />} />
         
-        {/* 관리자 페이지 */}
+        {/* 관리자 페이지 - 보안을 위해 /admin/ 경로 제거 */}
         <Route path="/secret-admin-login" element={<SecretAdminLogin />} />
         <Route path="/test-admin-login" element={<TestAdminLogin />} />
-        <Route path="/admin" element={<AdminDashboardSimple />} />
-        <Route path="/admin/campaigns" element={<AdminCampaignsWithQuestions />} />
-        <Route path="/admin/campaign-create" element={<CampaignCreationWithTranslator />} />
-        <Route path="/admin/applications" element={<ApplicationsReportSimple />} />
-        <Route path="/admin/confirmed-creators" element={<ConfirmedCreatorsReport_multilingual />} />
-        <Route path="/admin/confirmed-creators/:campaignId" element={<ConfirmedCreatorsNew />} />
-        <Route path="/admin/sns-uploads" element={<SNSUploadNew />} />
-        <Route path="/admin/sns-uploads/:campaignId" element={<SNSUploadNew />} />
-        <Route path="/admin/campaign-report/:campaignId" element={<CampaignReportEnhanced />} />
-        <Route path="/admin/email-templates" element={<EmailTemplateManager />} />
-        <Route path="/admin/users" element={<UserApprovalManagerEnhanced />} />
-        <Route path="/admin/user-approval" element={<UserApprovalManagerEnhanced />} />
-        <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
-        <Route path="/admin/system-settings" element={<SystemSettings />} />
-        <Route path="/admin/email-settings" element={<EmailSettings />} />
+        <Route path="/dashboard" element={<AdminDashboardSimple />} />
+        <Route path="/campaigns-manage" element={<AdminCampaignsWithQuestions />} />
+        <Route path="/campaign-create" element={<CampaignCreationWithTranslator />} />
+        <Route path="/applications-report" element={<ApplicationsReportSimple />} />
+        <Route path="/confirmed-creators" element={<ConfirmedCreatorsReport_multilingual />} />
+        <Route path="/confirmed-creators/:campaignId" element={<ConfirmedCreatorsNew />} />
+        <Route path="/sns-uploads" element={<SNSUploadNew />} />
+        <Route path="/sns-uploads/:campaignId" element={<SNSUploadNew />} />
+        <Route path="/campaign-report/:campaignId" element={<CampaignReportEnhanced />} />
+        <Route path="/email-templates" element={<EmailTemplateManager />} />
+        <Route path="/users-manage" element={<UserApprovalManagerEnhanced />} />
+        <Route path="/user-approval" element={<UserApprovalManagerEnhanced />} />
+        <Route path="/withdrawals-manage" element={<AdminWithdrawals />} />
+        <Route path="/system-settings" element={<SystemSettings />} />
+        <Route path="/email-settings" element={<EmailSettings />} />
       </Routes>
     </div>
   );

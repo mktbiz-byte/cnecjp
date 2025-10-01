@@ -240,3 +240,46 @@ AND table_schema = 'public'
 ORDER BY ordinal_position;
 
 SELECT '데이터베이스 스키마 수정 완료' as result;
+
+
+-- 9. applications 테이블에 shipped_at 컬럼 추가 (송장번호 업데이트 오류 해결)
+DO $$ 
+BEGIN
+    -- shipped_at 컬럼 추가
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'applications' 
+        AND column_name = 'shipped_at'
+        AND table_schema = 'public'
+    ) THEN
+        ALTER TABLE applications ADD COLUMN shipped_at TIMESTAMP WITH TIME ZONE;
+    END IF;
+
+    -- tracking_number 컬럼 추가
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'applications' 
+        AND column_name = 'tracking_number'
+        AND table_schema = 'public'
+    ) THEN
+        ALTER TABLE applications ADD COLUMN tracking_number TEXT;
+    END IF;
+
+    -- shipping_status 컬럼 추가
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'applications' 
+        AND column_name = 'shipping_status'
+        AND table_schema = 'public'
+    ) THEN
+        ALTER TABLE applications ADD COLUMN shipping_status TEXT DEFAULT 'pending' CHECK (shipping_status IN ('pending', 'shipped', 'delivered'));
+    END IF;
+
+END $$;
+
+-- applications 테이블 새 컬럼 인덱스 생성
+CREATE INDEX IF NOT EXISTS idx_applications_shipped_at ON applications(shipped_at);
+CREATE INDEX IF NOT EXISTS idx_applications_tracking_number ON applications(tracking_number);
+CREATE INDEX IF NOT EXISTS idx_applications_shipping_status ON applications(shipping_status);
+
+SELECT 'applications 테이블 배송 관련 컬럼 추가 완료' as result;
