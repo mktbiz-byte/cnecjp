@@ -883,47 +883,72 @@ export const database = {
   userPoints: {
     async getUserTotalPoints(userId) {
       return safeQuery(async () => {
+        console.log('포인트 조회 시작 - 사용자 ID:', userId)
+        
+        // point_transactions 테이블에서 포인트 합계 계산
         const { data, error } = await supabase
-          .from('user_points')
-          .select('points')
+          .from('point_transactions')
+          .select('amount')
           .eq('user_id', userId)
-          .eq('status', 'approved')
         
-        if (error) throw error
+        if (error) {
+          console.error('포인트 조회 오류:', error)
+          throw error
+        }
         
-        const totalPoints = (data || []).reduce((sum, record) => sum + record.points, 0)
+        console.log('포인트 트랜잭션 데이터:', data)
+        
+        // 모든 트랜잭션의 합계 계산 (양수는 적립, 음수는 차감)
+        const totalPoints = (data || []).reduce((sum, record) => sum + (record.amount || 0), 0)
+        
+        console.log('총 포인트:', totalPoints)
         return totalPoints
       })
     },
 
     async getUserPoints(userId) {
       return safeQuery(async () => {
+        console.log('포인트 내역 조회 - 사용자 ID:', userId)
+        
+        // point_transactions 테이블에서 포인트 내역 조회
         const { data, error } = await supabase
-          .from('user_points')
-          .select(`
-            *,
-            campaigns!user_points_campaign_id_fkey(title)
-          `)
+          .from('point_transactions')
+          .select('*')
           .eq('user_id', userId)
           .order('created_at', { ascending: false })
-        if (error) throw error
+          
+        if (error) {
+          console.error('포인트 내역 조회 오류:', error)
+          throw error
+        }
+        
+        console.log('포인트 내역:', data)
         return data || []
       })
     },
 
     async deductPoints(userId, amount, reason = '出金申請') {
       return safeQuery(async () => {
+        console.log('포인트 차감:', { userId, amount, reason })
+        
+        // point_transactions 테이블에 차감 기록 추가 (음수로 저장)
         const { data, error } = await supabase
-          .from('user_points')
+          .from('point_transactions')
           .insert([{
             user_id: userId,
-            points: -amount,
-            reason: reason,
-            status: 'approved',
-            approved_at: new Date().toISOString()
+            amount: -amount, // 차감이므로 음수
+            transaction_type: 'withdrawal',
+            description: reason,
+            created_at: new Date().toISOString()
           }])
           .select()
-        if (error) throw error
+          
+        if (error) {
+          console.error('포인트 차감 오류:', error)
+          throw error
+        }
+        
+        console.log('포인트 차감 완료:', data)
         return data && data.length > 0 ? data[0] : null
       })
     }
