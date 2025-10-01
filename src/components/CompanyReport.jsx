@@ -49,55 +49,116 @@ const CompanyReport = () => {
       setLoading(true)
       setError('')
       
-      // 토큰 검증 생략 - 관리자 권한으로 접근
+      console.log('会社データ読み込み開始:', companyId)
       
-      // 회사 정보 로드
-      const { data: companyData, error: companyError } = await supabase
-        .from('companies')
-        .select('*')
-        .eq('id', companyId)
-        .single()
-      
-      if (companyError) throw companyError
-      setCompany(companyData)
-      
-      // 회사의 캠페인 로드
-      const { data: campaignsData, error: campaignsError } = await supabase
-        .from('campaigns')
-        .select('*')
-        .eq('company_id', companyId)
-        .order('created_at', { ascending: false })
-      
-      if (campaignsError) throw campaignsError
-      setCampaigns(campaignsData || [])
-      
-      // 캠페인 신청 내역 로드
-      const campaignIds = campaignsData?.map(c => c.id) || []
-      if (campaignIds.length > 0) {
-        const { data: applicationsData, error: applicationsError } = await supabase
-          .from('applications')
-          .select(`
-            *,
-            campaigns (
-              title,
-              brand,
-              reward_amount
-            ),
-            user_profiles (
-              name,
-              instagram_followers,
-              tiktok_followers,
-              youtube_followers
-            )
-          `)
-          .in('campaign_id', campaignIds)
-          .order('created_at', { ascending: false })
+      // 会社情報の読み込み - Supabaseライブラリを使用
+      let companyData
+      try {
+        companyData = await database.companies.get(companyId)
+        if (!companyData) {
+          throw new Error('会社情報が見つかりません')
+        }
+        setCompany(companyData)
+        console.log('会社データ読み込み成功:', companyData)
+      } catch (companyError) {
+        console.error('会社データ読み込みエラー:', companyError)
+        // フォールバック: 直接Supabaseクエリ
+        const { data: fallbackCompanyData, error: fallbackError } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('id', companyId)
+          .single()
         
-        if (applicationsError) throw applicationsError
-        setApplications(applicationsData || [])
+        if (fallbackError) throw new Error(`会社情報の取得に失敗: ${fallbackError.message}`)
+        companyData = fallbackCompanyData
+        setCompany(companyData)
       }
       
-      // 분석 데이터 생성
+      // 会社のキャンペーン読み込み - Supabaseライブラリを使用
+      let campaignsData = []
+      try {
+        campaignsData = await database.campaigns.getByCompany(companyId)
+        setCampaigns(campaignsData || [])
+        console.log('キャンペーンデータ読み込み成功:', campaignsData?.length || 0, '件')
+      } catch (campaignsError) {
+        console.error('キャンペーンデータ読み込みエラー:', campaignsError)
+        // フォールバック: 直接Supabaseクエリ
+        const { data: fallbackCampaignsData, error: fallbackCampaignsError } = await supabase
+          .from('campaigns')
+          .select('*')
+          .eq('company_id', companyId)
+          .order('created_at', { ascending: false })
+        
+        if (fallbackCampaignsError) {
+          console.warn('キャンペーンデータのフォールバック読み込みも失敗:', fallbackCampaignsError)
+          campaignsData = []
+        } else {
+          campaignsData = fallbackCampaignsData || []
+        }
+        setCampaigns(campaignsData)
+      }
+      
+      // キャンペーン申請履歴の読み込み
+      let applicationsData = []
+      const campaignIds = campaignsData?.map(c => c.id) || []
+      
+      if (campaignIds.length > 0) {
+        try {
+          // 各キャンペーンの申請を個別に取得
+          const allApplications = []
+          for (const campaignId of campaignIds) {
+            try {
+              const campaignApplications = await database.applications.getByCampaign(campaignId)
+              if (campaignApplications && campaignApplications.length > 0) {
+                allApplications.push(...campaignApplications)
+              }
+            } catch (appError) {
+              console.warn(`キャンペーン ${campaignId} の申請データ取得に失敗:`, appError)
+            }
+          }
+          
+          applicationsData = allApplications
+          console.log('申請データ読み込み成功:', applicationsData.length, '件')
+        } catch (applicationsError) {
+          console.error('申請データ読み込みエラー:', applicationsError)
+          
+          // フォールバック: 直接Supabaseクエリ
+          try {
+            const { data: fallbackApplicationsData, error: fallbackApplicationsError } = await supabase
+              .from('applications')
+              .select(`
+                *,
+                campaigns (
+                  title,
+                  brand,
+                  reward_amount
+                ),
+                user_profiles (
+                  name,
+                  instagram_followers,
+                  tiktok_followers,
+                  youtube_followers
+                )
+              `)
+              .in('campaign_id', campaignIds)
+              .order('created_at', { ascending: false })
+            
+            if (fallbackApplicationsError) {
+              console.warn('申請データのフォールバック読み込みも失敗:', fallbackApplicationsError)
+              applicationsData = []
+            } else {
+              applicationsData = fallbackApplicationsData || []
+            }
+          } catch (fallbackError) {
+            console.warn('申請データのフォールバック処理でエラー:', fallbackError)
+            applicationsData = []
+          }
+        }
+      }
+      
+      setApplications(applicationsData)
+      
+      // 分析データ生成
       generateAnalytics(campaignsData || [], applicationsData || [])
       
     } catch (error) {

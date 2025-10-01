@@ -307,20 +307,40 @@ const CampaignApplicationUpdated = () => {
       setSubmitting(true)
       setError('')
 
+      // 申請データの準備 - applicationsテーブル用の構造に合わせる
       const submissionData = {
         user_id: user.id,
         campaign_id: campaignId,
-        ...applicationData,
-        status: 'pending'
+        applicant_name: applicationData.applicant_name,
+        age: parseInt(applicationData.age) || null,
+        skin_type: applicationData.skin_type,
+        postal_code: applicationData.postal_code,
+        address: applicationData.address,
+        phone_number: applicationData.phone_number,
+        instagram_url: applicationData.instagram_url,
+        youtube_url: applicationData.youtube_url || null,
+        tiktok_url: applicationData.tiktok_url || null,
+        answer_1: applicationData.answer_1 || null,
+        answer_2: applicationData.answer_2 || null,
+        answer_3: applicationData.answer_3 || null,
+        answer_4: applicationData.answer_4 || null,
+        additional_info: applicationData.additional_info || null,
+        offline_visit_available: applicationData.offline_visit_available || false,
+        offline_visit_notes: applicationData.offline_visit_notes || null,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }
 
-      console.log('신청서 제출 데이터:', submissionData)
+      console.log('申請書提出データ:', submissionData)
 
       if (existingApplication) {
-        // 기존 신청서 업데이트
+        // 既存申請書の更新
+        console.log('既存申請書を更新:', existingApplication.id)
         await database.applications.update(existingApplication.id, submissionData)
       } else {
-        // 새 신청서 생성
+        // 新規申請書作成
+        console.log('新規申請書を作成')
         await database.applications.create(submissionData)
       }
 

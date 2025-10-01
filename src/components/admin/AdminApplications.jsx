@@ -53,6 +53,30 @@ const AdminApplications = () => {
     }
   }, [selectedCampaign])
 
+  // ESCキーでモーダルを閉じる
+  useEffect(() => {
+    const handleEscKey = (event) => {
+      if (event.key === 'Escape') {
+        if (approveModal) {
+          setApproveModal(false)
+        }
+        if (detailModal) {
+          setDetailModal(false)
+        }
+        if (rejectModal) {
+          setRejectModal(false)
+        }
+      }
+    }
+
+    if (approveModal || detailModal || rejectModal) {
+      document.addEventListener('keydown', handleEscKey)
+      return () => {
+        document.removeEventListener('keydown', handleEscKey)
+      }
+    }
+  }, [approveModal, detailModal, rejectModal])
+
   const loadData = async () => {
     try {
       setLoading(true)
@@ -721,74 +745,105 @@ const AdminApplications = () => {
           </DialogContent>
         </Dialog>
 
-        {/* 승인 모달 */}
-        <Dialog open={approveModal} onOpenChange={setApproveModal}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>
-                {language === 'ko' ? '지원자 승인' : '応募者承認'}
-              </DialogTitle>
-              <DialogDescription>
-                {language === 'ko' 
-                  ? '지원자를 승인하고 필요한 링크를 제공하세요.'
-                  : '応募者を承認し、必要なリンクを提供してください。'
-                }
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="google_drive_link">
-                  {language === 'ko' ? '구글 드라이브 링크 (영상 공유용)' : 'Google ドライブリンク (動画共有用)'}
-                </Label>
-                <Input
-                  id="google_drive_link"
-                  value={approvalData.google_drive_link}
-                  onChange={(e) => setApprovalData(prev => ({ ...prev, google_drive_link: e.target.value }))}
-                  placeholder="https://drive.google.com/..."
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="google_slides_link">
-                  {language === 'ko' ? '구글 슬라이드 링크 (가이드)' : 'Google スライドリンク (ガイド)'}
-                </Label>
-                <Input
-                  id="google_slides_link"
-                  value={approvalData.google_slides_link}
-                  onChange={(e) => setApprovalData(prev => ({ ...prev, google_slides_link: e.target.value }))}
-                  placeholder="https://docs.google.com/presentation/..."
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="notes">
-                  {language === 'ko' ? '관리자 메모' : '管理者メモ'}
-                </Label>
-                <Textarea
-                  id="notes"
-                  value={approvalData.notes}
-                  onChange={(e) => setApprovalData(prev => ({ ...prev, notes: e.target.value }))}
-                  placeholder={language === 'ko' 
-                    ? '승인과 함께 전달할 메시지를 입력하세요...'
-                    : '承認と一緒に伝えるメッセージを入力してください...'
+        {/* 승인 처리 - 인라인 편집 방식 */}
+        {approveModal && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4"
+            style={{ zIndex: 99999 }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setApproveModal(false)
+              }
+            }}
+          >
+            <div 
+              className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative"
+              onClick={(e) => e.stopPropagation()}
+              style={{ zIndex: 100000 }}
+            >
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold">
+                    {language === 'ko' ? '지원자 승인' : '応募者承認'}
+                  </h2>
+                  <button
+                    onClick={() => setApproveModal(false)}
+                    className="text-gray-400 hover:text-gray-600 text-2xl"
+                  >
+                    ×
+                  </button>
+                </div>
+                
+                <p className="text-gray-600 mb-6">
+                  {language === 'ko' 
+                    ? '지원자를 승인하고 필요한 링크를 제공하세요.'
+                    : '応募者を承認し、必要なリンクを提供してください。'
                   }
-                  rows={3}
-                />
+                </p>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      {language === 'ko' ? '구글 드라이브 링크 (영상 공유용)' : 'Google ドライブリンク (動画共有用)'}
+                    </label>
+                    <input
+                      type="url"
+                      value={approvalData.google_drive_link}
+                      onChange={(e) => setApprovalData(prev => ({ ...prev, google_drive_link: e.target.value }))}
+                      placeholder="https://drive.google.com/..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      {language === 'ko' ? '구글 슬라이드 링크 (가이드)' : 'Google スライドリンク (ガイド)'}
+                    </label>
+                    <input
+                      type="url"
+                      value={approvalData.google_slides_link}
+                      onChange={(e) => setApprovalData(prev => ({ ...prev, google_slides_link: e.target.value }))}
+                      placeholder="https://docs.google.com/presentation/..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      {language === 'ko' ? '관리자 메모' : '管理者メモ'}
+                    </label>
+                    <textarea
+                      value={approvalData.notes}
+                      onChange={(e) => setApprovalData(prev => ({ ...prev, notes: e.target.value }))}
+                      placeholder={language === 'ko' 
+                        ? '승인과 함께 전달할 메시지를 입력하세요...'
+                        : '承認と一緒に伝えるメッセージを入力してください...'
+                      }
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex justify-end space-x-3 pt-6 border-t mt-6">
+                  <button
+                    onClick={() => setApproveModal(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  >
+                    {language === 'ko' ? '취소' : 'キャンセル'}
+                  </button>
+                  <button
+                    onClick={handleApprove}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center"
+                  >
+                    <Check className="h-4 w-4 mr-2" />
+                    {language === 'ko' ? '승인' : '承認'}
+                  </button>
+                </div>
               </div>
             </div>
-            
-            <div className="flex justify-end space-x-3 pt-6 border-t">
-              <Button variant="outline" onClick={() => setApproveModal(false)}>
-                {language === 'ko' ? '취소' : 'キャンセル'}
-              </Button>
-              <Button onClick={handleApprove} className="bg-green-600 hover:bg-green-700">
-                <Check className="h-4 w-4 mr-2" />
-                {language === 'ko' ? '승인' : '承認'}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+        )}
 
         {/* 거절/취소 모달 */}
         <Dialog open={rejectModal} onOpenChange={setRejectModal}>

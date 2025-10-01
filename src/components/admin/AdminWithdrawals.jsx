@@ -162,12 +162,25 @@ const AdminWithdrawals = () => {
       
       // 단계별 데이터 로딩으로 흰화면 문제 해결
       
-      // 1단계: 출금 요청 데이터 로드
+      // 1단계: 출금 요청 데이터 로드 (withdrawal_requests 테이블에서)
       console.log('1단계: 출금 요청 데이터 로드...')
       try {
-        const withdrawalsData = await database.withdrawals?.getAll() || []
-        setWithdrawals(withdrawalsData)
-        console.log('출금 요청 데이터 로드 성공:', withdrawalsData.length)
+        // withdrawal_requests 테이블에서 직접 데이터 가져오기
+        const { data: withdrawalsData, error } = await supabase
+          .from('withdrawal_requests')
+          .select(`
+            *,
+            user_profiles!withdrawal_requests_user_id_fkey(name, email, phone)
+          `)
+          .order('created_at', { ascending: false })
+        
+        if (error) {
+          console.error('출금 요청 데이터 로드 오류:', error)
+          throw error
+        }
+        
+        setWithdrawals(withdrawalsData || [])
+        console.log('출금 요청 데이터 로드 성공:', withdrawalsData?.length || 0)
       } catch (error) {
         console.warn('출금 요청 데이터 로드 실패:', error)
         setWithdrawals([])
@@ -209,7 +222,15 @@ const AdminWithdrawals = () => {
         updated_at: new Date().toISOString()
       }
 
-      await database.withdrawals.update(withdrawalId, updateData)
+      // withdrawal_requests 테이블 직접 업데이트
+      const { error } = await supabase
+        .from('withdrawal_requests')
+        .update(updateData)
+        .eq('id', withdrawalId)
+      
+      if (error) {
+        throw error
+      }
       
       console.log('상태 업데이트 완료')
       setSuccess(t.success)

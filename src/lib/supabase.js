@@ -824,20 +824,32 @@ export const database = {
 
     async create(withdrawalData) {
       return safeQuery(async () => {
+        console.log('출금 신청 데이터:', withdrawalData)
+        
+        // withdrawal_requests 테이블에 직접 삽입
+        const insertData = {
+          user_id: withdrawalData.user_id,
+          amount: withdrawalData.amount,
+          paypal_email: withdrawalData.paypal_email,
+          paypal_name: withdrawalData.paypal_name,
+          reason: withdrawalData.reason || 'ポイント出金申請',
+          status: 'pending',
+          created_at: new Date().toISOString()
+        }
+        
+        console.log('삽입할 데이터:', insertData)
+        
         const { data, error } = await supabase
-          .from('withdrawals')
-          .insert([{
-            user_id: withdrawalData.user_id,
-            amount: withdrawalData.amount,
-            bank_info: {
-              paypal_email: withdrawalData.paypal_email,
-              paypal_name: withdrawalData.paypal_name
-            },
-            status: 'pending',
-            requested_at: new Date().toISOString()
-          }])
+          .from('withdrawal_requests')
+          .insert([insertData])
           .select()
-        if (error) throw error
+          
+        if (error) {
+          console.error('출금 신청 삽입 오류:', error)
+          throw error
+        }
+        
+        console.log('출금 신청 성공:', data)
         return data && data.length > 0 ? data[0] : null
       })
     },
@@ -899,7 +911,7 @@ export const database = {
       })
     },
 
-    async deductPoints(userId, amount, reason = '출금 신청') {
+    async deductPoints(userId, amount, reason = '出金申請') {
       return safeQuery(async () => {
         const { data, error } = await supabase
           .from('user_points')

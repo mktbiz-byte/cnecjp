@@ -236,26 +236,46 @@ const MyPageWithWithdrawal = () => {
       const applicationsData = await database.applications.getByUser(user.id)
       setApplications(applicationsData || [])
       
-      // 출금 내역 로드 (아직 구현되지 않음)
-      setWithdrawals([])
-      
-      // 포인트 거래 내역 로드
+      // 出金履歴の読み込み
       try {
-        const { data: pointData, error: pointError } = await supabase
-          .from('point_transactions')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
+        const withdrawalData = await database.withdrawals.getByUser(user.id)
+        setWithdrawals(withdrawalData || [])
+      } catch (withdrawErr) {
+        console.warn('出金履歴の読み込みに失敗:', withdrawErr)
+        setWithdrawals([])
+      }
+      
+      // ポイント取引履歴の読み込み
+      try {
+        const userPointsData = await database.userPoints.getUserPoints(user.id)
+        setPointTransactions(userPointsData || [])
         
-        if (pointError) {
-          console.warn('포인트 거래 내역 로드 실패:', pointError)
-          setPointTransactions([])
-        } else {
-          setPointTransactions(pointData || [])
+        // 現在のポイント残高を計算してプロフィールに反映
+        const totalPoints = await database.userPoints.getUserTotalPoints(user.id)
+        if (profileData) {
+          setProfile(prev => ({
+            ...prev,
+            points: totalPoints
+          }))
         }
       } catch (pointErr) {
-        console.warn('포인트 거래 내역 로드 중 오류:', pointErr)
+        console.warn('ポイント取引履歴の読み込み中にエラー:', pointErr)
         setPointTransactions([])
+        
+        // フォールバック: 直接point_transactionsテーブルから読み込み
+        try {
+          const { data: pointData, error: pointError } = await supabase
+            .from('point_transactions')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+          
+          if (!pointError && pointData) {
+            setPointTransactions(pointData)
+          }
+        } catch (fallbackErr) {
+          console.warn('フォールバックポイント読み込みも失敗:', fallbackErr)
+        }
       }
       
     } catch (error) {
@@ -308,15 +328,23 @@ const MyPageWithWithdrawal = () => {
     }
   }
 
-  // 출금 신청 처리 함수
+  // 出金申請処理関数
   const handleWithdrawSubmit = async () => {
     if (!withdrawForm.amount || !withdrawForm.paypalEmail || !withdrawForm.paypalName) {
-      setError('모든 필수 항목을 입력해주세요.')
+      setError(language === 'ja' ? 'すべての必須項目を入力してください。' : '모든 필수 항목을 입력해주세요.')
       return
     }
 
-    if (parseInt(withdrawForm.amount) > (profile?.points || 0)) {
-      setError('보유 포인트보다 많은 금액을 출금할 수 없습니다.')
+    const requestAmount = parseInt(withdrawForm.amount)
+    const currentPoints = profile?.points || 0
+
+    if (requestAmount > currentPoints) {
+      setError(language === 'ja' ? '保有ポイントより多い金額は出金できません。' : '보유 포인트보다 많은 금액을 출금할 수 없습니다.')
+      return
+    }
+
+    if (requestAmount < 1000) {
+      setError(language === 'ja' ? '最小出金額は1,000ポイントです。' : '최소 출금 금액은 1,000포인트입니다.')
       return
     }
 
@@ -324,34 +352,43 @@ const MyPageWithWithdrawal = () => {
       setProcessing(true)
       setError('')
 
-      // 출금 신청 데이터를 Supabase에 저장
-      const { error: withdrawError } = await supabase
-        .from('withdrawal_requests')
-        .insert([{
-          user_id: user.id,
-          amount: parseInt(withdrawForm.amount),
-          paypal_email: withdrawForm.paypalEmail,
-          paypal_name: withdrawForm.paypalName,
-          reason: withdrawForm.reason,
-          status: 'pending',
-          created_at: new Date().toISOString()
-        }])
-
-      if (withdrawError) {
-        throw withdrawError
+      // Supabaseライブラリの出金関数を使用
+      const withdrawalData = {
+        user_id: user.id,
+        amount: requestAmount,
+        paypal_email: withdrawForm.paypalEmail,
+        paypal_name: withdrawForm.paypalName,
+        reason: withdrawForm.reason || (language === 'ja' ? 'ポイント出金申請' : '포인트 출금 신청')
       }
 
-      setSuccess('출금 신청이 완료되었습니다. 관리자 검토 후 처리됩니다.')
-      setShowWithdrawModal(false)
-      setWithdrawForm({
-        amount: '',
-        paypalEmail: '',
-        paypalName: '',
-        reason: ''
-      })
+      console.log('出金申請データ:', withdrawalData)
+
+      // withdrawalsテーブルに出金申請を作成
+      const result = await database.withdrawals.create(withdrawalData)
+      
+      if (result) {
+        // 出金申請 성공 시 사용자 포인트에서 차감
+        await database.userPoints.deductPoints(user.id, requestAmount, language === 'ja' ? '出金申請' : '출금 신청')
+        
+        setSuccess(language === 'ja' ? '出金申請が完了しました。管理者の審査後に処理されます。' : '출금 신청이 완료되었습니다. 관리자 검토 후 처리됩니다.')
+        setShowWithdrawModal(false)
+        setWithdrawForm({
+          amount: '',
+          paypalEmail: '',
+          paypalName: '',
+          reason: ''
+        })
+        
+        // データを再読み込みして最新状態を反映
+        await loadUserData()
+        
+        setTimeout(() => setSuccess(''), 5000)
+      } else {
+        throw new Error('出金申請の作成に失敗しました')
+      }
     } catch (error) {
-      console.error('출금 신청 오류:', error)
-      setError('출금 신청 중 오류가 발생했습니다. 다시 시도해주세요.')
+      console.error('出金申請エラー:', error)
+      setError(language === 'ja' ? '出金申請中にエラーが発生しました。再度お試しください。' : '출금 신청 중 오류가 발생했습니다. 다시 시도해주세요.')
     } finally {
       setProcessing(false)
     }
@@ -453,7 +490,7 @@ const MyPageWithWithdrawal = () => {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{t.title}</h1>
               <p className="mt-2 text-gray-600">
-                {profile?.name || user?.email}님의 계정 정보
+{language === 'ja' ? `${profile?.name || user?.email}さんのアカウント情報` : `${profile?.name || user?.email}님의 계정 정보`}
               </p>
             </div>
             <div className="flex space-x-3">
@@ -576,7 +613,7 @@ const MyPageWithWithdrawal = () => {
                         className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     ) : (
-                      <p className="mt-1 text-sm text-gray-900">{profile?.name || '이름 없음'}</p>
+                      <p className="mt-1 text-sm text-gray-900">{profile?.name || (language === 'ja' ? '名前未設定' : '이름 없음')}</p>
                     )}
                   </div>
                   
@@ -596,7 +633,7 @@ const MyPageWithWithdrawal = () => {
                         placeholder="080-1234-5678"
                       />
                     ) : (
-                      <p className="mt-1 text-sm text-gray-900">{profile?.phone || '등록되지 않음'}</p>
+                      <p className="mt-1 text-sm text-gray-900">{profile?.phone || (language === 'ja' ? '未登録' : '등록되지 않음')}</p>
                     )}
                   </div>
                   
@@ -996,12 +1033,12 @@ const MyPageWithWithdrawal = () => {
                       type="number"
                       value={withdrawForm.amount}
                       onChange={(e) => setWithdrawForm({...withdrawForm, amount: e.target.value})}
-                      placeholder="출금할 포인트 수"
+                      placeholder={language === 'ja' ? '出金するポイント数' : '출금할 포인트 수'}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                       max={profile?.points || 0}
                     />
                     <p className="text-sm text-gray-500 mt-1">
-                      보유 포인트: {profile?.points?.toLocaleString() || 0}P
+                      {language === 'ja' ? '保有ポイント' : '보유 포인트'}: {profile?.points?.toLocaleString() || 0}P
                     </p>
                   </div>
                   
@@ -1013,7 +1050,7 @@ const MyPageWithWithdrawal = () => {
                       type="email"
                       value={withdrawForm.paypalEmail}
                       onChange={(e) => setWithdrawForm({...withdrawForm, paypalEmail: e.target.value})}
-                      placeholder="PayPal 계정 이메일"
+                      placeholder={language === 'ja' ? 'PayPal アカウントメール' : 'PayPal 계정 이메일'}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                     />
                   </div>
@@ -1026,7 +1063,7 @@ const MyPageWithWithdrawal = () => {
                       type="text"
                       value={withdrawForm.paypalName}
                       onChange={(e) => setWithdrawForm({...withdrawForm, paypalName: e.target.value})}
-                      placeholder="PayPal 계정명 (실명)"
+                      placeholder={language === 'ja' ? 'PayPal アカウント名（実名）' : 'PayPal 계정명 (실명)'}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                     />
                   </div>
@@ -1040,7 +1077,7 @@ const MyPageWithWithdrawal = () => {
                       onChange={(e) => setWithdrawForm({...withdrawForm, reason: e.target.value})}
                       rows={3}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                      placeholder="출금 사유 (선택사항)"
+                      placeholder={language === 'ja' ? '出金理由（任意）' : '출금 사유 (선택사항)'}
                     />
                   </div>
                 </div>
