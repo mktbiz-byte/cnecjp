@@ -29,13 +29,18 @@ const SecretAdminLogin = () => {
           // 사용자 프로필에서 관리자 권한 확인
           const { data: profile } = await supabase
             .from('user_profiles')
-            .select('user_role')
+            .select('role')
             .eq('user_id', user.id)
             .single()
           
+          console.log('사용자 프로필 확인:', profile)
+          
           // 관리자 또는 매니저 권한이 있는 경우에만 리다이렉트
-          if (profile?.user_role === 'admin' || profile?.user_role === 'manager') {
+          if (profile?.role === 'admin' || profile?.role === 'manager') {
+            console.log('관리자 권한 확인됨, 관리자 페이지로 이동')
             navigate('/admin')
+          } else {
+            console.log('관리자 권한 없음:', profile?.role)
           }
         } catch (error) {
           console.error('Admin access check error:', error)

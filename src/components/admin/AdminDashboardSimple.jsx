@@ -92,7 +92,7 @@ const AdminDashboardSimple = () => {
       return
     }
     
-    const adminEmails = ['mkt_biz@cnec.co.kr', 'admin@cnec.test']
+    const adminEmails = ['mkt_biz@cnec.co.kr', 'admin@cnec.test', 'acrossx@howlab.co.kr']
     const isAdmin = adminEmails.some(email => user.email?.includes(email))
     
     if (!isAdmin) {
