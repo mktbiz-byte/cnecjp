@@ -46,52 +46,83 @@ const ConfirmedCreatorsReport_multilingual = () => {
       setLoading(true)
       setError('')
       
-      // 특정 캠페인 또는 전체 캠페인 로드
+      console.log('확정 크리에이터 데이터 로드 시작, campaignId:', campaignId)
+      
+      // 1단계: 캠페인 데이터 로드
       if (campaignId && campaignId !== 'undefined') {
-        const campaignData = await database.campaigns.getById(campaignId)
-        if (!campaignData) {
-          setError(t('common.error'))
+        console.log('특정 캠페인 로드:', campaignId)
+        try {
+          const campaignData = await database.campaigns.getById(campaignId)
+          if (!campaignData) {
+            setError('캠페인을 찾을 수 없습니다.')
+            return
+          }
+          setCampaign(campaignData)
+          console.log('캠페인 데이터 로드 성공:', campaignData.title)
+        } catch (error) {
+          console.error('캠페인 로드 오류:', error)
+          setError('캠페인 로드 중 오류가 발생했습니다.')
           return
         }
-        setCampaign(campaignData)
       } else {
-        // campaignId가 없으면 전체 확정 크리에이터 보기
         console.log('전체 확정 크리에이터 보기 모드')
         setCampaign(null)
       }
       
-      // 승인된 신청서들 로드 (확정 크리에이터)
-      let applicationsData
-      if (campaignId && campaignId !== 'undefined') {
-        applicationsData = await database.applications.getByCampaign(campaignId)
-      } else {
-        applicationsData = await database.applications.getAll()
-      }
-      
-      if (!applicationsData || applicationsData.length === 0) {
-        setApplications([])
-        return
-      }
-      
-      const approvedApplications = (Array.isArray(applicationsData) ? applicationsData : applicationsData?.data || [])
-        .filter(app => app.status === 'approved' || app.status === 'completed')
-      setApplications(approvedApplications)
-      
-      // 신청자들의 프로필 정보 로드
-      const profiles = {}
-      for (const app of approvedApplications) {
-        const profile = await database.userProfiles.get(app.user_id)
-        if (profile) {
-          profiles[app.user_id] = profile
+      // 2단계: 신청서 데이터 로드
+      console.log('신청서 데이터 로드 시작...')
+      try {
+        let applicationsData
+        if (campaignId && campaignId !== 'undefined') {
+          applicationsData = await database.applications.getByCampaign(campaignId)
+        } else {
+          applicationsData = await database.applications.getAll()
         }
+        
+        console.log('로드된 신청서 수:', applicationsData?.length || 0)
+        
+        if (!applicationsData || applicationsData.length === 0) {
+          setApplications([])
+          setUserProfiles({})
+          console.log('신청서 데이터 없음')
+          return
+        }
+        
+        // 승인된 신청서만 필터링 (확정 크리에이터)
+        const approvedApplications = (Array.isArray(applicationsData) ? applicationsData : [])
+          .filter(app => app.status === 'approved' || app.status === 'completed')
+        
+        console.log('승인된 신청서 수:', approvedApplications.length)
+        setApplications(approvedApplications)
+        
+        // 3단계: 신청자들의 프로필 정보 로드
+        console.log('프로필 정보 로드 시작...')
+        const profiles = {}
+        for (const app of approvedApplications) {
+          try {
+            const profile = await database.userProfiles.get(app.user_id)
+            if (profile) {
+              profiles[app.user_id] = profile
+            }
+          } catch (profileError) {
+            console.warn('프로필 로드 실패:', app.user_id, profileError)
+          }
+        }
+        setUserProfiles(profiles)
+        console.log('프로필 로드 완료:', Object.keys(profiles).length)
+        
+      } catch (error) {
+        console.error('신청서 데이터 로드 오류:', error)
+        setApplications([])
+        setUserProfiles({})
       }
-      setUserProfiles(profiles)
       
     } catch (error) {
-      console.error('Load data error:', error)
-      setError(t('common.error'))
+      console.error('전체 데이터 로드 오류:', error)
+      setError('데이터 로드 중 오류가 발생했습니다.')
     } finally {
       setLoading(false)
+      console.log('확정 크리에이터 데이터 로드 완료')
     }
   }
 

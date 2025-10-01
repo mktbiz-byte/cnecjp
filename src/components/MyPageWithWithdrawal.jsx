@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
-import { database } from '../lib/supabase'
+import { database, supabase } from '../lib/supabase'
 import { 
   User, Mail, Phone, MapPin, Calendar, Award, 
   CreditCard, Download, Settings, LogOut, 
@@ -241,7 +241,7 @@ const MyPageWithWithdrawal = () => {
       
       // 포인트 거래 내역 로드
       try {
-        const { data: pointData, error: pointError } = await database.supabase
+        const { data: pointData, error: pointError } = await supabase
           .from('point_transactions')
           .select('*')
           .eq('user_id', user.id)
@@ -325,7 +325,7 @@ const MyPageWithWithdrawal = () => {
       setError('')
 
       // 출금 신청 데이터를 Supabase에 저장
-      const { error: withdrawError } = await database.supabase
+      const { error: withdrawError } = await supabase
         .from('withdrawal_requests')
         .insert([{
           user_id: user.id,

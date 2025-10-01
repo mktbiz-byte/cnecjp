@@ -16,11 +16,11 @@ import { useLanguage } from '../../contexts/LanguageContext'
 import LanguageSelector from '../LanguageSelector'
 
 const CompanyReport = () => {
-  const { companyId } = useParams()
+  const { campaignId } = useParams()
   const navigate = useNavigate()
   const { language } = useLanguage()
   
-  const [company, setCompany] = useState(null)
+  const [campaign, setCampaign] = useState(null)
   const [campaigns, setCampaigns] = useState([])
   const [applications, setApplications] = useState([])
   const [loading, setLoading] = useState(true)
@@ -49,7 +49,7 @@ const CompanyReport = () => {
 
   useEffect(() => {
     loadData()
-  }, [companyId])
+  }, [campaignId])
 
   useEffect(() => {
     if (applications.length > 0) {
@@ -62,25 +62,16 @@ const CompanyReport = () => {
       setLoading(true)
       setError('')
       
-      // 회사 정보 로드
-      const companyData = await database.companies.getById(companyId)
-      if (!companyData) {
+      // 캠페인 정보 로드
+      const campaignData = await database.campaigns.getById(campaignId)
+      if (!campaignData) {
         setError(i18n.t('common.error'))
         return
       }
-      setCompany(companyData)
+      setCampaign(campaignData)
       
-      // 회사의 캠페인 로드
-      const campaignsData = await database.campaigns.getByCompany(companyId)
-      if (!campaignsData) {
-        setError(i18n.t('common.error'))
-        return
-      }
-      setCampaigns(campaignsData)
-      
-      // 캠페인의 신청 정보 로드
-      const campaignIds = campaignsData.map(campaign => campaign.id)
-      const applicationsData = await database.applications.getByCampaigns(campaignIds)
+      // 해당 캠페인의 신청 정보 로드
+      const applicationsData = await database.applications.getByCampaign(campaignId)
       if (!applicationsData) {
         setError(i18n.t('common.error'))
         return
