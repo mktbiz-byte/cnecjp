@@ -33,6 +33,8 @@ import ApplicationsReportSimple from './components/admin/ApplicationsReportSimpl
 // import SNSUploadFinalReport from './components/admin/SNSUploadFinalReport';
 import ConfirmedCreatorsReport_multilingual from './components/admin/ConfirmedCreatorsReport_multilingual';
 import SNSUploadFinalReport_multilingual from './components/admin/SNSUploadFinalReport_multilingual';
+import ConfirmedCreatorsNew from './components/admin/ConfirmedCreatorsNew';
+import SNSUploadNew from './components/admin/SNSUploadNew';
 import CampaignReportEnhanced from './components/admin/CampaignReportEnhanced';
 import EmailTemplateManager from './components/admin/EmailTemplateManager';
 import UserApprovalManagerEnhanced from './components/admin/UserApprovalManagerEnhanced';
@@ -88,9 +90,9 @@ const AppContent = () => {
         <Route path="/admin/campaign-create" element={<CampaignCreationWithTranslator />} />
         <Route path="/admin/applications" element={<ApplicationsReportSimple />} />
         <Route path="/admin/confirmed-creators" element={<ConfirmedCreatorsReport_multilingual />} />
-        <Route path="/admin/confirmed-creators/:campaignId" element={<ConfirmedCreatorsReport_multilingual />} />
-        <Route path="/admin/sns-uploads" element={<SNSUploadFinalReport_multilingual />} />
-        <Route path="/admin/sns-uploads/:campaignId" element={<SNSUploadFinalReport_multilingual />} />
+        <Route path="/admin/confirmed-creators/:campaignId" element={<ConfirmedCreatorsNew />} />
+        <Route path="/admin/sns-uploads" element={<SNSUploadNew />} />
+        <Route path="/admin/sns-uploads/:campaignId" element={<SNSUploadNew />} />
         <Route path="/admin/campaign-report/:campaignId" element={<CampaignReportEnhanced />} />
         <Route path="/admin/email-templates" element={<EmailTemplateManager />} />
         <Route path="/admin/users" element={<UserApprovalManagerEnhanced />} />
