@@ -533,7 +533,7 @@ const MyPageWithWithdrawal = () => {
           .insert([{
             user_id: user.id,
             amount: -requestAmount,
-            transaction_type: 'spend',
+            transaction_type: 'withdrawal',
             description: language === 'ja' ? `出金申請: ${requestAmount}ポイント` : `출금 신청: ${requestAmount}포인트`,
             created_at: new Date().toISOString()
           }])
@@ -617,7 +617,7 @@ const MyPageWithWithdrawal = () => {
             user_id: user.id,
             campaign_id: selectedApplication.campaign_id,
             application_id: selectedApplication.id,
-            transaction_type: 'pending_reward',
+            transaction_type: 'pending',
             amount: 0, // 승인 전이므로 0
             description: `SNS 업로드 포인트 신청: ${snsUploadForm.sns_upload_url}`,
             created_at: new Date().toISOString()
@@ -1325,13 +1325,13 @@ const MyPageWithWithdrawal = () => {
                                 <div className="mt-2">
                                   {/* video_links가 있고 point_transactions에 승인된 기록이 있으면 완료 상태 */}
                                   {application.video_links && pointTransactions.some(pt => 
-                                    pt.application_id === application.id && pt.transaction_type === 'campaign_reward'
+                                    pt.application_id === application.id && pt.transaction_type === 'reward'
                                   ) ? (
                                     <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
                                       ✅ {t.pointRequestApproved}
                                     </span>
                                   ) : application.video_links && pointTransactions.some(pt => 
-                                    pt.application_id === application.id && pt.transaction_type === 'pending_reward'
+                                    pt.application_id === application.id && pt.transaction_type === 'pending'
                                   ) ? (
                                     <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-yellow-100 text-yellow-800">
                                       ⏳ {t.pointRequestPending}
