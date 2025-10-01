@@ -37,6 +37,14 @@ const MyPageWithWithdrawal = () => {
     reason: ''
   })
 
+  // SNS 업로드 및 포인트 신청 관련 상태
+  const [showSnsUploadModal, setShowSnsUploadModal] = useState(false)
+  const [selectedApplication, setSelectedApplication] = useState(null)
+  const [snsUploadForm, setSnsUploadForm] = useState({
+    sns_upload_url: '',
+    notes: ''
+  })
+
   // 프로필 편집 관련 상태
   const [isEditing, setIsEditing] = useState(false)
   const [editForm, setEditForm] = useState({
@@ -119,11 +127,22 @@ const MyPageWithWithdrawal = () => {
         unused: '서비스 미사용',
         other: '기타'
       },
+      snsUpload: 'SNS 업로드',
+      snsUploadUrl: 'SNS 업로드 URL',
+      pointRequest: '포인트 신청',
+      pointRequestTitle: 'SNS 업로드 및 포인트 신청',
+      snsUploadDescription: 'SNS에 업로드한 콘텐츠의 URL을 입력하고 포인트를 신청하세요.',
+      additionalNotes: '추가 메모',
+      submitPointRequest: '포인트 신청하기',
+      pointRequestPending: '포인트 신청 대기중',
+      pointRequestApproved: '포인트 지급 완료',
       messages: {
         withdrawalSubmitted: '탈퇴 신청이 완료되었습니다. 관리자 검토 후 처리됩니다.',
         error: '오류가 발생했습니다. 다시 시도해주세요.',
         confirmRequired: '탈퇴 확인 문구를 정확히 입력해주세요.',
-        reasonRequired: '탈퇴 사유를 선택해주세요.'
+        reasonRequired: '탈퇴 사유를 선택해주세요.',
+        snsUploadSubmitted: 'SNS 업로드 및 포인트 신청이 완료되었습니다.',
+        snsUrlRequired: 'SNS 업로드 URL을 입력해주세요.'
       }
     },
     ja: {
@@ -196,11 +215,22 @@ const MyPageWithWithdrawal = () => {
         unused: 'サービス未使用',
         other: 'その他'
       },
+      snsUpload: 'SNS投稿',
+      snsUploadUrl: 'SNS投稿URL',
+      pointRequest: 'ポイント申請',
+      pointRequestTitle: 'SNS投稿およびポイント申請',
+      snsUploadDescription: 'SNSに投稿したコンテンツのURLを入力してポイントを申請してください。',
+      additionalNotes: '追加メモ',
+      submitPointRequest: 'ポイント申請する',
+      pointRequestPending: 'ポイント申請待ち',
+      pointRequestApproved: 'ポイント支給完了',
       messages: {
         withdrawalSubmitted: '退会申請が完了しました。管理者の審査後に処理されます。',
         error: 'エラーが発生しました。再度お試しください。',
         confirmRequired: '退会確認文を正確に入力してください。',
-        reasonRequired: '退会理由を選択してください。'
+        reasonRequired: '退会理由を選択してください。',
+        snsUploadSubmitted: 'SNS投稿およびポイント申請が完了しました。',
+        snsUrlRequired: 'SNS投稿URLを入力してください。'
       }
     }
   }
@@ -392,6 +422,60 @@ const MyPageWithWithdrawal = () => {
     } finally {
       setProcessing(false)
     }
+  }
+
+  // SNS 업로드 및 포인트 신청 함수
+  const handleSnsUploadSubmit = async () => {
+    if (!snsUploadForm.sns_upload_url.trim()) {
+      setError(t.messages.snsUrlRequired)
+      return
+    }
+    
+    try {
+      setProcessing(true)
+      setError('')
+      
+      // applications 테이블에 SNS URL 업데이트
+      const { error } = await supabase
+        .from('applications')
+        .update({
+          sns_upload_url: snsUploadForm.sns_upload_url,
+          sns_upload_notes: snsUploadForm.notes,
+          point_request_status: 'pending',
+          sns_uploaded_at: new Date().toISOString()
+        })
+        .eq('id', selectedApplication.id)
+      
+      if (error) throw error
+      
+      setSuccess(t.messages.snsUploadSubmitted)
+      setShowSnsUploadModal(false)
+      setSnsUploadForm({
+        sns_upload_url: '',
+        notes: ''
+      })
+      setSelectedApplication(null)
+      
+      // 데이터 재로드
+      await loadUserData()
+      
+      setTimeout(() => setSuccess(''), 5000)
+      
+    } catch (error) {
+      console.error('SNS 업로드 오류:', error)
+      setError(t.messages.error)
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  const openSnsUploadModal = (application) => {
+    setSelectedApplication(application)
+    setSnsUploadForm({
+      sns_upload_url: application.sns_upload_url || '',
+      notes: application.sns_upload_notes || ''
+    })
+    setShowSnsUploadModal(true)
   }
 
   const handleWithdrawalSubmit = async () => {
@@ -812,26 +896,49 @@ const MyPageWithWithdrawal = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             {application.status === 'approved' ? (
                               <div className="space-y-2">
-                                {application.google_drive_url && (
-                                  <a
-                                    href={application.google_drive_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors"
-                                  >
-                                    📁 {language === 'ko' ? '구글 드라이브' : 'Google Drive'}
-                                  </a>
-                                )}
-                                {application.google_slides_url && (
-                                  <a
-                                    href={application.google_slides_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 transition-colors ml-2"
-                                  >
-                                    📊 {language === 'ko' ? '구글 슬라이드' : 'Google Slides'}
-                                  </a>
-                                )}
+                                <div className="flex flex-wrap gap-2">
+                                  {application.google_drive_url && (
+                                    <a
+                                      href={application.google_drive_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors"
+                                    >
+                                      📁 {language === 'ko' ? '구글 드라이브' : 'Google Drive'}
+                                    </a>
+                                  )}
+                                  {application.google_slides_url && (
+                                    <a
+                                      href={application.google_slides_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 transition-colors"
+                                    >
+                                      📊 {language === 'ko' ? '구글 슬라이드' : 'Google Slides'}
+                                    </a>
+                                  )}
+                                </div>
+                                
+                                {/* SNS 업로드 및 포인트 신청 버튼 */}
+                                <div className="mt-2">
+                                  {application.point_request_status === 'approved' ? (
+                                    <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
+                                      ✅ {t.pointRequestApproved}
+                                    </span>
+                                  ) : application.point_request_status === 'pending' ? (
+                                    <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-yellow-100 text-yellow-800">
+                                      ⏳ {t.pointRequestPending}
+                                    </span>
+                                  ) : (
+                                    <button
+                                      onClick={() => openSnsUploadModal(application)}
+                                      className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200 transition-colors"
+                                    >
+                                      📱 {t.snsUpload}
+                                    </button>
+                                  )}
+                                </div>
+                                
                                 {(!application.google_drive_url && !application.google_slides_url) && (
                                   <span className="text-xs text-gray-400">
                                     {language === 'ko' ? '자료 준비 중' : '資料準備中'}
@@ -1238,6 +1345,80 @@ const MyPageWithWithdrawal = () => {
                     className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
                   >
                     {processing ? t.processing : t.submitWithdrawal}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* SNS 업로드 및 포인트 신청 모달 */}
+        {showSnsUploadModal && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+              <div className="mt-3">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-gray-900">{t.pointRequestTitle}</h3>
+                  <button
+                    onClick={() => setShowSnsUploadModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                
+                <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    {t.snsUploadDescription}
+                  </p>
+                  {selectedApplication && (
+                    <p className="text-sm text-blue-600 mt-2 font-medium">
+                      캠페인: {selectedApplication.campaign_title}
+                    </p>
+                  )}
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t.snsUploadUrl} *
+                    </label>
+                    <input
+                      type="url"
+                      value={snsUploadForm.sns_upload_url}
+                      onChange={(e) => setSnsUploadForm({...snsUploadForm, sns_upload_url: e.target.value})}
+                      placeholder={language === 'ja' ? 'https://instagram.com/p/...' : 'https://instagram.com/p/...'}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t.additionalNotes}
+                    </label>
+                    <textarea
+                      value={snsUploadForm.notes}
+                      onChange={(e) => setSnsUploadForm({...snsUploadForm, notes: e.target.value})}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder={language === 'ja' ? '追加情報があれば入力してください' : '추가 정보가 있으면 입력해주세요'}
+                    />
+                  </div>
+                </div>
+                
+                <div className="mt-6 flex justify-end space-x-3">
+                  <button
+                    onClick={() => setShowSnsUploadModal(false)}
+                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                  >
+                    {t.cancel}
+                  </button>
+                  <button
+                    onClick={handleSnsUploadSubmit}
+                    disabled={processing || !snsUploadForm.sns_upload_url.trim()}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {processing ? t.processing : t.submitPointRequest}
                   </button>
                 </div>
               </div>

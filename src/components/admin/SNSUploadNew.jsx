@@ -48,6 +48,11 @@ const translations = {
     twitter: '트위터',
     uploadDate: '업로드 날짜',
     feedback: '피드백',
+    approvePoints: '포인트 승인',
+    pointsApproved: '포인트 지급 완료',
+    pointsPending: '포인트 승인 대기',
+    approvePointsConfirm: '포인트를 지급하시겠습니까?',
+    pointsAmount: '지급 포인트',
     saveFeedback: '피드백 저장',
     performance: '성과',
     likes: '좋아요',
@@ -242,6 +247,70 @@ const SNSUploadNew = () => {
       setSelectedCreator(null)
 
       setTimeout(() => setSuccess(''), 3000)
+
+    } catch (error) {
+      console.error('피드백 업데이트 오류:', error)
+      setError(error.message || '피드백 저장에 실패했습니다.')
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  // 포인트 승인 함수
+  const handleApprovePoints = async (application) => {
+    if (!application.campaigns?.reward_amount) {
+      setError('캠페인 보상 금액 정보가 없습니다.')
+      return
+    }
+
+    const confirmMessage = `${application.applicant_name}님에게 ${application.campaigns.reward_amount.toLocaleString()}P를 지급하시겠습니까?`
+    
+    if (!window.confirm(confirmMessage)) {
+      return
+    }
+
+    try {
+      setProcessing(true)
+      setError('')
+
+      // 1. 포인트 지급
+      const { error: pointError } = await database.userPoints.addPoints(
+        application.user_id,
+        application.campaigns.reward_amount,
+        `캠페인 완료 보상: ${application.campaigns.title}`
+      )
+
+      if (pointError) {
+        throw new Error(`포인트 지급 실패: ${pointError.message}`)
+      }
+
+      // 2. 신청서 상태 업데이트
+      const { error: updateError } = await supabase
+        .from('applications')
+        .update({
+          point_request_status: 'approved',
+          points_awarded_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', application.id)
+
+      if (updateError) {
+        throw new Error(`상태 업데이트 실패: ${updateError.message}`)
+      }
+
+      // 로컬 상태 업데이트
+      setApplications(prev => prev.map(app => 
+        app.id === application.id 
+          ? { 
+              ...app, 
+              point_request_status: 'approved',
+              points_awarded_at: new Date().toISOString()
+            }
+          : app
+      ))
+
+      setSuccess(`${application.applicant_name}님에게 ${application.campaigns.reward_amount.toLocaleString()}P가 지급되었습니다.`)
+      setTimeout(() => setSuccess(''), 5000)
 
     } catch (error) {
       console.error('피드백 업데이트 오류:', error)
@@ -494,7 +563,7 @@ const SNSUploadNew = () => {
                         )}
                       </div>
                       
-                      <div className="flex space-x-2 ml-4">
+                      <div className="flex flex-col space-y-2 ml-4">
                         <Button
                           variant="outline"
                           size="sm"
@@ -503,6 +572,26 @@ const SNSUploadNew = () => {
                           <MessageCircle className="h-4 w-4 mr-2" />
                           {application.admin_feedback ? '피드백 수정' : t.addFeedback}
                         </Button>
+                        
+                        {/* 포인트 승인 버튼 */}
+                        {application.point_request_status === 'pending' && application.sns_upload_url && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleApprovePoints(application)}
+                            disabled={processing}
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                          >
+                            <DollarSign className="h-4 w-4 mr-2" />
+                            {t.approvePoints}
+                          </Button>
+                        )}
+                        
+                        {application.point_request_status === 'approved' && (
+                          <div className="flex items-center space-x-2 text-green-600 text-sm">
+                            <CheckCircle className="h-4 w-4" />
+                            <span>{t.pointsApproved}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                     
