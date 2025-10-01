@@ -170,17 +170,54 @@ const AdminWithdrawals = () => {
           .from('withdrawal_requests')
           .select(`
             *,
-            user_profiles!withdrawal_requests_user_id_fkey(name, email, phone)
+            user_profiles(name, email, phone)
           `)
           .order('created_at', { ascending: false })
         
         if (error) {
           console.error('출금 요청 데이터 로드 오류:', error)
-          throw error
+          
+          // withdrawal_requests 테이블이 없으면 withdrawals 테이블 시도
+          console.log('withdrawal_requests 테이블 접근 실패, withdrawals 테이블 시도')
+          const { data: fallbackData, error: fallbackError } = await supabase
+            .from('withdrawals')
+            .select(`
+              *,
+              user_profiles(name, email, phone)
+            `)
+            .order('requested_at', { ascending: false })
+          
+          if (fallbackError) {
+            console.error('withdrawals 테이블도 접근 실패:', fallbackError)
+            throw fallbackError
+          }
+          
+          // withdrawals 테이블 데이터를 withdrawal_requests 형식으로 변환
+          const convertedData = (fallbackData || []).map(item => ({
+            ...item,
+            created_at: item.requested_at || item.created_at,
+            user_name: item.user_profiles?.name || item.paypal_name || '-',
+            user_email: item.user_profiles?.email || item.paypal_email || '-',
+            user_phone: item.user_profiles?.phone || '-',
+            bank_name: item.bank_name || '-',
+            account_number: item.account_number || '-',
+            account_holder: item.account_holder || item.paypal_name || '-'
+          }))
+          
+          setWithdrawals(convertedData)
+          console.log('withdrawals 테이블에서 데이터 로드 성공:', convertedData.length)
+        } else {
+          // withdrawal_requests 테이블 데이터 처리
+          const processedData = (withdrawalsData || []).map(item => ({
+            ...item,
+            user_name: item.user_profiles?.name || item.user_name || '-',
+            user_email: item.user_profiles?.email || item.user_email || '-',
+            user_phone: item.user_profiles?.phone || item.user_phone || '-'
+          }))
+          
+          setWithdrawals(processedData)
+          console.log('출금 요청 데이터 로드 성공:', processedData.length)
         }
-        
-        setWithdrawals(withdrawalsData || [])
-        console.log('출금 요청 데이터 로드 성공:', withdrawalsData?.length || 0)
       } catch (error) {
         console.warn('출금 요청 데이터 로드 실패:', error)
         setWithdrawals([])
@@ -222,14 +259,32 @@ const AdminWithdrawals = () => {
         updated_at: new Date().toISOString()
       }
 
-      // withdrawal_requests 테이블 직접 업데이트
-      const { error } = await supabase
+      // withdrawal_requests 테이블 먼저 시도
+      let { error } = await supabase
         .from('withdrawal_requests')
         .update(updateData)
         .eq('id', withdrawalId)
       
       if (error) {
-        throw error
+        console.log('withdrawal_requests 테이블 업데이트 실패, withdrawals 테이블 시도')
+        
+        // withdrawals 테이블 시도 (컬럼명 조정)
+        const fallbackUpdateData = {
+          status: newStatus,
+          notes: adminNotes,
+          transaction_id: transactionId,
+          processed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+        
+        const { error: fallbackError } = await supabase
+          .from('withdrawals')
+          .update(fallbackUpdateData)
+          .eq('id', withdrawalId)
+        
+        if (fallbackError) {
+          throw fallbackError
+        }
       }
       
       console.log('상태 업데이트 완료')
