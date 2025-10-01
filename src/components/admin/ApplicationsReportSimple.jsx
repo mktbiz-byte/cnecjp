@@ -9,7 +9,6 @@ import {
   Calendar, Mail, Instagram, Youtube, Video, RefreshCw,
   Link, FolderOpen, Presentation, Wand2
 } from 'lucide-react'
-import googleDriveHelper from '../../lib/googleDriveHelper'
 
 const ApplicationsReportSimple = () => {
   const navigate = useNavigate()
@@ -297,8 +296,6 @@ const ApplicationsReportSimple = () => {
     const userName = selectedApplication.user_name || 'user';
     
     try {
-      const driveUrl = googleDriveHelper.generateDriveUrl(brandName, userName);
-      const slidesUrl = googleDriveHelper.generateSlidesUrl(brandName, userName);
       
       setDriveForm(prev => ({
         ...prev,

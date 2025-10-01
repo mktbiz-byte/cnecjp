@@ -10,7 +10,6 @@ import {
   Link as LinkIcon, FolderOpen, Presentation, Wand2, X, Save,
   ArrowLeft, DollarSign, FileText as FileTextIcon, Edit
 } from 'lucide-react'
-import googleDriveHelper from '../../lib/googleDriveHelper'
 import DriveModal from './DriveModal'
 
 const ApplicationsReportSimple = () => {
@@ -299,8 +298,6 @@ const ApplicationsReportSimple = () => {
     const userName = selectedApplication.user_name || 'user';
     
     try {
-      const driveUrl = googleDriveHelper.generateDriveUrl(brandName, userName);
-      const slidesUrl = googleDriveHelper.generateSlidesUrl(brandName, userName);
       
       setDriveForm(prev => ({
         ...prev,

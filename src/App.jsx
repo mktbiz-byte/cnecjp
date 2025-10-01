@@ -36,8 +36,7 @@ import CampaignReportEnhanced from './components/admin/CampaignReportEnhanced';
 import EmailTemplateManager from './components/admin/EmailTemplateManager';
 import UserApprovalManagerEnhanced from './components/admin/UserApprovalManagerEnhanced';
 import AdminWithdrawals from './components/admin/AdminWithdrawals';
-// import SystemSettings from './components/admin/SystemSettings';
-import SystemSettings from './components/admin/SystemSettings_enhanced';
+import SystemSettings from './components/admin/SystemSettings';
 import EmailSettings from './components/admin/EmailSettings';
 
 // 테스트용 관리자 로그인 컴포넌트

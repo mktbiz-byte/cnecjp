@@ -10,8 +10,7 @@ import {
   Link as LinkIcon, FolderOpen, Presentation, Wand2, X, Save,
   ArrowLeft, DollarSign, FileText as FileTextIcon, Edit
 } from 'lucide-react'
-import googleDriveHelper from '../../lib/googleDriveHelper_enhanced'
-import DriveModal from './DriveModal_enhanced'
+import DriveModal from './DriveModal'
 
 const ApplicationsReportSimple = () => {
   const navigate = useNavigate()
@@ -178,7 +177,6 @@ const ApplicationsReportSimple = () => {
   // Google Drive API 초기화
   const initializeGoogleDriveApi = async () => {
     try {
-      await googleDriveHelper.initializeFromSystemSettings()
     } catch (error) {
       console.error('Google Drive API 초기화 오류:', error)
     }
