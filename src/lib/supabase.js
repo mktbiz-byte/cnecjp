@@ -312,6 +312,28 @@ export const database = {
           
           if (!appsError && appsData && appsData.length > 0) {
             console.log('Applications에서 사용자 데이터 발견:', appsData.length, '개')
+            
+            // 캠페인 정보도 함께 가져오기
+            const campaignIds = [...new Set(appsData.map(app => app.campaign_id).filter(Boolean))]
+            if (campaignIds.length > 0) {
+              const { data: campaigns, error: campaignsError } = await supabase
+                .from('campaigns')
+                .select('id, title, brand_name')
+                .in('id', campaignIds)
+
+              if (!campaignsError && campaigns) {
+                const applicationsWithCampaigns = appsData.map(app => {
+                  const campaign = campaigns.find(c => c.id === app.campaign_id)
+                  return {
+                    ...app,
+                    campaign_title: campaign ? campaign.title : 'Unknown Campaign',
+                    brand_name: campaign ? campaign.brand_name : ''
+                  }
+                })
+                return applicationsWithCampaigns
+              }
+            }
+            
             return appsData
           }
           
