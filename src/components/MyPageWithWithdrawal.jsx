@@ -215,6 +215,16 @@ const MyPageWithWithdrawal = () => {
       save: '保存',
       skinType: '肌タイプ',
       postalCode: '郵便番号',
+      age: '年齢',
+      region: '地域',
+      bio: '自己紹介',
+      weight: '体重',
+      height: '身長',
+      hasChildren: 'お子様の有無',
+      isMarried: '結婚の有無',
+      instagramFollowers: 'Instagramフォロワー数',
+      tiktokFollowers: 'TikTokフォロワー数',
+      youtubeSubscribers: 'YouTube登録者数',
       roles: {
         user: '一般ユーザー',
         vip: 'VIPユーザー',
@@ -290,46 +300,58 @@ const MyPageWithWithdrawal = () => {
       const applicationsData = await database.applications.getByUser(user.id)
       setApplications(applicationsData || [])
       
-      // 出金履歴の読み込み
+      // 출금 내역 로딩 (withdrawal_requests 테이블 사용)
       try {
-        const withdrawalData = await database.withdrawals.getByUser(user.id)
-        setWithdrawals(withdrawalData || [])
+        const { data: withdrawalData, error: withdrawalError } = await supabase
+          .from('withdrawal_requests')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+        
+        if (withdrawalError) {
+          console.warn('출금 내역 로딩 오류:', withdrawalError)
+          setWithdrawals([])
+        } else {
+          setWithdrawals(withdrawalData || [])
+        }
       } catch (withdrawErr) {
-        console.warn('出金履歴の読み込みに失敗:', withdrawErr)
+        console.warn('출금 내역 로딩 실패:', withdrawErr)
         setWithdrawals([])
       }
       
-      // ポイント取引履歴の読み込み
+      // 포인트 거래 내역 로딩 (point_transactions 테이블 직접 사용)
       try {
-        const userPointsData = await database.userPoints.getUserPoints(user.id)
-        setPointTransactions(userPointsData || [])
+        const { data: pointData, error: pointError } = await supabase
+          .from('point_transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
         
-        // 現在のポイント残高を計算してプロフィールに反映
-        const totalPoints = await database.userPoints.getUserTotalPoints(user.id)
-        if (profileData) {
-          setProfile(prev => ({
-            ...prev,
-            points: totalPoints
-          }))
+        if (pointError) {
+          console.warn('포인트 거래 내역 로딩 오류:', pointError)
+          setPointTransactions([])
+        } else {
+          setPointTransactions(pointData || [])
+          
+          // 현재 포인트 잔액 계산
+          const totalPoints = (pointData || []).reduce((sum, transaction) => {
+            if (transaction.status === 'completed') {
+              return sum + transaction.amount
+            }
+            return sum
+          }, 0)
+          
+          // 프로필에 포인트 잔액 반영
+          if (profileData) {
+            setProfile(prev => ({
+              ...prev,
+              points: Math.max(totalPoints, 0) // 음수 방지
+            }))
+          }
         }
       } catch (pointErr) {
-        console.warn('ポイント取引履歴の読み込み中にエラー:', pointErr)
+        console.warn('포인트 거래 내역 로딩 실패:', pointErr)
         setPointTransactions([])
-        
-        // フォールバック: 直接point_transactionsテーブルから読み込み
-        try {
-          const { data: pointData, error: pointError } = await supabase
-            .from('point_transactions')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-          
-          if (!pointError && pointData) {
-            setPointTransactions(pointData)
-          }
-        } catch (fallbackErr) {
-          console.warn('フォールバックポイント読み込みも失敗:', fallbackErr)
-        }
       }
       
     } catch (error) {
@@ -359,53 +381,68 @@ const MyPageWithWithdrawal = () => {
       setProcessing(true)
       setError('')
       
+      // 숫자 필드 유효성 검사
+      const validateNumber = (value, fieldName) => {
+        if (value && isNaN(Number(value))) {
+          throw new Error(language === 'ja' ? `${fieldName}は数値で入力してください。` : `${fieldName}은(는) 숫자로 입력해주세요.`)
+        }
+        return value ? Number(value) : null
+      }
+
       // 업데이트할 데이터 준비 (실제 테이블 구조에 맞게, 빈 값도 허용)
       const updateData = {
-        name: editForm.name || '',
-        phone: editForm.phone || '',
-        bio: editForm.bio || '',
-        age: editForm.age ? parseInt(editForm.age) : null,
-        region: editForm.region || '',
-        skin_type: editForm.skin_type || '',
-        weight: editForm.weight ? parseFloat(editForm.weight) : null,
-        height: editForm.height ? parseFloat(editForm.height) : null,
-        has_children: editForm.has_children || false,
-        is_married: editForm.is_married || false,
-        instagram_url: editForm.instagram_url || '',
-        tiktok_url: editForm.tiktok_url || '',
-        youtube_url: editForm.youtube_url || '',
-        other_sns_url: editForm.other_sns_url || '',
-        instagram_followers: editForm.instagram_followers ? parseInt(editForm.instagram_followers) : null,
-        tiktok_followers: editForm.tiktok_followers ? parseInt(editForm.tiktok_followers) : null,
-        youtube_subscribers: editForm.youtube_subscribers ? parseInt(editForm.youtube_subscribers) : null,
+        name: editForm.name?.trim() || null,
+        phone: editForm.phone?.trim() || null,
+        bio: editForm.bio?.trim() || null,
+        age: validateNumber(editForm.age, language === 'ja' ? '年齢' : '나이'),
+        region: editForm.region?.trim() || null,
+        skin_type: editForm.skin_type?.trim() || null,
+        weight: validateNumber(editForm.weight, language === 'ja' ? '体重' : '체중'),
+        height: validateNumber(editForm.height, language === 'ja' ? '身長' : '신장'),
+        has_children: Boolean(editForm.has_children),
+        is_married: Boolean(editForm.is_married),
+        instagram_url: editForm.instagram_url?.trim() || null,
+        tiktok_url: editForm.tiktok_url?.trim() || null,
+        youtube_url: editForm.youtube_url?.trim() || null,
+        other_sns_url: editForm.other_sns_url?.trim() || null,
+        instagram_followers: validateNumber(editForm.instagram_followers, 'Instagram ' + (language === 'ja' ? 'フォロワー数' : '팔로워 수')),
+        tiktok_followers: validateNumber(editForm.tiktok_followers, 'TikTok ' + (language === 'ja' ? 'フォロワー数' : '팔로워 수')),
+        youtube_subscribers: validateNumber(editForm.youtube_subscribers, 'YouTube ' + (language === 'ja' ? '登録者数' : '구독자 수')),
         updated_at: new Date().toISOString()
-      }  
+      }
+
+      console.log('프로필 업데이트 데이터:', updateData)
+      
       // Supabase 직접 업데이트 사용
-      const { error: updateError } = await supabase
+      const { data, error: updateError } = await supabase
         .from('user_profiles')
         .update(updateData)
         .eq('user_id', user.id)
+        .select()
       
       if (updateError) {
-        throw new Error(`프로필 업데이트 실패: ${updateError.message}`)
+        console.error('프로필 업데이트 오류:', updateError)
+        throw new Error(updateError.message)
       }
+
+      console.log('프로필 업데이트 성공:', data)
       
       // 로컬 상태 업데이트
       setProfile(prev => ({ ...prev, ...updateData }))
       
-      setSuccess(language === 'ko' ? '프로필이 성공적으로 업데이트되었습니다.' : 'プロフィールが正常に更新されました。')
+      setSuccess(language === 'ja' ? 'プロフィールが正常に更新されました。' : '프로필이 성공적으로 업데이트되었습니다.')
       setIsEditing(false)
       
-      setTimeout(() => setSuccess(''), 3000)
+      setTimeout(() => setSuccess(''), 5000)
     } catch (error) {
       console.error('프로필 업데이트 오류:', error)
-      setError(language === 'ko' ? '프로필 업데이트에 실패했습니다.' : 'プロフィールの更新に失敗しました。')
+      setError(error.message || (language === 'ja' ? 'プロフィールの更新に失敗しました。' : '프로필 업데이트에 실패했습니다.'))
     } finally {
       setProcessing(false)
     }
   }
 
-  // 出金申請処理関数
+  // 출금 신청 처리 함수
   const handleWithdrawSubmit = async () => {
     if (!withdrawForm.amount || !withdrawForm.paypalEmail || !withdrawForm.paypalName) {
       setError(language === 'ja' ? 'すべての必須項目を入力してください。' : '모든 필수 항목을 입력해주세요.')
@@ -429,43 +466,60 @@ const MyPageWithWithdrawal = () => {
       setProcessing(true)
       setError('')
 
-      // Supabaseライブラリの出金関数を使用
-      const withdrawalData = {
-        user_id: user.id,
-        amount: requestAmount,
-        paypal_email: withdrawForm.paypalEmail,
-        paypal_name: withdrawForm.paypalName,
-        reason: withdrawForm.reason || (language === 'ja' ? 'ポイント出金申請' : '포인트 출금 신청')
+      // withdrawal_requests 테이블에 직접 삽입
+      const { data: withdrawalData, error: withdrawalError } = await supabase
+        .from('withdrawal_requests')
+        .insert([{
+          user_id: user.id,
+          amount: requestAmount,
+          paypal_email: withdrawForm.paypalEmail,
+          paypal_name: withdrawForm.paypalName,
+          reason: withdrawForm.reason || (language === 'ja' ? 'ポイント出金申請' : '포인트 출금 신청'),
+          status: 'pending',
+          created_at: new Date().toISOString()
+        }])
+        .select()
+
+      if (withdrawalError) {
+        console.error('출금 신청 오류:', withdrawalError)
+        throw new Error(withdrawalError.message)
       }
 
-      console.log('出金申請データ:', withdrawalData)
+      console.log('출금 신청 성공:', withdrawalData)
 
-      // withdrawalsテーブルに出金申請を作成
-      const result = await database.withdrawals.create(withdrawalData)
+      // 포인트 차감 기록을 point_transactions에 추가
+      const { error: pointError } = await supabase
+        .from('point_transactions')
+        .insert([{
+          user_id: user.id,
+          amount: -requestAmount, // 음수로 차감 표시
+          transaction_type: 'spend',
+          description: language === 'ja' ? `出金申請: ${requestAmount}ポイント` : `출금 신청: ${requestAmount}포인트`,
+          status: 'completed',
+          created_at: new Date().toISOString()
+        }])
+
+      if (pointError) {
+        console.warn('포인트 차감 기록 실패:', pointError)
+        // 포인트 기록 실패는 치명적이지 않으므로 계속 진행
+      }
       
-      if (result) {
-        // 出金申請 성공 시 사용자 포인트에서 차감
-        await database.userPoints.deductPoints(user.id, requestAmount, language === 'ja' ? '出金申請' : '출금 신청')
-        
-        setSuccess(language === 'ja' ? '出金申請が完了しました。管理者の審査後に処理されます。' : '출금 신청이 완료되었습니다. 관리자 검토 후 처리됩니다.')
-        setShowWithdrawModal(false)
-        setWithdrawForm({
-          amount: '',
-          paypalEmail: '',
-          paypalName: '',
-          reason: ''
-        })
-        
-        // データを再読み込みして最新状態を反映
-        await loadUserData()
-        
-        setTimeout(() => setSuccess(''), 5000)
-      } else {
-        throw new Error('出金申請の作成に失敗しました')
-      }
+      setSuccess(language === 'ja' ? '出金申請が完了しました。管理者の審査後に処理されます。' : '출금 신청이 완료되었습니다. 관리자 검토 후 처리됩니다.')
+      setShowWithdrawModal(false)
+      setWithdrawForm({
+        amount: '',
+        paypalEmail: '',
+        paypalName: '',
+        reason: ''
+      })
+      
+      // 데이터를 다시 로드하여 최신 상태 반영
+      await loadUserData()
+      
+      setTimeout(() => setSuccess(''), 5000)
     } catch (error) {
-      console.error('出金申請エラー:', error)
-      setError(language === 'ja' ? '出金申請中にエラーが発生しました。再度お試しください。' : '출금 신청 중 오류가 발생했습니다. 다시 시도해주세요.')
+      console.error('출금 신청 오류:', error)
+      setError(error.message || (language === 'ja' ? '出金申請中にエラーが発生しました。再度お試しください。' : '출금 신청 중 오류가 발생했습니다. 다시 시도해주세요.'))
     } finally {
       setProcessing(false)
     }
@@ -477,12 +531,26 @@ const MyPageWithWithdrawal = () => {
   const handleSnsUploadSubmit = async () => {
     try {
       if (!snsUploadForm.sns_upload_url.trim()) {
-        setError(t.messages.snsUrlRequired)
+        setError(t.messages?.snsUrlRequired || (language === 'ja' ? 'SNS投稿URLを入力してください。' : 'SNS 업로드 URL을 입력해주세요.'))
+        return
+      }
+
+      if (!selectedApplication) {
+        setError(language === 'ja' ? '選択されたアプリケーションが見つかりません。' : '선택된 신청을 찾을 수 없습니다.')
         return
       }
       
       setProcessing(true)
       setError('')
+      
+      // URL 유효성 검사
+      try {
+        new URL(snsUploadForm.sns_upload_url)
+      } catch (urlError) {
+        setError(language === 'ja' ? '有効なURLを入力してください。' : '유효한 URL을 입력해주세요.')
+        setProcessing(false)
+        return
+      }
       
       // applications 테이블의 기존 컬럼 활용
       const updateData = {
@@ -495,52 +563,77 @@ const MyPageWithWithdrawal = () => {
         .from('applications')
         .update(updateData)
         .eq('id', selectedApplication.id)
+        .eq('user_id', user.id) // 보안을 위해 user_id도 확인
       
       if (updateError) {
-        throw new Error(`SNS 업로드 실패: ${updateError.message}`)
+        console.error('Application update error:', updateError)
+        throw new Error(language === 'ja' ? 'SNS投稿の更新に失敗しました。' : 'SNS 업로드 업데이트에 실패했습니다.')
       }
       
       // point_transactions 테이블에 포인트 신청 기록 추가
-      const { error: pointError } = await supabase
-        .from('point_transactions')
-        .insert({
-          user_id: user.id,
-          campaign_id: selectedApplication.campaign_id,
-          application_id: selectedApplication.id,
-          transaction_type: 'pending_reward',
-          amount: 0, // 승인 전이므로 0
-          description: `SNS 업로드 포인트 신청: ${snsUploadForm.sns_upload_url}`,
-          status: 'pending',
-          created_at: new Date().toISOString()
-        })
-      
-      if (pointError) {
-        console.warn('포인트 신청 기록 추가 실패:', pointError)
+      try {
+        const { error: pointError } = await supabase
+          .from('point_transactions')
+          .insert({
+            user_id: user.id,
+            campaign_id: selectedApplication.campaign_id,
+            application_id: selectedApplication.id,
+            transaction_type: 'pending_reward',
+            amount: 0, // 승인 전이므로 0
+            description: `SNS 업로드 포인트 신청: ${snsUploadForm.sns_upload_url}`,
+            status: 'pending',
+            created_at: new Date().toISOString()
+          })
+        
+        if (pointError) {
+          console.warn('포인트 신청 기록 추가 실패:', pointError)
+          // 포인트 기록 실패는 치명적이지 않으므로 계속 진행
+        }
+      } catch (pointInsertError) {
+        console.warn('Point transaction insert failed:', pointInsertError)
+        // 포인트 기록 실패는 치명적이지 않으므로 계속 진행
       }
       
-      setSuccess(t.messages.snsUploadSubmitted)
+      setSuccess(t.messages?.snsUploadSubmitted || (language === 'ja' ? 'SNS投稿およびポイント申請が完了しました。' : 'SNS 업로드 및 포인트 신청이 완료되었습니다.'))
       setShowSnsUploadModal(false)
       setSnsUploadForm({ sns_upload_url: '', notes: '' })
+      setSelectedApplication(null)
       
       // 데이터 새로고침
-      loadUserData()
+      await loadUserData()
       
-      setTimeout(() => setSuccess(''), 3000)
+      setTimeout(() => setSuccess(''), 5000)
     } catch (error) {
       console.error('SNS 업로드 오류:', error)
-      setError(t.messages.error)
+      setError(error.message || (language === 'ja' ? 'エラーが発生しました。再試行してください。' : '오류가 발생했습니다. 다시 시도해주세요.'))
     } finally {
       setProcessing(false)
     }
   }
 
   const openSnsUploadModal = (application) => {
-    setSelectedApplication(application)
-    setSnsUploadForm({
-      sns_upload_url: application.video_links || '',
-      notes: application.additional_info || ''
-    })
-    setShowSnsUploadModal(true)
+    try {
+      // 에러 상태 초기화
+      setError('')
+      setSuccess('')
+      
+      if (!application) {
+        setError(language === 'ja' ? 'アプリケーション情報が見つかりません。' : '신청 정보를 찾을 수 없습니다.')
+        return
+      }
+
+      setSelectedApplication(application)
+      setSnsUploadForm({
+        sns_upload_url: application.video_links || '',
+        notes: application.additional_info || ''
+      })
+      setShowSnsUploadModal(true)
+      
+      console.log('SNS 업로드 모달 열림:', application.id, application.campaign_title)
+    } catch (error) {
+      console.error('SNS 업로드 모달 열기 오류:', error)
+      setError(language === 'ja' ? 'モーダルを開けませんでした。' : '모달을 열 수 없습니다.')
+    }
   }
 
   const handleWithdrawalSubmit = async () => {
@@ -809,7 +902,7 @@ const MyPageWithWithdrawal = () => {
                 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">나이</label>
+                    <label className="block text-sm font-medium text-gray-700">{t.age}</label>
                     {isEditing ? (
                       <input
                         type="number"
@@ -826,14 +919,14 @@ const MyPageWithWithdrawal = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">지역</label>
+                    <label className="block text-sm font-medium text-gray-700">{t.region}</label>
                     {isEditing ? (
                       <input
                         type="text"
                         value={editForm.region}
                         onChange={(e) => setEditForm({...editForm, region: e.target.value})}
                         className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="서울특별시"
+                        placeholder={language === 'ja' ? '東京都' : '서울특별시'}
                       />
                     ) : (
                       <p className="mt-1 text-sm text-gray-900">{profile?.region || '未設定'}</p>
@@ -841,14 +934,14 @@ const MyPageWithWithdrawal = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">자기소개</label>
+                    <label className="block text-sm font-medium text-gray-700">{t.bio}</label>
                     {isEditing ? (
                       <textarea
                         value={editForm.bio}
                         onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
                         className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         rows="2"
-                        placeholder="자기소개를 입력하세요..."
+                        placeholder={language === 'ja' ? '自己紹介を入力してください...' : '자기소개를 입력하세요...'}
                       />
                     ) : (
                       <p className="mt-1 text-sm text-gray-900">{profile?.bio || '未設定'}</p>
@@ -954,7 +1047,7 @@ const MyPageWithWithdrawal = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">기타 SNS</label>
+                    <label className="block text-sm font-medium text-gray-700">{language === 'ja' ? 'その他のSNS' : '기타 SNS'}</label>
                     {isEditing ? (
                       <input
                         type="url"
@@ -970,6 +1063,152 @@ const MyPageWithWithdrawal = () => {
                             {profile.other_sns_url}
                           </a>
                         ) : (language === 'ja' ? '未登録' : '등록되지 않음')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* 추가 프로필 정보 섹션 */}
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  {language === 'ja' ? '詳細情報' : '상세 정보'}
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">{t.weight}</label>
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        value={editForm.weight}
+                        onChange={(e) => setEditForm({...editForm, weight: e.target.value})}
+                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="60"
+                        min="1"
+                        max="200"
+                        step="0.1"
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">
+                        {profile?.weight ? `${profile.weight}kg` : (language === 'ja' ? '未設定' : '설정되지 않음')}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">{t.height}</label>
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        value={editForm.height}
+                        onChange={(e) => setEditForm({...editForm, height: e.target.value})}
+                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="165"
+                        min="1"
+                        max="250"
+                        step="0.1"
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">
+                        {profile?.height ? `${profile.height}cm` : (language === 'ja' ? '未設定' : '설정되지 않음')}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">{t.hasChildren}</label>
+                    {isEditing ? (
+                      <select
+                        value={editForm.has_children}
+                        onChange={(e) => setEditForm({...editForm, has_children: e.target.value === 'true'})}
+                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="false">{language === 'ja' ? 'いいえ' : '아니오'}</option>
+                        <option value="true">{language === 'ja' ? 'はい' : '예'}</option>
+                      </select>
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">
+                        {profile?.has_children ? (language === 'ja' ? 'はい' : '예') : (language === 'ja' ? 'いいえ' : '아니오')}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">{t.isMarried}</label>
+                    {isEditing ? (
+                      <select
+                        value={editForm.is_married}
+                        onChange={(e) => setEditForm({...editForm, is_married: e.target.value === 'true'})}
+                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="false">{language === 'ja' ? '未婚' : '미혼'}</option>
+                        <option value="true">{language === 'ja' ? '既婚' : '기혼'}</option>
+                      </select>
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">
+                        {profile?.is_married ? (language === 'ja' ? '既婚' : '기혼') : (language === 'ja' ? '未婚' : '미혼')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* SNS 팔로워 수 섹션 */}
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  {language === 'ja' ? 'SNSフォロワー数' : 'SNS 팔로워 수'}
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">{t.instagramFollowers}</label>
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        value={editForm.instagram_followers}
+                        onChange={(e) => setEditForm({...editForm, instagram_followers: e.target.value})}
+                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="1000"
+                        min="0"
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">
+                        {profile?.instagram_followers ? profile.instagram_followers.toLocaleString() : (language === 'ja' ? '未設定' : '설정되지 않음')}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">{t.tiktokFollowers}</label>
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        value={editForm.tiktok_followers}
+                        onChange={(e) => setEditForm({...editForm, tiktok_followers: e.target.value})}
+                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="1000"
+                        min="0"
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">
+                        {profile?.tiktok_followers ? profile.tiktok_followers.toLocaleString() : (language === 'ja' ? '未設定' : '설정되지 않음')}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">{t.youtubeSubscribers}</label>
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        value={editForm.youtube_subscribers}
+                        onChange={(e) => setEditForm({...editForm, youtube_subscribers: e.target.value})}
+                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="1000"
+                        min="0"
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">
+                        {profile?.youtube_subscribers ? profile.youtube_subscribers.toLocaleString() : (language === 'ja' ? '未設定' : '설정되지 않음')}
                       </p>
                     )}
                   </div>
