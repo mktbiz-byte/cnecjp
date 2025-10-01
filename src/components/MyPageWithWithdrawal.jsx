@@ -471,10 +471,12 @@ const MyPageWithWithdrawal = () => {
     }
   }
 
-  // SNS 업로드 및 포인트 신청 함수
-  const handleSnsUpload = async () => {
+
+
+  // SNS 업로드 모달에서 제출 처리
+  const handleSnsUploadSubmit = async () => {
     try {
-      if (!snsUploadForm.snsUrl.trim()) {
+      if (!snsUploadForm.sns_upload_url.trim()) {
         setError(t.messages.snsUrlRequired)
         return
       }
@@ -484,7 +486,7 @@ const MyPageWithWithdrawal = () => {
       
       // applications 테이블의 기존 컬럼 활용
       const updateData = {
-        video_links: snsUploadForm.snsUrl, // SNS URL을 video_links에 저장
+        video_links: snsUploadForm.sns_upload_url, // SNS URL을 video_links에 저장
         additional_info: snsUploadForm.notes, // 추가 메모를 additional_info에 저장
         updated_at: new Date().toISOString()
       }
@@ -507,7 +509,7 @@ const MyPageWithWithdrawal = () => {
           application_id: selectedApplication.id,
           transaction_type: 'pending_reward',
           amount: 0, // 승인 전이므로 0
-          description: `SNS 업로드 포인트 신청: ${snsUploadForm.snsUrl}`,
+          description: `SNS 업로드 포인트 신청: ${snsUploadForm.sns_upload_url}`,
           status: 'pending',
           created_at: new Date().toISOString()
         })
@@ -518,7 +520,7 @@ const MyPageWithWithdrawal = () => {
       
       setSuccess(t.messages.snsUploadSubmitted)
       setShowSnsUploadModal(false)
-      setSnsUploadForm({ snsUrl: '', notes: '' })
+      setSnsUploadForm({ sns_upload_url: '', notes: '' })
       
       // 데이터 새로고침
       loadUserData()
@@ -535,8 +537,8 @@ const MyPageWithWithdrawal = () => {
   const openSnsUploadModal = (application) => {
     setSelectedApplication(application)
     setSnsUploadForm({
-      sns_upload_url: application.sns_upload_url || '',
-      notes: application.sns_upload_notes || ''
+      sns_upload_url: application.video_links || '',
+      notes: application.additional_info || ''
     })
     setShowSnsUploadModal(true)
   }
