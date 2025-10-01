@@ -851,13 +851,10 @@ export const database = {
       return safeQuery(async () => {
         console.log('출금 신청 데이터:', withdrawalData)
         
-        // withdrawals 테이블에 PayPal 정보 포함하여 삽입
+        // withdrawals 테이블의 기본 컬럼만 사용 (PayPal 정보는 별도 저장 필요시 추가)
         const insertData = {
           user_id: withdrawalData.user_id,
           amount: withdrawalData.amount,
-          paypal_email: withdrawalData.paypal_email,
-          paypal_name: withdrawalData.paypal_name,
-          reason: withdrawalData.reason || 'ポイント出金申請',
           status: 'pending'
         }
         
