@@ -50,13 +50,21 @@ const MyPageWithWithdrawal = () => {
   const [editForm, setEditForm] = useState({
     name: '',
     phone: '',
-    postal_code: '',
-    address: '',
+    bio: '',
+    age: '',
+    region: '',
     skin_type: '',
+    weight: '',
+    height: '',
+    has_children: false,
+    is_married: false,
     instagram_url: '',
     tiktok_url: '',
     youtube_url: '',
-    twitter_url: ''
+    other_sns_url: '',
+    instagram_followers: '',
+    tiktok_followers: '',
+    youtube_subscribers: ''
   })
 
   // 다국어 텍스트
@@ -255,18 +263,26 @@ const MyPageWithWithdrawal = () => {
       const profileData = await database.userProfiles.get(user.id)
       setProfile(profileData)
       
-      // 편집 폼 초기화
+      // 편집 폼 초기화 (실제 테이블 구조에 맞게)
       if (profileData) {
         setEditForm({
           name: profileData.name || '',
-          phone: profileData.phone_number || '',
-          postal_code: profileData.postal_code || '',
-          address: profileData.address || '',
+          phone: profileData.phone || '',
+          bio: profileData.bio || '',
+          age: profileData.age || '',
+          region: profileData.region || '',
           skin_type: profileData.skin_type || '',
+          weight: profileData.weight || '',
+          height: profileData.height || '',
+          has_children: profileData.has_children || false,
+          is_married: profileData.is_married || false,
           instagram_url: profileData.instagram_url || '',
           tiktok_url: profileData.tiktok_url || '',
           youtube_url: profileData.youtube_url || '',
-          twitter_url: profileData.twitter_url || ''
+          other_sns_url: profileData.other_sns_url || '',
+          instagram_followers: profileData.instagram_followers || '',
+          tiktok_followers: profileData.tiktok_followers || '',
+          youtube_subscribers: profileData.youtube_subscribers || ''
         })
       }
       
@@ -343,18 +359,27 @@ const MyPageWithWithdrawal = () => {
       setProcessing(true)
       setError('')
       
+      // 업데이트할 데이터 준비 (실제 테이블 구조에 맞게, 빈 값도 허용)
       const updateData = {
-        name: editForm.name,
-        phone_number: editForm.phone,
-        postal_code: editForm.postal_code,
-        address: editForm.address,
-        skin_type: editForm.skin_type,
-        instagram_url: editForm.instagram_url,
-        tiktok_url: editForm.tiktok_url,
-        youtube_url: editForm.youtube_url,
-        twitter_url: editForm.twitter_url
-      }
-      
+        name: editForm.name || '',
+        phone: editForm.phone || '',
+        bio: editForm.bio || '',
+        age: editForm.age ? parseInt(editForm.age) : null,
+        region: editForm.region || '',
+        skin_type: editForm.skin_type || '',
+        weight: editForm.weight ? parseFloat(editForm.weight) : null,
+        height: editForm.height ? parseFloat(editForm.height) : null,
+        has_children: editForm.has_children || false,
+        is_married: editForm.is_married || false,
+        instagram_url: editForm.instagram_url || '',
+        tiktok_url: editForm.tiktok_url || '',
+        youtube_url: editForm.youtube_url || '',
+        other_sns_url: editForm.other_sns_url || '',
+        instagram_followers: editForm.instagram_followers ? parseInt(editForm.instagram_followers) : null,
+        tiktok_followers: editForm.tiktok_followers ? parseInt(editForm.tiktok_followers) : null,
+        youtube_subscribers: editForm.youtube_subscribers ? parseInt(editForm.youtube_subscribers) : null,
+        updated_at: new Date().toISOString()
+      }  
       // Supabase 직접 업데이트 사용
       const { error: updateError } = await supabase
         .from('user_profiles')
@@ -782,32 +807,49 @@ const MyPageWithWithdrawal = () => {
                 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{t.postalCode}</label>
+                    <label className="block text-sm font-medium text-gray-700">나이</label>
                     {isEditing ? (
                       <input
-                        type="text"
-                        value={editForm.postal_code}
-                        onChange={(e) => setEditForm({...editForm, postal_code: e.target.value})}
+                        type="number"
+                        value={editForm.age}
+                        onChange={(e) => setEditForm({...editForm, age: e.target.value})}
                         className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="123-4567"
+                        placeholder="25"
+                        min="1"
+                        max="100"
                       />
                     ) : (
-                      <p className="mt-1 text-sm text-gray-900">{profile?.postal_code || '未設定'}</p>
+                      <p className="mt-1 text-sm text-gray-900">{profile?.age || '未設定'}</p>
                     )}
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{t.address}</label>
+                    <label className="block text-sm font-medium text-gray-700">지역</label>
                     {isEditing ? (
-                      <textarea
-                        value={editForm.address}
-                        onChange={(e) => setEditForm({...editForm, address: e.target.value})}
+                      <input
+                        type="text"
+                        value={editForm.region}
+                        onChange={(e) => setEditForm({...editForm, region: e.target.value})}
                         className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        rows="2"
-                        placeholder="東京都渋谷区..."
+                        placeholder="서울특별시"
                       />
                     ) : (
-                      <p className="mt-1 text-sm text-gray-900">{profile?.address || '未設定'}</p>
+                      <p className="mt-1 text-sm text-gray-900">{profile?.region || '未設定'}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">자기소개</label>
+                    {isEditing ? (
+                      <textarea
+                        value={editForm.bio}
+                        onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
+                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        rows="2"
+                        placeholder="자기소개를 입력하세요..."
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">{profile?.bio || '未設定'}</p>
                     )}
                   </div>
                   
@@ -910,20 +952,20 @@ const MyPageWithWithdrawal = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Twitter</label>
+                    <label className="block text-sm font-medium text-gray-700">기타 SNS</label>
                     {isEditing ? (
                       <input
                         type="url"
-                        value={editForm.twitter_url}
-                        onChange={(e) => setEditForm({...editForm, twitter_url: e.target.value})}
+                        value={editForm.other_sns_url}
+                        onChange={(e) => setEditForm({...editForm, other_sns_url: e.target.value})}
                         className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="https://twitter.com/username"
+                        placeholder="https://other-sns.com/username"
                       />
                     ) : (
                       <p className="mt-1 text-sm text-gray-900">
-                        {profile?.twitter_url ? (
-                          <a href={profile.twitter_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                            {profile.twitter_url}
+                        {profile?.other_sns_url ? (
+                          <a href={profile.other_sns_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                            {profile.other_sns_url}
                           </a>
                         ) : (language === 'ja' ? '未登録' : '등록되지 않음')}
                       </p>
