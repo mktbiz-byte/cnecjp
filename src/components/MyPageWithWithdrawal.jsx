@@ -1793,6 +1793,18 @@ const MyPageWithWithdrawal = () => {
                   )}
                 </div>
                 
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                    <p className="text-sm text-red-800">{error}</p>
+                  </div>
+                )}
+                
+                {success && (
+                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                    <p className="text-sm text-green-800">{success}</p>
+                  </div>
+                )}
+                
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1802,9 +1814,12 @@ const MyPageWithWithdrawal = () => {
                       type="url"
                       value={snsUploadForm.sns_upload_url}
                       onChange={(e) => setSnsUploadForm({...snsUploadForm, sns_upload_url: e.target.value})}
-                      placeholder={language === 'ja' ? 'https://instagram.com/p/...' : 'https://instagram.com/p/...'}
+                      placeholder={language === 'ja' ? 'https://instagram.com/p/... または https://tiktok.com/@.../video/...' : 'https://instagram.com/p/... 또는 https://tiktok.com/@.../video/...'}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
+                    <p className="mt-1 text-xs text-gray-500">
+                      {language === 'ja' ? 'Instagram、TikTok、YouTubeなどのSNS投稿URLを入力してください' : 'Instagram, TikTok, YouTube 등의 SNS 게시물 URL을 입력해주세요'}
+                    </p>
                   </div>
                   
                   <div>
