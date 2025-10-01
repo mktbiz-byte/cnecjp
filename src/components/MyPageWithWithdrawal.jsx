@@ -52,7 +52,11 @@ const MyPageWithWithdrawal = () => {
     phone: '',
     postal_code: '',
     address: '',
-    skin_type: ''
+    skin_type: '',
+    instagram_url: '',
+    tiktok_url: '',
+    youtube_url: '',
+    twitter_url: ''
   })
 
   // 다국어 텍스트
@@ -255,10 +259,14 @@ const MyPageWithWithdrawal = () => {
       if (profileData) {
         setEditForm({
           name: profileData.name || '',
-          phone: profileData.phone || '',
+          phone: profileData.phone_number || '',
           postal_code: profileData.postal_code || '',
           address: profileData.address || '',
-          skin_type: profileData.skin_type || ''
+          skin_type: profileData.skin_type || '',
+          instagram_url: profileData.instagram_url || '',
+          tiktok_url: profileData.tiktok_url || '',
+          youtube_url: profileData.youtube_url || '',
+          twitter_url: profileData.twitter_url || ''
         })
       }
       
@@ -337,17 +345,31 @@ const MyPageWithWithdrawal = () => {
       
       const updateData = {
         name: editForm.name,
-        phone: editForm.phone,
+        phone_number: editForm.phone,
         postal_code: editForm.postal_code,
         address: editForm.address,
-        skin_type: editForm.skin_type
+        skin_type: editForm.skin_type,
+        instagram_url: editForm.instagram_url,
+        tiktok_url: editForm.tiktok_url,
+        youtube_url: editForm.youtube_url,
+        twitter_url: editForm.twitter_url
       }
       
-      await database.userProfiles.update(user.id, updateData)
+      // Supabase 직접 업데이트 사용
+      const { error: updateError } = await supabase
+        .from('user_profiles')
+        .update(updateData)
+        .eq('user_id', user.id)
+      
+      if (updateError) {
+        throw new Error(`프로필 업데이트 실패: ${updateError.message}`)
+      }
+      
+      // 로컬 상태 업데이트
+      setProfile(prev => ({ ...prev, ...updateData }))
       
       setSuccess(language === 'ko' ? '프로필이 성공적으로 업데이트되었습니다.' : 'プロフィールが正常に更新されました。')
       setIsEditing(false)
-      loadUserData() // 데이터 새로고침
       
       setTimeout(() => setSuccess(''), 3000)
     } catch (error) {
@@ -798,6 +820,98 @@ const MyPageWithWithdrawal = () => {
                         {t.withdrawRequest}
                       </button>
                     </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* SNS 주소 섹션 */}
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  {language === 'ko' ? 'SNS 주소' : 'SNSアドレス'}
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Instagram</label>
+                    {isEditing ? (
+                      <input
+                        type="url"
+                        value={editForm.instagram_url}
+                        onChange={(e) => setEditForm({...editForm, instagram_url: e.target.value})}
+                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="https://instagram.com/username"
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">
+                        {profile?.instagram_url ? (
+                          <a href={profile.instagram_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                            {profile.instagram_url}
+                          </a>
+                        ) : (language === 'ja' ? '未登録' : '등록되지 않음')}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">TikTok</label>
+                    {isEditing ? (
+                      <input
+                        type="url"
+                        value={editForm.tiktok_url}
+                        onChange={(e) => setEditForm({...editForm, tiktok_url: e.target.value})}
+                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="https://tiktok.com/@username"
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">
+                        {profile?.tiktok_url ? (
+                          <a href={profile.tiktok_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                            {profile.tiktok_url}
+                          </a>
+                        ) : (language === 'ja' ? '未登録' : '등록되지 않음')}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">YouTube</label>
+                    {isEditing ? (
+                      <input
+                        type="url"
+                        value={editForm.youtube_url}
+                        onChange={(e) => setEditForm({...editForm, youtube_url: e.target.value})}
+                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="https://youtube.com/@username"
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">
+                        {profile?.youtube_url ? (
+                          <a href={profile.youtube_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                            {profile.youtube_url}
+                          </a>
+                        ) : (language === 'ja' ? '未登録' : '등록되지 않음')}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Twitter</label>
+                    {isEditing ? (
+                      <input
+                        type="url"
+                        value={editForm.twitter_url}
+                        onChange={(e) => setEditForm({...editForm, twitter_url: e.target.value})}
+                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="https://twitter.com/username"
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">
+                        {profile?.twitter_url ? (
+                          <a href={profile.twitter_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                            {profile.twitter_url}
+                          </a>
+                        ) : (language === 'ja' ? '未登録' : '등록되지 않음')}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
