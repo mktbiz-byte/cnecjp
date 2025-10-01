@@ -283,3 +283,30 @@ CREATE INDEX IF NOT EXISTS idx_applications_tracking_number ON applications(trac
 CREATE INDEX IF NOT EXISTS idx_applications_shipping_status ON applications(shipping_status);
 
 SELECT 'applications 테이블 배송 관련 컬럼 추가 완료' as result;
+
+-- 10. user_profiles 테이블에 address 컬럼 추가 (프로필 수정 오류 해결)
+DO $$ 
+BEGIN
+    -- address 컬럼 추가
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'user_profiles' 
+        AND column_name = 'address'
+        AND table_schema = 'public'
+    ) THEN
+        ALTER TABLE user_profiles ADD COLUMN address TEXT;
+    END IF;
+
+    -- phone_number 컬럼 추가 (phone과 별도로)
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'user_profiles' 
+        AND column_name = 'phone_number'
+        AND table_schema = 'public'
+    ) THEN
+        ALTER TABLE user_profiles ADD COLUMN phone_number TEXT;
+    END IF;
+
+END $$;
+
+SELECT 'user_profiles 테이블 address 및 phone_number 컬럼 추가 완료' as result;

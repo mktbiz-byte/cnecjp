@@ -272,6 +272,7 @@ const MyPageWithWithdrawal = () => {
         setEditForm({
           name: profileData.name || '',
           phone: profileData.phone || '',
+          address: profileData.address || '',
           bio: profileData.bio || '',
           age: profileData.age || '',
           region: profileData.region || '',
@@ -360,31 +361,84 @@ const MyPageWithWithdrawal = () => {
       setError('')
       
       // 숫자 필드 유효성 검사
-      const validateNumber = (value, fieldName) => {
-        if (value && isNaN(Number(value))) {
-          throw new Error(language === 'ja' ? `${fieldName}は数値で入力してください。` : `${fieldName}은(는) 숫자로 입력해주세요.`)
-        }
-        return value ? Number(value) : null
-      }
+  const validateNumber = (value, fieldName) => {
+    // 빈 값이나 undefined는 null로 처리 (허용)
+    if (!value || value === '' || value === undefined) {
+      return null
+    }
+    
+    // 숫자로 변환 시도
+    const numValue = Number(value)
+    if (isNaN(numValue)) {
+      throw new Error(language === 'ja' ? `${fieldName}は数値で入力してください。` : `${fieldName}은(는) 숫자로 입력해주세요.`)
+    }
+    
+    // 음수는 허용하지 않음 (나이, 팔로워 수 등)
+    if (numValue < 0) {
+      throw new Error(language === 'ja' ? `${fieldName}は0以上の数値で入力してください。` : `${fieldName}은(는) 0 이상의 숫자로 입력해주세요.`)
+    }
+    
+    return numValue
+  }
 
       // 업데이트할 데이터 준비 (실제 테이블 구조에 맞게, 빈 값도 허용)
-      const updateData = {
-        name: editForm.name?.trim() || null,
-        phone: editForm.phone?.trim() || null,
-        bio: editForm.bio?.trim() || null,
-        age: validateNumber(editForm.age, language === 'ja' ? '年齢' : '나이'),
-        region: editForm.region?.trim() || null,
-        skin_type: editForm.skin_type?.trim() || null,
-
-        instagram_url: editForm.instagram_url?.trim() || null,
-        tiktok_url: editForm.tiktok_url?.trim() || null,
-        youtube_url: editForm.youtube_url?.trim() || null,
-        other_sns_url: editForm.other_sns_url?.trim() || null,
-        instagram_followers: validateNumber(editForm.instagram_followers, 'Instagram ' + (language === 'ja' ? 'フォロワー数' : '팔로워 수')),
-        tiktok_followers: validateNumber(editForm.tiktok_followers, 'TikTok ' + (language === 'ja' ? 'フォロワー数' : '팔로워 수')),
-        youtube_subscribers: validateNumber(editForm.youtube_subscribers, 'YouTube ' + (language === 'ja' ? '登録者数' : '구독자 수')),
-        updated_at: new Date().toISOString()
+      // 안전한 프로필 업데이트 데이터 생성 (존재하는 컬럼만 포함)
+      const updateData = {}
+      
+      // 기본 정보 필드들 (안전하게 추가)
+      if (editForm.name !== undefined) updateData.name = editForm.name?.trim() || null
+      if (editForm.phone !== undefined) updateData.phone = editForm.phone?.trim() || null
+      if (editForm.address !== undefined) updateData.address = editForm.address?.trim() || null
+      if (editForm.bio !== undefined) updateData.bio = editForm.bio?.trim() || null
+      if (editForm.region !== undefined) updateData.region = editForm.region?.trim() || null
+      if (editForm.skin_type !== undefined) updateData.skin_type = editForm.skin_type?.trim() || null
+      
+      // 나이 필드 (숫자 검증)
+      if (editForm.age !== undefined) {
+        try {
+          updateData.age = validateNumber(editForm.age, language === 'ja' ? '年齢' : '나이')
+        } catch (err) {
+          console.warn('나이 필드 검증 실패:', err.message)
+          updateData.age = null
+        }
       }
+      
+      // SNS URL 필드들 (빈 값 허용)
+      if (editForm.instagram_url !== undefined) updateData.instagram_url = editForm.instagram_url?.trim() || null
+      if (editForm.tiktok_url !== undefined) updateData.tiktok_url = editForm.tiktok_url?.trim() || null
+      if (editForm.youtube_url !== undefined) updateData.youtube_url = editForm.youtube_url?.trim() || null
+      if (editForm.other_sns_url !== undefined) updateData.other_sns_url = editForm.other_sns_url?.trim() || null
+      
+      // SNS 팔로워 수 필드들 (숫자 검증, 빈 값 허용)
+      if (editForm.instagram_followers !== undefined) {
+        try {
+          updateData.instagram_followers = validateNumber(editForm.instagram_followers, 'Instagram ' + (language === 'ja' ? 'フォロワー数' : '팔로워 수'))
+        } catch (err) {
+          console.warn('Instagram 팔로워 수 검증 실패:', err.message)
+          updateData.instagram_followers = null
+        }
+      }
+      
+      if (editForm.tiktok_followers !== undefined) {
+        try {
+          updateData.tiktok_followers = validateNumber(editForm.tiktok_followers, 'TikTok ' + (language === 'ja' ? 'フォロワー数' : '팔로워 수'))
+        } catch (err) {
+          console.warn('TikTok 팔로워 수 검증 실패:', err.message)
+          updateData.tiktok_followers = null
+        }
+      }
+      
+      if (editForm.youtube_subscribers !== undefined) {
+        try {
+          updateData.youtube_subscribers = validateNumber(editForm.youtube_subscribers, 'YouTube ' + (language === 'ja' ? '登録者数' : '구독자 수'))
+        } catch (err) {
+          console.warn('YouTube 구독자 수 검증 실패:', err.message)
+          updateData.youtube_subscribers = null
+        }
+      }
+      
+      // 업데이트 시간 추가
+      updateData.updated_at = new Date().toISOString()
 
       console.log('프로필 업데이트 데이터:', updateData)
       
@@ -840,7 +894,10 @@ const MyPageWithWithdrawal = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{t.phone}</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      {t.phone}
+                      <span className="text-xs text-gray-500 ml-1">({language === 'ja' ? '任意' : '선택사항'})</span>
+                    </label>
                     {isEditing ? (
                       <input
                         type="tel"
@@ -851,6 +908,24 @@ const MyPageWithWithdrawal = () => {
                       />
                     ) : (
                       <p className="mt-1 text-sm text-gray-900">{profile?.phone || (language === 'ja' ? '未登録' : '등록되지 않음')}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      {t.address}
+                      <span className="text-xs text-gray-500 ml-1">({language === 'ja' ? '任意' : '선택사항'})</span>
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editForm.address || ''}
+                        onChange={(e) => setEditForm({...editForm, address: e.target.value})}
+                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder={language === 'ja' ? '東京都渋谷区...' : '서울특별시 강남구...'}
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">{profile?.address || (language === 'ja' ? '未登録' : '등록되지 않음')}</p>
                     )}
                   </div>
                   
@@ -877,11 +952,14 @@ const MyPageWithWithdrawal = () => {
                 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{t.age}</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      {t.age}
+                      <span className="text-xs text-gray-500 ml-1">({language === 'ja' ? '任意' : '선택사항'})</span>
+                    </label>
                     {isEditing ? (
                       <input
                         type="number"
-                        value={editForm.age}
+                        value={editForm.age || ''}
                         onChange={(e) => setEditForm({...editForm, age: e.target.value})}
                         className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="25"
@@ -889,37 +967,43 @@ const MyPageWithWithdrawal = () => {
                         max="100"
                       />
                     ) : (
-                      <p className="mt-1 text-sm text-gray-900">{profile?.age || '未設定'}</p>
+                      <p className="mt-1 text-sm text-gray-900">{profile?.age || (language === 'ja' ? '未設定' : '미설정')}</p>
                     )}
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{t.region}</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      {t.region}
+                      <span className="text-xs text-gray-500 ml-1">({language === 'ja' ? '任意' : '선택사항'})</span>
+                    </label>
                     {isEditing ? (
                       <input
                         type="text"
-                        value={editForm.region}
+                        value={editForm.region || ''}
                         onChange={(e) => setEditForm({...editForm, region: e.target.value})}
                         className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder={language === 'ja' ? '東京都' : '서울특별시'}
                       />
                     ) : (
-                      <p className="mt-1 text-sm text-gray-900">{profile?.region || '未設定'}</p>
+                      <p className="mt-1 text-sm text-gray-900">{profile?.region || (language === 'ja' ? '未設定' : '미설정')}</p>
                     )}
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{t.bio}</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      {t.bio}
+                      <span className="text-xs text-gray-500 ml-1">({language === 'ja' ? '任意' : '선택사항'})</span>
+                    </label>
                     {isEditing ? (
                       <textarea
-                        value={editForm.bio}
+                        value={editForm.bio || ''}
                         onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
                         className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         rows="2"
                         placeholder={language === 'ja' ? '自己紹介を入力してください...' : '자기소개를 입력하세요...'}
                       />
                     ) : (
-                      <p className="mt-1 text-sm text-gray-900">{profile?.bio || '未設定'}</p>
+                      <p className="mt-1 text-sm text-gray-900">{profile?.bio || (language === 'ja' ? '未設定' : '미설정')}</p>
                     )}
                   </div>
                   
