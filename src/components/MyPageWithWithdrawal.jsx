@@ -323,27 +323,14 @@ const MyPageWithWithdrawal = () => {
           setPointTransactions([])
         } else {
           setPointTransactions(pointData || [])
-          
-          // 현재 포인트 잔액 계산
-          const totalPoints = (pointData || []).reduce((sum, transaction) => {
-            if (transaction.status === 'completed') {
-              return sum + transaction.amount
-            }
-            return sum
-          }, 0)
-          
-          // 프로필에 포인트 잔액 반영
-          if (profileData) {
-            setProfile(prev => ({
-              ...prev,
-              points: Math.max(totalPoints, 0) // 음수 방지
-            }))
-          }
         }
       } catch (pointErr) {
         console.warn('포인트 거래 내역 로딩 실패:', pointErr)
         setPointTransactions([])
       }
+      
+      // 프로필의 points 컬럼을 그대로 사용 (이미 profileData에 포함됨)
+      // 별도의 포인트 계산 없이 데이터베이스의 points 값을 신뢰
       
     } catch (error) {
       console.error('사용자 데이터 로드 오류:', error)
