@@ -687,7 +687,10 @@ export const database = {
 
     async update(userId, updateData) {
       return safeQuery(async () => {
-        const { data, error } = await supabase
+        console.log('사용자 프로필 업데이트:', { userId, updateData })
+        
+        // user_id로 먼저 시도
+        let { data, error } = await supabase
           .from('user_profiles')
           .update({
             ...updateData,
@@ -695,9 +698,31 @@ export const database = {
           })
           .eq('user_id', userId)
           .select()
-          .single()
-        if (error) throw error
-        return data
+        
+        if (error || !data || data.length === 0) {
+          console.log('user_id로 업데이트 실패, id로 재시도:', error)
+          
+          // id로 재시도
+          const result = await supabase
+            .from('user_profiles')
+            .update({
+              ...updateData,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', userId)
+            .select()
+          
+          data = result.data
+          error = result.error
+        }
+        
+        if (error) {
+          console.error('프로필 업데이트 최종 실패:', error)
+          throw error
+        }
+        
+        console.log('프로필 업데이트 성공:', data)
+        return data && data.length > 0 ? data[0] : null
       })
     }
   },
