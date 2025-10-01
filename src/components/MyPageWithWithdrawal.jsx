@@ -447,42 +447,58 @@ const MyPageWithWithdrawal = () => {
   }
 
   // SNS 업로드 및 포인트 신청 함수
-  const handleSnsUploadSubmit = async () => {
-    if (!snsUploadForm.sns_upload_url.trim()) {
-      setError(t.messages.snsUrlRequired)
-      return
-    }
-    
+  const handleSnsUpload = async () => {
     try {
+      if (!snsUploadForm.snsUrl.trim()) {
+        setError(t.messages.snsUrlRequired)
+        return
+      }
+      
       setProcessing(true)
       setError('')
       
-      // applications 테이블에 SNS URL 업데이트
-      const { error } = await supabase
+      // applications 테이블의 기존 컬럼 활용
+      const updateData = {
+        video_links: snsUploadForm.snsUrl, // SNS URL을 video_links에 저장
+        additional_info: snsUploadForm.notes, // 추가 메모를 additional_info에 저장
+        updated_at: new Date().toISOString()
+      }
+      
+      const { error: updateError } = await supabase
         .from('applications')
-        .update({
-          sns_upload_url: snsUploadForm.sns_upload_url,
-          sns_upload_notes: snsUploadForm.notes,
-          point_request_status: 'pending',
-          sns_uploaded_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', selectedApplication.id)
       
-      if (error) throw error
+      if (updateError) {
+        throw new Error(`SNS 업로드 실패: ${updateError.message}`)
+      }
+      
+      // point_transactions 테이블에 포인트 신청 기록 추가
+      const { error: pointError } = await supabase
+        .from('point_transactions')
+        .insert({
+          user_id: user.id,
+          campaign_id: selectedApplication.campaign_id,
+          application_id: selectedApplication.id,
+          transaction_type: 'pending_reward',
+          amount: 0, // 승인 전이므로 0
+          description: `SNS 업로드 포인트 신청: ${snsUploadForm.snsUrl}`,
+          status: 'pending',
+          created_at: new Date().toISOString()
+        })
+      
+      if (pointError) {
+        console.warn('포인트 신청 기록 추가 실패:', pointError)
+      }
       
       setSuccess(t.messages.snsUploadSubmitted)
       setShowSnsUploadModal(false)
-      setSnsUploadForm({
-        sns_upload_url: '',
-        notes: ''
-      })
-      setSelectedApplication(null)
+      setSnsUploadForm({ snsUrl: '', notes: '' })
       
-      // 데이터 재로드
-      await loadUserData()
+      // 데이터 새로고침
+      loadUserData()
       
-      setTimeout(() => setSuccess(''), 5000)
-      
+      setTimeout(() => setSuccess(''), 3000)
     } catch (error) {
       console.error('SNS 업로드 오류:', error)
       setError(t.messages.error)
@@ -1035,11 +1051,16 @@ const MyPageWithWithdrawal = () => {
                                 
                                 {/* SNS 업로드 및 포인트 신청 버튼 */}
                                 <div className="mt-2">
-                                  {application.point_request_status === 'approved' ? (
+                                  {/* video_links가 있고 point_transactions에 승인된 기록이 있으면 완료 상태 */}
+                                  {application.video_links && pointTransactions.some(pt => 
+                                    pt.application_id === application.id && pt.transaction_type === 'campaign_reward' && pt.status === 'completed'
+                                  ) ? (
                                     <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
                                       ✅ {t.pointRequestApproved}
                                     </span>
-                                  ) : application.point_request_status === 'pending' ? (
+                                  ) : application.video_links && pointTransactions.some(pt => 
+                                    pt.application_id === application.id && pt.transaction_type === 'pending_reward'
+                                  ) ? (
                                     <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-yellow-100 text-yellow-800">
                                       ⏳ {t.pointRequestPending}
                                     </span>

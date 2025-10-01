@@ -273,29 +273,37 @@ const SNSUploadNew = () => {
       setProcessing(true)
       setError('')
 
-      // 1. 포인트 지급
-      const { error: pointError } = await database.userPoints.addPoints(
-        application.user_id,
-        application.campaigns.reward_amount,
-        `캠페인 완료 보상: ${application.campaigns.title}`
-      )
+      // 1. 포인트 지급 (point_transactions 테이블에 직접 추가)
+      const { error: pointError } = await supabase
+        .from('point_transactions')
+        .insert({
+          user_id: application.user_id,
+          campaign_id: application.campaign_id,
+          application_id: application.id,
+          transaction_type: 'campaign_reward',
+          amount: application.campaigns.reward_amount,
+          description: `캠페인 완료 보상: ${application.campaigns.title}`,
+          status: 'completed',
+          created_at: new Date().toISOString()
+        })
 
       if (pointError) {
         throw new Error(`포인트 지급 실패: ${pointError.message}`)
       }
 
-      // 2. 신청서 상태 업데이트
-      const { error: updateError } = await supabase
-        .from('applications')
+      // 2. 기존 pending_reward 상태 업데이트 (있는 경우)
+      const { error: updatePendingError } = await supabase
+        .from('point_transactions')
         .update({
-          point_request_status: 'approved',
-          points_awarded_at: new Date().toISOString(),
+          status: 'approved',
+          amount: application.campaigns.reward_amount,
           updated_at: new Date().toISOString()
         })
-        .eq('id', application.id)
+        .eq('application_id', application.id)
+        .eq('transaction_type', 'pending_reward')
 
-      if (updateError) {
-        throw new Error(`상태 업데이트 실패: ${updateError.message}`)
+      if (updatePendingError) {
+        console.warn('기존 거래 상태 업데이트 실패:', updatePendingError)
       }
 
       // 로컬 상태 업데이트
