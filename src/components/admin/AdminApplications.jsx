@@ -749,7 +749,7 @@ const AdminApplications = () => {
         {approveModal && (
           <div 
             className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4"
-            style={{ zIndex: 99999 }}
+            style={{ zIndex: '99999 !important', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
             onClick={(e) => {
               if (e.target === e.currentTarget) {
                 setApproveModal(false)
@@ -759,7 +759,7 @@ const AdminApplications = () => {
             <div 
               className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative"
               onClick={(e) => e.stopPropagation()}
-              style={{ zIndex: 100000 }}
+              style={{ zIndex: '100000 !important', position: 'relative' }}
             >
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
