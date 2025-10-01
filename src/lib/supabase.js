@@ -411,8 +411,10 @@ export const database = {
 
     async getByUserAndCampaign(userId, campaignId) {
       return safeQuery(async () => {
+        console.log('getByUserAndCampaign 호출 - applications 테이블 사용:', { userId, campaignId })
+        
         const { data, error } = await supabase
-          .from('campaign_applications')
+          .from('applications')
           .select('*')
           .eq('user_id', userId)
           .eq('campaign_id', campaignId)
@@ -420,31 +422,29 @@ export const database = {
         
         if (error && error.code !== 'PGRST116') {
           console.error('getByUserAndCampaign 오류:', error)
-          if (error.message.includes('permission denied')) {
-            return null
-          }
-          throw error
+          return null
         }
         
+        console.log('기존 신청서 조회 결과:', data)
         return data
       })
     },
 
     async create(applicationData) {
       return safeQuery(async () => {
-        console.log('Campaign Application 생성 시작:', applicationData)
+        console.log('Application 생성 시작 - applications 테이블 사용:', applicationData)
         const { data, error } = await supabase
-          .from('campaign_applications')
+          .from('applications')
           .insert([applicationData])
           .select()
           .single()
         
         if (error) {
-          console.error('Campaign Application 생성 오류:', error)
+          console.error('Application 생성 오류:', error)
           throw error
         }
         
-        console.log('Campaign Application 생성 성공:', data)
+        console.log('Application 생성 성공:', data)
         return data
       })
     },

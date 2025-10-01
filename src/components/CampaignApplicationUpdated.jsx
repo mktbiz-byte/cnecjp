@@ -599,21 +599,9 @@ const CampaignApplicationUpdated = () => {
                     </label>
                     <input
                       type="text"
-                      value={userProfile?.name || ''}
-                      disabled
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {t.name} <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
                       value={applicationData.applicant_name || userProfile?.name || ''}
                       onChange={(e) => setApplicationData(prev => ({ ...prev, applicant_name: e.target.value }))}
-                      placeholder={language === 'ja' ? '名前を入力してください' : '이름을 입력해주세요'}
+                      placeholder="名前を入力してください"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                       required
                     />
@@ -746,7 +734,7 @@ const CampaignApplicationUpdated = () => {
                               ...prev, 
                               offline_visit_notes: e.target.value 
                             }))}
-                            placeholder="방문 가능한 시간대, 특이사항 등을 작성해주세요"
+                            placeholder="訪問可能な時間帯、特記事項などをご記入ください"
                             rows={2}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                           />
@@ -849,7 +837,7 @@ const CampaignApplicationUpdated = () => {
                             }))}
                             rows={campaign.question1_type === 'long' ? 5 : 3}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                            placeholder="답변을 입력하세요"
+                            placeholder="回答を入力してください"
                             required
                           />
                         )}
@@ -895,7 +883,7 @@ const CampaignApplicationUpdated = () => {
                             }))}
                             rows={campaign.question2_type === 'long' ? 5 : 3}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                            placeholder="답변을 입력하세요"
+                            placeholder="回答を入力してください"
                             required
                           />
                         )}
@@ -941,7 +929,7 @@ const CampaignApplicationUpdated = () => {
                             }))}
                             rows={campaign.question3_type === 'long' ? 5 : 3}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                            placeholder="답변을 입력하세요"
+                            placeholder="回答を入力してください"
                             required
                           />
                         )}
@@ -987,7 +975,7 @@ const CampaignApplicationUpdated = () => {
                             }))}
                             rows={campaign.question4_type === 'long' ? 5 : 3}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                            placeholder="답변을 입력하세요"
+                            placeholder="回答を入力してください"
                             required
                           />
                         )}
@@ -1007,7 +995,7 @@ const CampaignApplicationUpdated = () => {
                   onChange={(e) => setApplicationData(prev => ({ ...prev, additional_info: e.target.value }))}
                   rows={4}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="추가로 전달하고 싶은 내용이 있으시면 작성해주세요."
+                  placeholder="追加でお伝えしたい内容がございましたらご記入ください。"
                 />
               </div>
 
