@@ -292,19 +292,31 @@ const MyPageWithWithdrawal = () => {
       const applicationsData = await database.applications.getByUser(user.id)
       setApplications(applicationsData || [])
       
-      // 출금 내역 로딩 (withdrawal_requests 테이블 사용)
+      // 출금 내역 로딩 (point_transactions에서 출금 신청 기록 가져오기)
       try {
+        console.log('출금 내역 로딩 시작 - 사용자 ID:', user.id)
         const { data: withdrawalData, error: withdrawalError } = await supabase
-          .from('withdrawal_requests')
+          .from('point_transactions')
           .select('*')
           .eq('user_id', user.id)
+          .eq('transaction_type', 'withdrawal_request')
           .order('created_at', { ascending: false })
         
         if (withdrawalError) {
           console.warn('출금 내역 로딩 오류:', withdrawalError)
+          console.warn('오류 세부사항:', withdrawalError.message, withdrawalError.code)
           setWithdrawals([])
         } else {
-          setWithdrawals(withdrawalData || [])
+          console.log('출금 내역 로딩 성공:', withdrawalData?.length || 0, '개')
+          // point_transactions 형식을 withdrawal_requests 형식으로 변환
+          const formattedWithdrawals = withdrawalData?.map(item => ({
+            id: item.id,
+            amount: Math.abs(item.amount), // 음수를 양수로 변환
+            status: item.status,
+            created_at: item.created_at,
+            description: item.description
+          })) || []
+          setWithdrawals(formattedWithdrawals)
         }
       } catch (withdrawErr) {
         console.warn('출금 내역 로딩 실패:', withdrawErr)
@@ -496,15 +508,14 @@ const MyPageWithWithdrawal = () => {
       setProcessing(true)
       setError('')
 
-      // withdrawal_requests 테이블에 직접 삽입
+      // point_transactions 테이블에 출금 신청 기록 (임시)
       const { data: withdrawalData, error: withdrawalError } = await supabase
-        .from('withdrawal_requests')
+        .from('point_transactions')
         .insert([{
           user_id: user.id,
-          amount: requestAmount,
-          withdrawal_method: 'paypal',
-          contact_info: withdrawForm.paypalEmail || withdrawForm.paypalName || user.email,
-          reason: withdrawForm.reason || (language === 'ja' ? 'ポイント出金申請' : '포인트 출금 신청'),
+          amount: -requestAmount, // 음수로 출금 표시
+          transaction_type: 'withdrawal_request',
+          description: `출금 신청: ${requestAmount}P (PayPal: ${withdrawForm.paypalEmail || withdrawForm.paypalName || user.email})`,
           status: 'pending',
           created_at: new Date().toISOString()
         }])

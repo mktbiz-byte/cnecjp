@@ -318,7 +318,7 @@ export const database = {
             if (campaignIds.length > 0) {
               const { data: campaigns, error: campaignsError } = await supabase
                 .from('campaigns')
-                .select('id, title, brand_name')
+                .select('id, title')
                 .in('id', campaignIds)
 
               if (!campaignsError && campaigns) {
@@ -326,8 +326,7 @@ export const database = {
                   const campaign = campaigns.find(c => c.id === app.campaign_id)
                   return {
                     ...app,
-                    campaign_title: campaign ? campaign.title : 'Unknown Campaign',
-                    brand_name: campaign ? campaign.brand_name : ''
+                    campaign_title: campaign ? campaign.title : 'Unknown Campaign'
                   }
                 })
                 return applicationsWithCampaigns
