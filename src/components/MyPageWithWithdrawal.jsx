@@ -1330,7 +1330,12 @@ const MyPageWithWithdrawal = () => {
                                     </span>
                                   ) : (
                                     <button
-                                      onClick={() => openSnsUploadModal(application)}
+                                      onClick={(e) => {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        openSnsUploadModal(application)
+                                      }}
+                                      type="button"
                                       className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200 transition-colors"
                                     >
                                       📱 {t.snsUpload}
