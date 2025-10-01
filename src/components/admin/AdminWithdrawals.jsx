@@ -162,62 +162,54 @@ const AdminWithdrawals = () => {
       
       // 단계별 데이터 로딩으로 흰화면 문제 해결
       
-      // 1단계: 출금 요청 데이터 로드 (withdrawal_requests 테이블에서)
+      // 1단계: 출금 요청 데이터 로드 (point_transactions 테이블에서)
       console.log('1단계: 출금 요청 데이터 로드...')
       try {
-        // withdrawal_requests 테이블에서 직접 데이터 가져오기
+        // point_transactions 테이블에서 출금 요청 데이터 가져오기
         const { data: withdrawalsData, error } = await supabase
-          .from('withdrawal_requests')
+          .from('point_transactions')
           .select(`
             *,
             user_profiles(name, email, phone)
           `)
+          .eq('transaction_type', 'pending')
+          .lt('amount', 0)
           .order('created_at', { ascending: false })
         
         if (error) {
           console.error('출금 요청 데이터 로드 오류:', error)
-          
-          // withdrawal_requests 테이블이 없으면 withdrawals 테이블 시도
-          console.log('withdrawal_requests 테이블 접근 실패, withdrawals 테이블 시도')
-          const { data: fallbackData, error: fallbackError } = await supabase
-            .from('withdrawals')
-            .select(`
-              *,
-              user_profiles(name, email, phone)
-            `)
-            .order('requested_at', { ascending: false })
-          
-          if (fallbackError) {
-            console.error('withdrawals 테이블도 접근 실패:', fallbackError)
-            throw fallbackError
-          }
-          
-          // withdrawals 테이블 데이터를 withdrawal_requests 형식으로 변환
-          const convertedData = (fallbackData || []).map(item => ({
-            ...item,
-            created_at: item.requested_at || item.created_at,
-            user_name: item.user_profiles?.name || item.paypal_name || '-',
-            user_email: item.user_profiles?.email || item.paypal_email || '-',
-            user_phone: item.user_profiles?.phone || '-',
-            bank_name: item.bank_name || '-',
-            account_number: item.account_number || '-',
-            account_holder: item.account_holder || item.paypal_name || '-'
-          }))
-          
-          setWithdrawals(convertedData)
-          console.log('withdrawals 테이블에서 데이터 로드 성공:', convertedData.length)
-        } else {
-          // withdrawal_requests 테이블 데이터 처리
-          const processedData = (withdrawalsData || []).map(item => ({
-            ...item,
-            user_name: item.user_profiles?.name || item.user_name || '-',
-            user_email: item.user_profiles?.email || item.user_email || '-',
-            user_phone: item.user_profiles?.phone || item.user_phone || '-'
-          }))
-          
-          setWithdrawals(processedData)
-          console.log('출금 요청 데이터 로드 성공:', processedData.length)
+          throw error
         }
+        
+        // point_transactions 데이터를 출금 요청 형식으로 변환
+        const processedData = (withdrawalsData || []).map(item => {
+          // description에서 PayPal 정보 추출 (예: "출금 신청: 20000P (PayPal: 123)")
+          const paypalMatch = item.description?.match(/PayPal:\s*([^)]+)/)
+          const paypalInfo = paypalMatch ? paypalMatch[1] : ''
+          
+          return {
+            id: item.id,
+            user_id: item.user_id,
+            amount: Math.abs(item.amount), // 음수를 양수로 변환
+            points_amount: Math.abs(item.amount),
+            status: 'pending',
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+            description: item.description,
+            paypal_email: paypalInfo,
+            paypal_name: paypalInfo,
+            user_name: item.user_profiles?.name || '-',
+            user_email: item.user_profiles?.email || '-',
+            user_phone: item.user_profiles?.phone || '-',
+            bank_name: 'PayPal',
+            account_number: paypalInfo,
+            account_holder: item.user_profiles?.name || '-'
+          }
+        })
+        
+        setWithdrawals(processedData)
+        console.log('출금 요청 데이터 로드 성공:', processedData.length)
+        
       } catch (error) {
         console.warn('출금 요청 데이터 로드 실패:', error)
         setWithdrawals([])
@@ -251,40 +243,41 @@ const AdminWithdrawals = () => {
       
       console.log('출금 상태 업데이트:', withdrawalId, newStatus)
 
+      // point_transactions 테이블에서 transaction_type 업데이트
+      let newTransactionType = 'pending'
+      if (newStatus === 'approved') {
+        newTransactionType = 'approved'
+      } else if (newStatus === 'rejected') {
+        newTransactionType = 'rejected'
+      } else if (newStatus === 'completed') {
+        newTransactionType = 'spent' // 실제 출금 완료
+      }
+
       const updateData = {
-        status: newStatus,
-        admin_notes: adminNotes,
-        transaction_id: transactionId,
-        processed_at: new Date().toISOString(),
+        transaction_type: newTransactionType,
         updated_at: new Date().toISOString()
       }
 
-      // withdrawal_requests 테이블 먼저 시도
-      let { error } = await supabase
-        .from('withdrawal_requests')
+      // description에 관리자 메모 추가
+      if (adminNotes) {
+        const { data: currentData } = await supabase
+          .from('point_transactions')
+          .select('description')
+          .eq('id', withdrawalId)
+          .single()
+        
+        if (currentData) {
+          updateData.description = `${currentData.description} [관리자 메모: ${adminNotes}]`
+        }
+      }
+
+      const { error } = await supabase
+        .from('point_transactions')
         .update(updateData)
         .eq('id', withdrawalId)
       
       if (error) {
-        console.log('withdrawal_requests 테이블 업데이트 실패, withdrawals 테이블 시도')
-        
-        // withdrawals 테이블 시도 (컬럼명 조정)
-        const fallbackUpdateData = {
-          status: newStatus,
-          notes: adminNotes,
-          transaction_id: transactionId,
-          processed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-        
-        const { error: fallbackError } = await supabase
-          .from('withdrawals')
-          .update(fallbackUpdateData)
-          .eq('id', withdrawalId)
-        
-        if (fallbackError) {
-          throw fallbackError
-        }
+        throw error
       }
       
       console.log('상태 업데이트 완료')
