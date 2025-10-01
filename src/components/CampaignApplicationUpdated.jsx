@@ -279,16 +279,16 @@ const CampaignApplicationUpdated = () => {
 
     // 질문 답변 검증 (개별 질문 필드 사용)
     if (campaign?.question1 && !applicationData.answer_1?.trim()) {
-      errors.push('질문 1은 필수입니다')
+      errors.push(language === 'ja' ? '質問 1は必須です' : '질문 1은 필수입니다')
     }
     if (campaign?.question2 && !applicationData.answer_2?.trim()) {
-      errors.push('질문 2는 필수입니다')
+      errors.push(language === 'ja' ? '質問 2は必須です' : '질문 2는 필수입니다')
     }
     if (campaign?.question3 && !applicationData.answer_3?.trim()) {
-      errors.push('질문 3은 필수입니다')
+      errors.push(language === 'ja' ? '質問 3は必須です' : '질문 3은 필수입니다')
     }
     if (campaign?.question4 && !applicationData.answer_4?.trim()) {
-      errors.push('질문 4는 필수입니다')
+      errors.push(language === 'ja' ? '質問 4は必須です' : '질문 4는 필수입니다')
     }
 
     return errors
@@ -607,13 +607,13 @@ const CampaignApplicationUpdated = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      이름 <span className="text-red-500">*</span>
+                      {t.name} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       value={applicationData.applicant_name || userProfile?.name || ''}
                       onChange={(e) => setApplicationData(prev => ({ ...prev, applicant_name: e.target.value }))}
-                      placeholder="이름을 입력해주세요"
+                      placeholder={language === 'ja' ? '名前を入力してください' : '이름을 입력해주세요'}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                       required
                     />
@@ -738,7 +738,7 @@ const CampaignApplicationUpdated = () => {
                         
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            오프라인 방문 관련 메모 (선택사항)
+                            {language === 'ja' ? 'オフライン訪問関連メモ（任意）' : '오프라인 방문 관련 메모 (선택사항)'}
                           </label>
                           <textarea
                             value={applicationData.offline_visit_notes || ''}
@@ -808,7 +808,7 @@ const CampaignApplicationUpdated = () => {
               {/* 질문 답변 섹션 */}
               {(campaign?.question1 || campaign?.question2 || campaign?.question3 || campaign?.question4) && (
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">질문</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">{t.questions}</h3>
                   <div className="space-y-4">
                     {/* 질문 1 */}
                     {campaign?.question1 && (

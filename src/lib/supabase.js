@@ -303,62 +303,59 @@ export const database = {
         console.log('getByUser 호출 - 사용자 ID:', userId)
         
         try {
-          // 먼저 campaign_applications 테이블 확인
-          const { data: campaignAppsData, error: campaignAppsError } = await supabase
-            .from('campaign_applications')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false })
-          
-          if (!campaignAppsError && campaignAppsData && campaignAppsData.length > 0) {
-            console.log('Campaign Applications에서 사용자 데이터 발견:', campaignAppsData.length, '개')
-            const campaignIds = campaignAppsData.map(app => app.campaign_id)
-            const { data: campaigns, error: campaignsError } = await supabase
-              .from('campaigns')
-              .select('id, title')
-              .in('id', campaignIds)
-
-            if (campaignsError) {
-              console.error('Error fetching campaigns:', campaignsError)
-              return campaignAppsData // Return applications without campaign titles
-            }
-
-            const applicationsWithCampaigns = campaignAppsData.map(app => {
-              const campaign = campaigns.find(c => c.id === app.campaign_id)
-              return {
-                ...app,
-                campaign_title: campaign ? campaign.title : 'Unknown Campaign'
-              }
-            })
-            return applicationsWithCampaigns
-          }
-          
-          // campaign_applications가 비어있으면 기존 applications 테이블 확인
-          console.log('Campaign Applications 테이블에서 사용자 데이터 없음, 기존 applications 테이블 확인')
+          // 먼저 기존 applications 테이블 확인 (우선순위)
           const { data: appsData, error: appsError } = await supabase
             .from('applications')
             .select('*')
             .eq('user_id', userId)
             .order('created_at', { ascending: false })
           
-          if (!appsError && appsData) {
-            console.log('기존 Applications에서 사용자 데이터 발견:', appsData.length, '개')
+          if (!appsError && appsData && appsData.length > 0) {
+            console.log('Applications에서 사용자 데이터 발견:', appsData.length, '개')
             return appsData
           }
           
-          // 둘 다 실패하면 오류 처리
-          if (campaignAppsError && appsError) {
-            console.error('두 테이블 모두 접근 실패:', { campaignAppsError, appsError })
-            if (campaignAppsError.message.includes('permission denied') || appsError.message.includes('permission denied')) {
-              return []
+          // applications 테이블이 비어있으면 campaign_applications 테이블 확인 (백업)
+          console.log('Applications 테이블에서 사용자 데이터 없음, Campaign Applications 테이블 확인')
+          try {
+            const { data: campaignAppsData, error: campaignAppsError } = await supabase
+              .from('campaign_applications')
+              .select('*')
+              .eq('user_id', userId)
+              .order('created_at', { ascending: false })
+            
+            if (!campaignAppsError && campaignAppsData && campaignAppsData.length > 0) {
+              console.log('Campaign Applications에서 사용자 데이터 발견:', campaignAppsData.length, '개')
+              const campaignIds = campaignAppsData.map(app => app.campaign_id)
+              const { data: campaigns, error: campaignsError } = await supabase
+                .from('campaigns')
+                .select('id, title')
+                .in('id', campaignIds)
+
+              if (campaignsError) {
+                console.error('Error fetching campaigns:', campaignsError)
+                return campaignAppsData // Return applications without campaign titles
+              }
+
+              const applicationsWithCampaigns = campaignAppsData.map(app => {
+                const campaign = campaigns.find(c => c.id === app.campaign_id)
+                return {
+                  ...app,
+                  campaign_title: campaign ? campaign.title : 'Unknown Campaign'
+                }
+              })
+              return applicationsWithCampaigns
             }
-            throw campaignAppsError
+          } catch (campaignError) {
+            console.warn('Campaign Applications 테이블 접근 실패:', campaignError)
           }
           
+          // 둘 다 실패하면 빈 배열 반환
           console.log('두 테이블 모두에서 사용자 데이터 없음')
           return []
+          
         } catch (error) {
-          console.error('getByUser 함수 오류:', error)
+          console.error('getByUser 전체 오류:', error)
           return []
         }
       })

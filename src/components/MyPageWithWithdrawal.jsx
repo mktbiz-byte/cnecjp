@@ -5,7 +5,7 @@ import { database, supabase } from '../lib/supabase'
 import { 
   User, Mail, Phone, MapPin, Calendar, Award, 
   CreditCard, Download, Settings, LogOut, 
-  AlertTriangle, Trash2, Shield, Eye, EyeOff
+  AlertTriangle, Trash2, Shield, Eye, EyeOff, X
 } from 'lucide-react'
 
 const MyPageWithWithdrawal = () => {
