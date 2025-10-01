@@ -128,6 +128,9 @@ importers:
       googleapis:
         specifier: ^160.0.0
         version: 160.0.0
+      googleapis-common:
+        specifier: ^8.0.0
+        version: 8.0.0
       input-otp:
         specifier: ^1.4.2
         version: 1.4.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
