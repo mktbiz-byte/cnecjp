@@ -658,12 +658,15 @@ const MyPageWithWithdrawal = () => {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         {language === 'ko' ? '신청일' : '応募日'}
                       </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {language === 'ko' ? '자료' : '資料'}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {applications.length === 0 ? (
                       <tr>
-                        <td colSpan="3" className="px-6 py-12 text-center text-gray-500">
+                        <td colSpan="4" className="px-6 py-12 text-center text-gray-500">
                           {t.noData}
                         </td>
                       </tr>
@@ -689,12 +692,65 @@ const MyPageWithWithdrawal = () => {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {new Date(application.created_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'ja-JP')}
                           </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {application.status === 'approved' ? (
+                              <div className="space-y-2">
+                                {application.google_drive_url && (
+                                  <a
+                                    href={application.google_drive_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors"
+                                  >
+                                    📁 {language === 'ko' ? '구글 드라이브' : 'Google Drive'}
+                                  </a>
+                                )}
+                                {application.google_slides_url && (
+                                  <a
+                                    href={application.google_slides_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 transition-colors ml-2"
+                                  >
+                                    📊 {language === 'ko' ? '구글 슬라이드' : 'Google Slides'}
+                                  </a>
+                                )}
+                                {(!application.google_drive_url && !application.google_slides_url) && (
+                                  <span className="text-xs text-gray-400">
+                                    {language === 'ko' ? '자료 준비 중' : '資料準備中'}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-400">-</span>
+                            )}
+                          </td>
                         </tr>
                       ))
                     )}
                   </tbody>
                 </table>
               </div>
+              
+              {/* SNS 업로드 경고 메시지 */}
+              {applications.some(app => app.status === 'approved') && (
+                <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div className="flex items-start">
+                    <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 mr-3 flex-shrink-0" />
+                    <div className="text-sm text-amber-800">
+                      <p className="font-medium mb-1">
+                        {language === 'ko' ? '⚠️ SNS 업로드 주의사항' : '⚠️ SNS投稿注意事項'}
+                      </p>
+                      <p>
+                        {language === 'ko' 
+                          ? 'SNS 업로드는 영상이 1회 수정된 후 업로드 해주세요. 절대 바로 올리지 마세요.' 
+                          : 'SNS投稿は動画を1回修正してからアップロードしてください。絶対にそのまま投稿しないでください。'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -767,6 +823,26 @@ const MyPageWithWithdrawal = () => {
                   </tbody>
                 </table>
               </div>
+              
+              {/* SNS 업로드 경고 메시지 */}
+              {applications.some(app => app.status === 'approved') && (
+                <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div className="flex items-start">
+                    <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 mr-3 flex-shrink-0" />
+                    <div className="text-sm text-amber-800">
+                      <p className="font-medium mb-1">
+                        {language === 'ko' ? '⚠️ SNS 업로드 주의사항' : '⚠️ SNS投稿注意事項'}
+                      </p>
+                      <p>
+                        {language === 'ko' 
+                          ? 'SNS 업로드는 영상이 1회 수정된 후 업로드 해주세요. 절대 바로 올리지 마세요.' 
+                          : 'SNS投稿は動画を1回修正してからアップロードしてください。絶対にそのまま投稿しないでください。'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
