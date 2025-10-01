@@ -140,27 +140,10 @@ const CompanyReportNew = () => {
       setCampaign(campaignData)
       console.log('캠페인 데이터:', campaignData)
       
-      // 신청서 데이터 로드 (사용자 프로필 포함)
+      // 신청서 데이터 로드 (실제 데이터베이스 구조에 맞게)
       const { data: applicationsData, error: applicationsError } = await supabase
         .from('applications')
-        .select(`
-          *,
-          user_profiles (
-            id,
-            name,
-            email,
-            phone,
-            skin_type,
-            instagram_url,
-            tiktok_url,
-            youtube_url,
-            twitter_url,
-            instagram_followers,
-            tiktok_followers,
-            youtube_followers,
-            twitter_followers
-          )
-        `)
+        .select('*')
         .eq('campaign_id', campaignId)
         .order('created_at', { ascending: false })
       
@@ -353,7 +336,7 @@ const CompanyReportNew = () => {
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
                           <h3 className="text-lg font-semibold text-gray-800">
-                            {application.user_profiles?.name || '이름 없음'}
+                            {application.applicant_name || '이름 없음'}
                           </h3>
                           {getStatusBadge(application.status)}
                         </div>
@@ -362,9 +345,9 @@ const CompanyReportNew = () => {
                         <div className="mb-4">
                           <h4 className="font-medium text-gray-700 mb-2">{t.snsAddress}</h4>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                            {application.user_profiles?.instagram_url && (
+                            {application.instagram_url && (
                               <a 
-                                href={application.user_profiles.instagram_url}
+                                href={application.instagram_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center space-x-2 text-pink-600 hover:text-pink-800"
@@ -374,9 +357,9 @@ const CompanyReportNew = () => {
                                 <ExternalLink className="h-3 w-3" />
                               </a>
                             )}
-                            {application.user_profiles?.tiktok_url && (
+                            {application.tiktok_url && (
                               <a 
-                                href={application.user_profiles.tiktok_url}
+                                href={application.tiktok_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center space-x-2 text-black hover:text-gray-700"
@@ -386,27 +369,15 @@ const CompanyReportNew = () => {
                                 <ExternalLink className="h-3 w-3" />
                               </a>
                             )}
-                            {application.user_profiles?.youtube_url && (
+                            {application.youtube_url && (
                               <a 
-                                href={application.user_profiles.youtube_url}
+                                href={application.youtube_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center space-x-2 text-red-600 hover:text-red-800"
                               >
                                 <Youtube className="h-4 w-4" />
                                 <span className="text-sm">YouTube</span>
-                                <ExternalLink className="h-3 w-3" />
-                              </a>
-                            )}
-                            {application.user_profiles?.twitter_url && (
-                              <a 
-                                href={application.user_profiles.twitter_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center space-x-2 text-blue-600 hover:text-blue-800"
-                              >
-                                <Share2 className="h-4 w-4" />
-                                <span className="text-sm">Twitter</span>
                                 <ExternalLink className="h-3 w-3" />
                               </a>
                             )}
@@ -417,7 +388,7 @@ const CompanyReportNew = () => {
                         <div className="mb-4">
                           <h4 className="font-medium text-gray-700 mb-2">{t.skinType}</h4>
                           <Badge variant="outline">
-                            {getSkinTypeLabel(application.user_profiles?.skin_type)}
+                            {application.skin_type || '정보 없음'}
                           </Badge>
                         </div>
 

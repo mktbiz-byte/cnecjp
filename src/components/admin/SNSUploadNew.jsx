@@ -168,7 +168,7 @@ const SNSUploadNew = () => {
         console.log('캠페인 데이터:', campaignData)
       }
       
-      // 완료된 크리에이터의 SNS 업로드 데이터 로드
+      // 완료된 크리에이터의 SNS 업로드 데이터 로드 (실제 데이터베이스 구조에 맞게)
       let query = supabase
         .from('applications')
         .select(`
@@ -178,15 +178,6 @@ const SNSUploadNew = () => {
             title,
             brand,
             reward_amount
-          ),
-          user_profiles (
-            id,
-            name,
-            email,
-            instagram_url,
-            tiktok_url,
-            youtube_url,
-            twitter_url
           )
         `)
         .eq('status', 'completed')
@@ -417,7 +408,7 @@ const SNSUploadNew = () => {
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-3">
                           <h3 className="text-lg font-semibold text-gray-800">
-                            {application.user_profiles?.name || '이름 없음'}
+                            {application.applicant_name || '이름 없음'}
                           </h3>
                           {getStatusBadge(application)}
                         </div>
@@ -436,9 +427,9 @@ const SNSUploadNew = () => {
                         <div className="mb-4">
                           <h4 className="font-medium text-gray-700 mb-2">{t.snsLinks}</h4>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                            {application.user_profiles?.instagram_url && (
+                            {application.instagram_url && (
                               <a 
-                                href={application.user_profiles.instagram_url}
+                                href={application.instagram_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center space-x-2 text-pink-600 hover:text-pink-800 p-2 border rounded"
@@ -448,9 +439,9 @@ const SNSUploadNew = () => {
                                 <ExternalLink className="h-3 w-3" />
                               </a>
                             )}
-                            {application.user_profiles?.tiktok_url && (
+                            {application.tiktok_url && (
                               <a 
-                                href={application.user_profiles.tiktok_url}
+                                href={application.tiktok_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center space-x-2 text-black hover:text-gray-700 p-2 border rounded"
@@ -460,27 +451,15 @@ const SNSUploadNew = () => {
                                 <ExternalLink className="h-3 w-3" />
                               </a>
                             )}
-                            {application.user_profiles?.youtube_url && (
+                            {application.youtube_url && (
                               <a 
-                                href={application.user_profiles.youtube_url}
+                                href={application.youtube_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center space-x-2 text-red-600 hover:text-red-800 p-2 border rounded"
                               >
                                 <Youtube className="h-4 w-4" />
                                 <span className="text-sm">YouTube</span>
-                                <ExternalLink className="h-3 w-3" />
-                              </a>
-                            )}
-                            {application.user_profiles?.twitter_url && (
-                              <a 
-                                href={application.user_profiles.twitter_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 p-2 border rounded"
-                              >
-                                <Hash className="h-4 w-4" />
-                                <span className="text-sm">Twitter</span>
                                 <ExternalLink className="h-3 w-3" />
                               </a>
                             )}

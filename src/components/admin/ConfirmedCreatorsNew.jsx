@@ -163,7 +163,7 @@ const ConfirmedCreatorsNew = () => {
         console.log('캠페인 데이터:', campaignData)
       }
       
-      // 확정된 크리에이터 신청서 로드 (사용자 프로필 포함)
+      // 확정된 크리에이터 데이터 로드 (실제 데이터베이스 구조에 맞게)
       let query = supabase
         .from('applications')
         .select(`
@@ -173,22 +173,9 @@ const ConfirmedCreatorsNew = () => {
             title,
             brand,
             reward_amount
-          ),
-          user_profiles (
-            id,
-            name,
-            email,
-            phone,
-            postal_code,
-            address,
-            skin_type,
-            instagram_url,
-            tiktok_url,
-            youtube_url,
-            twitter_url
           )
         `)
-        .in('status', ['approved', 'completed'])
+        .eq('status', 'approved')
         .order('updated_at', { ascending: false })
       
       if (campaignId && campaignId !== 'undefined') {
@@ -471,31 +458,25 @@ const ConfirmedCreatorsNew = () => {
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-3">
                           <h3 className="text-lg font-semibold text-gray-800">
-                            {application.user_profiles?.name || '이름 없음'}
+                            {application.applicant_name || '이름 없음'}
                           </h3>
                           {getStatusBadge(application)}
-                        </div>
-                        
-                        <div className="grid md:grid-cols-2 gap-4 mb-4">
-                          <div className="space-y-2">
-                            <div className="flex items-center space-x-2 text-sm text-gray-600">
-                              <Mail className="h-4 w-4" />
-                              <span>{application.user_profiles?.email || '이메일 없음'}</span>
-                            </div>
-                            <div className="flex items-center space-x-2 text-sm text-gray-600">
-                              <Phone className="h-4 w-4" />
-                              <span>{application.user_profiles?.phone || '전화번호 없음'}</span>
-                            </div>
-                            <div className="flex items-center space-x-2 text-sm text-gray-600">
-                              <MapPin className="h-4 w-4" />
-                              <span>
-                                {application.user_profiles?.postal_code && application.user_profiles?.address
-                                  ? `(${application.user_profiles.postal_code}) ${application.user_profiles.address}`
-                                  : '주소 없음'
-                                }
-                              </span>
-                            </div>
+                         {/* 연락처 정보 */}
+                        <div className="mb-4">
+                          <h4 className="font-medium text-gray-700 mb-2">{t.contactInfo}</h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex items-center space                        {/* 배송 주소 */}
+                        <div className="mb-4">
+                          <h4 className="font-medium text-gray-700 mb-2">{t.shippingAddress}</h4>
+                          <div className="flex items-start space-x-2 text-sm">
+                            <MapPin className="h-4 w-4" />
+                            <span>
+                              {application.postal_code && application.address
+                                ? `(${application.postal_code}) ${application.address}`
+                                : '주소 정보 없음'}
+                            </span>
                           </div>
+                        </div>                          </div>
                           
                           <div className="space-y-2">
                             {!campaignId && (
