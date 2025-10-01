@@ -61,6 +61,6 @@
   NODE_ENV = "development"
 
 
-[functions]
-  directory = "netlify/functions/"
+# [functions]
+#   directory = "netlify/functions/"
 
