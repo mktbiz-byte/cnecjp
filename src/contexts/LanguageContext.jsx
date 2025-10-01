@@ -132,19 +132,9 @@ export const LanguageProvider = ({ children }) => {
   const [language, setLanguage] = useState('ja') // 기본값을 일본어로 설정
 
   useEffect(() => {
-    // 강제로 일본어 설정
-    localStorage.setItem('cnec-language', 'ja')
+    // 홈페이지와 마이페이지는 항상 일본어로 설정
     setLanguage('ja')
-    
-    // 로컬 스토리지에서 언어 설정 불러오기 (일본어 우선)
-    const savedLanguage = localStorage.getItem('cnec-language')
-    if (savedLanguage && ['ko', 'ja'].includes(savedLanguage)) {
-      setLanguage(savedLanguage)
-    } else {
-      // 저장된 언어가 없으면 일본어로 설정
-      setLanguage('ja')
-      localStorage.setItem('cnec-language', 'ja')
-    }
+    localStorage.setItem('cnec-language', 'ja')
   }, [])
 
   const changeLanguage = (newLanguage) => {

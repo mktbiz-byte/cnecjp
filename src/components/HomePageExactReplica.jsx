@@ -10,7 +10,8 @@ import {
   Loader2, Play, Users, Target, Shield,
   Instagram, Youtube, Hash, Twitter, ExternalLink,
   Star, Award, Calendar, DollarSign, Eye, ArrowRight,
-  CheckCircle, Clock, MapPin, Phone, Mail, User, Zap
+  CheckCircle, Clock, MapPin, Phone, Mail, User, Zap,
+  Menu, X
 } from 'lucide-react'
 
 const HomePageExactReplica = () => {
@@ -27,6 +28,7 @@ const HomePageExactReplica = () => {
   const [loading, setLoading] = useState(true)
   const [selectedCampaign, setSelectedCampaign] = useState(null)
   const [detailModal, setDetailModal] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     loadPageData()
@@ -162,7 +164,7 @@ const HomePageExactReplica = () => {
               </div>
             </div>
             
-            {/* 네비게이션 메뉴 - 참조 사이트와 동일한 배지 색상 */}
+            {/* 데스크톱 네비게이션 메뉴 */}
             <nav className="hidden md:flex items-center space-x-4">
               <Badge className="bg-green-500 text-white hover:bg-green-600 cursor-pointer">
                 <a href="#campaigns">キャンペーン</a>
@@ -196,7 +198,54 @@ const HomePageExactReplica = () => {
                 </>
               )}
             </nav>
+
+            {/* 모바일 메뉴 버튼 */}
+            <button
+              className="md:hidden p-2 text-gray-600 hover:text-gray-800"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
           </div>
+
+          {/* 모바일 메뉴 */}
+          {mobileMenuOpen && (
+            <div className="md:hidden mt-4 pb-4 border-t border-gray-200">
+              <div className="flex flex-col space-y-2 pt-4">
+                <Badge className="bg-green-500 text-white hover:bg-green-600 cursor-pointer w-fit">
+                  <a href="#campaigns">キャンペーン</a>
+                </Badge>
+                <Badge className="bg-blue-500 text-white hover:bg-blue-600 cursor-pointer w-fit">
+                  <a href="#about">サービス紹介</a>
+                </Badge>
+                <Badge className="bg-orange-500 text-white hover:bg-orange-600 cursor-pointer w-fit">
+                  <a href="https://www.youtube.com/@CNEC_JP" target="_blank" rel="noopener noreferrer">ポートフォリオ</a>
+                </Badge>
+                <Badge className="bg-purple-500 text-white hover:bg-purple-600 cursor-pointer w-fit">
+                  <a href="#guide">参加方法</a>
+                </Badge>
+                {user ? (
+                  <>
+                    <Badge className="bg-indigo-500 text-white hover:bg-indigo-600 cursor-pointer w-fit">
+                      <Link to="/mypage">マイページ</Link>
+                    </Badge>
+                    <Badge className="bg-gray-500 text-white hover:bg-gray-600 cursor-pointer w-fit">
+                      <button onClick={signOut}>ログアウト</button>
+                    </Badge>
+                  </>
+                ) : (
+                  <>
+                    <Badge className="bg-teal-500 text-white hover:bg-teal-600 cursor-pointer w-fit">
+                      <Link to="/login">ログイン</Link>
+                    </Badge>
+                    <Badge className="bg-purple-600 text-white hover:bg-purple-700 cursor-pointer w-fit">
+                      <Link to="/signup">新規登録</Link>
+                    </Badge>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </header>
 

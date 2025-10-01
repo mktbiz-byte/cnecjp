@@ -28,6 +28,15 @@ const MyPageWithWithdrawal = () => {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
+  // 출금 신청 관련 상태
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false)
+  const [withdrawForm, setWithdrawForm] = useState({
+    amount: '',
+    paypalEmail: '',
+    paypalName: '',
+    reason: ''
+  })
+
   // 프로필 편집 관련 상태
   const [isEditing, setIsEditing] = useState(false)
   const [editForm, setEditForm] = useState({
@@ -72,6 +81,13 @@ const MyPageWithWithdrawal = () => {
       spent: '사용',
       bonus: '보너스',
       withdrawal: '출금',
+      withdrawRequest: '출금 신청',
+      withdrawRequestTitle: '포인트 출금 신청',
+      withdrawAmount: '출금 금액',
+      paypalEmail: 'PayPal 이메일',
+      paypalName: 'PayPal 계정명',
+      withdrawReason: '출금 사유',
+      submitWithdrawRequest: '출금 신청하기',
       accountDeletion: '회원 탈퇴',
       deleteAccount: '계정 삭제',
       deleteAccountWarning: '계정을 삭제하면 모든 데이터가 영구적으로 삭제됩니다.',
@@ -142,6 +158,13 @@ const MyPageWithWithdrawal = () => {
       spent: '使用',
       bonus: 'ボーナス',
       withdrawal: '出金',
+      withdrawRequest: '出金申請',
+      withdrawRequestTitle: 'ポイント出金申請',
+      withdrawAmount: '出金金額',
+      paypalEmail: 'PayPal メール',
+      paypalName: 'PayPal アカウント名',
+      withdrawReason: '出金理由',
+      submitWithdrawRequest: '出金申請する',
       accountDeletion: '退会',
       deleteAccount: 'アカウント削除',
       deleteAccountWarning: 'アカウントを削除すると、すべてのデータが永久に削除されます。',
@@ -280,6 +303,55 @@ const MyPageWithWithdrawal = () => {
     } catch (error) {
       console.error('프로필 업데이트 오류:', error)
       setError(language === 'ko' ? '프로필 업데이트에 실패했습니다.' : 'プロフィールの更新に失敗しました。')
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  // 출금 신청 처리 함수
+  const handleWithdrawSubmit = async () => {
+    if (!withdrawForm.amount || !withdrawForm.paypalEmail || !withdrawForm.paypalName) {
+      setError('모든 필수 항목을 입력해주세요.')
+      return
+    }
+
+    if (parseInt(withdrawForm.amount) > (profile?.points || 0)) {
+      setError('보유 포인트보다 많은 금액을 출금할 수 없습니다.')
+      return
+    }
+
+    try {
+      setProcessing(true)
+      setError('')
+
+      // 출금 신청 데이터를 Supabase에 저장
+      const { error: withdrawError } = await database.supabase
+        .from('withdrawal_requests')
+        .insert([{
+          user_id: user.id,
+          amount: parseInt(withdrawForm.amount),
+          paypal_email: withdrawForm.paypalEmail,
+          paypal_name: withdrawForm.paypalName,
+          reason: withdrawForm.reason,
+          status: 'pending',
+          created_at: new Date().toISOString()
+        }])
+
+      if (withdrawError) {
+        throw withdrawError
+      }
+
+      setSuccess('출금 신청이 완료되었습니다. 관리자 검토 후 처리됩니다.')
+      setShowWithdrawModal(false)
+      setWithdrawForm({
+        amount: '',
+        paypalEmail: '',
+        paypalName: '',
+        reason: ''
+      })
+    } catch (error) {
+      console.error('출금 신청 오류:', error)
+      setError('출금 신청 중 오류가 발생했습니다. 다시 시도해주세요.')
     } finally {
       setProcessing(false)
     }
@@ -594,9 +666,17 @@ const MyPageWithWithdrawal = () => {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700">{t.currentPoints}</label>
-                    <p className="mt-1 text-lg font-semibold text-purple-600">
-                      {profile?.points?.toLocaleString() || 0}P
-                    </p>
+                    <div className="flex items-center justify-between mt-1">
+                      <p className="text-lg font-semibold text-purple-600">
+                        {profile?.points?.toLocaleString() || 0}P
+                      </p>
+                      <button
+                        onClick={() => setShowWithdrawModal(true)}
+                        className="ml-4 px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors"
+                      >
+                        {t.withdrawRequest}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -879,6 +959,111 @@ const MyPageWithWithdrawal = () => {
             </div>
           )}
         </div>
+
+        {/* 출금 신청 모달 */}
+        {showWithdrawModal && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-[9999]">
+            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+              <div className="mt-3">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-gray-900">{t.withdrawRequestTitle}</h3>
+                  <button
+                    onClick={() => setShowWithdrawModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                
+                {error && (
+                  <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                    {error}
+                  </div>
+                )}
+                
+                {success && (
+                  <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+                    {success}
+                  </div>
+                )}
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t.withdrawAmount} *
+                    </label>
+                    <input
+                      type="number"
+                      value={withdrawForm.amount}
+                      onChange={(e) => setWithdrawForm({...withdrawForm, amount: e.target.value})}
+                      placeholder="출금할 포인트 수"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      max={profile?.points || 0}
+                    />
+                    <p className="text-sm text-gray-500 mt-1">
+                      보유 포인트: {profile?.points?.toLocaleString() || 0}P
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t.paypalEmail} *
+                    </label>
+                    <input
+                      type="email"
+                      value={withdrawForm.paypalEmail}
+                      onChange={(e) => setWithdrawForm({...withdrawForm, paypalEmail: e.target.value})}
+                      placeholder="PayPal 계정 이메일"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t.paypalName} *
+                    </label>
+                    <input
+                      type="text"
+                      value={withdrawForm.paypalName}
+                      onChange={(e) => setWithdrawForm({...withdrawForm, paypalName: e.target.value})}
+                      placeholder="PayPal 계정명 (실명)"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t.withdrawReason}
+                    </label>
+                    <textarea
+                      value={withdrawForm.reason}
+                      onChange={(e) => setWithdrawForm({...withdrawForm, reason: e.target.value})}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="출금 사유 (선택사항)"
+                    />
+                  </div>
+                </div>
+                
+                <div className="mt-6 flex justify-end space-x-3">
+                  <button
+                    onClick={() => setShowWithdrawModal(false)}
+                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                  >
+                    {t.cancel}
+                  </button>
+                  <button
+                    onClick={handleWithdrawSubmit}
+                    disabled={processing}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+                  >
+                    {processing ? t.processing : t.submitWithdrawRequest}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 회원 탈퇴 모달 */}
         {showWithdrawalModal && (
