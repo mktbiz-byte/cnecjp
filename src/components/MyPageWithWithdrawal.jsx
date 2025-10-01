@@ -299,7 +299,7 @@ const MyPageWithWithdrawal = () => {
           .from('point_transactions')
           .select('*')
           .eq('user_id', user.id)
-          .eq('transaction_type', 'withdrawal_request')
+          .lt('amount', 0) // 음수 금액 (출금/차감)
           .order('created_at', { ascending: false })
         
         if (withdrawalError) {
@@ -312,7 +312,7 @@ const MyPageWithWithdrawal = () => {
           const formattedWithdrawals = withdrawalData?.map(item => ({
             id: item.id,
             amount: Math.abs(item.amount), // 음수를 양수로 변환
-            status: item.status,
+            status: 'pending', // 기본값으로 pending 설정
             created_at: item.created_at,
             description: item.description
           })) || []
@@ -516,7 +516,6 @@ const MyPageWithWithdrawal = () => {
           amount: -requestAmount, // 음수로 출금 표시
           transaction_type: 'withdrawal_request',
           description: `출금 신청: ${requestAmount}P (PayPal: ${withdrawForm.paypalEmail || withdrawForm.paypalName || user.email})`,
-          status: 'pending',
           created_at: new Date().toISOString()
         }])
         .select()
@@ -529,16 +528,15 @@ const MyPageWithWithdrawal = () => {
       console.log('출금 신청 성공:', withdrawalData)
 
       // 포인트 차감 기록을 point_transactions에 추가
-      const { error: pointError } = await supabase
-        .from('point_transactions')
-        .insert([{
-          user_id: user.id,
-          amount: -requestAmount, // 음수로 차감 표시
-          transaction_type: 'spend',
-          description: language === 'ja' ? `出金申請: ${requestAmount}ポイント` : `출금 신청: ${requestAmount}포인트`,
-          status: 'completed',
-          created_at: new Date().toISOString()
-        }])
+        const { error: pointError } = await supabase
+          .from('point_transactions')
+          .insert([{
+            user_id: user.id,
+            amount: -requestAmount,
+            transaction_type: 'spend',
+            description: language === 'ja' ? `出金申請: ${requestAmount}ポイント` : `출금 신청: ${requestAmount}포인트`,
+            created_at: new Date().toISOString()
+          }])
 
       if (pointError) {
         console.warn('포인트 차감 기록 실패:', pointError)
@@ -571,7 +569,7 @@ const MyPageWithWithdrawal = () => {
   // SNS 업로드 모달에서 제출 처리
   const handleSnsUploadSubmit = async () => {
     try {
-      if (!snsUploadForm.sns_upload_url || !snsUploadForm.sns_upload_url.trim()) {
+      if (!snsUploadForm.sns_upload_url || typeof snsUploadForm.sns_upload_url !== 'string' || !snsUploadForm.sns_upload_url.trim()) {
         setError(t.messages?.snsUrlRequired || (language === 'ja' ? 'SNS投稿URLを入力してください。' : 'SNS 업로드 URL을 입력해주세요.'))
         return
       }
@@ -622,7 +620,6 @@ const MyPageWithWithdrawal = () => {
             transaction_type: 'pending_reward',
             amount: 0, // 승인 전이므로 0
             description: `SNS 업로드 포인트 신청: ${snsUploadForm.sns_upload_url}`,
-            status: 'pending',
             created_at: new Date().toISOString()
           })
         
@@ -1328,7 +1325,7 @@ const MyPageWithWithdrawal = () => {
                                 <div className="mt-2">
                                   {/* video_links가 있고 point_transactions에 승인된 기록이 있으면 완료 상태 */}
                                   {application.video_links && pointTransactions.some(pt => 
-                                    pt.application_id === application.id && pt.transaction_type === 'campaign_reward' && pt.status === 'completed'
+                                    pt.application_id === application.id && pt.transaction_type === 'campaign_reward'
                                   ) ? (
                                     <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
                                       ✅ {t.pointRequestApproved}
@@ -1845,7 +1842,7 @@ const MyPageWithWithdrawal = () => {
                   </button>
                   <button
                     onClick={handleSnsUploadSubmit}
-                    disabled={processing || !snsUploadForm.sns_upload_url || !snsUploadForm.sns_upload_url.trim()}
+                    disabled={processing || !snsUploadForm.sns_upload_url || typeof snsUploadForm.sns_upload_url !== 'string' || !snsUploadForm.sns_upload_url.trim()}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
                   >
                     {processing ? t.processing : t.submitPointRequest}
