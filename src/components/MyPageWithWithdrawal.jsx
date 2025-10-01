@@ -502,8 +502,8 @@ const MyPageWithWithdrawal = () => {
         .insert([{
           user_id: user.id,
           amount: requestAmount,
-          paypal_email: withdrawForm.paypalEmail,
-          paypal_name: withdrawForm.paypalName,
+          withdrawal_method: 'paypal',
+          contact_info: withdrawForm.paypalEmail || withdrawForm.paypalName || user.email,
           reason: withdrawForm.reason || (language === 'ja' ? 'ポイント出金申請' : '포인트 출금 신청'),
           status: 'pending',
           created_at: new Date().toISOString()
@@ -560,7 +560,7 @@ const MyPageWithWithdrawal = () => {
   // SNS 업로드 모달에서 제출 처리
   const handleSnsUploadSubmit = async () => {
     try {
-      if (!snsUploadForm.sns_upload_url.trim()) {
+      if (!snsUploadForm.sns_upload_url || !snsUploadForm.sns_upload_url.trim()) {
         setError(t.messages?.snsUrlRequired || (language === 'ja' ? 'SNS投稿URLを入力してください。' : 'SNS 업로드 URL을 입력해주세요.'))
         return
       }
@@ -1819,7 +1819,7 @@ const MyPageWithWithdrawal = () => {
                   </button>
                   <button
                     onClick={handleSnsUploadSubmit}
-                    disabled={processing || !snsUploadForm.sns_upload_url.trim()}
+                    disabled={processing || !snsUploadForm.sns_upload_url || !snsUploadForm.sns_upload_url.trim()}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
                   >
                     {processing ? t.processing : t.submitPointRequest}
