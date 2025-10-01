@@ -272,7 +272,7 @@ const MyPageWithWithdrawal = () => {
         setEditForm({
           name: profileData.name || '',
           phone: profileData.phone || '',
-          address: profileData.address || '',
+          // address: profileData.address || '', // 데이터베이스 스키마 적용 후 활성화
           bio: profileData.bio || '',
           age: profileData.age || '',
           region: profileData.region || '',
@@ -388,7 +388,8 @@ const MyPageWithWithdrawal = () => {
       // 기본 정보 필드들 (안전하게 추가)
       if (editForm.name !== undefined) updateData.name = editForm.name?.trim() || null
       if (editForm.phone !== undefined) updateData.phone = editForm.phone?.trim() || null
-      if (editForm.address !== undefined) updateData.address = editForm.address?.trim() || null
+      // address 필드는 데이터베이스 스키마 적용 후 활성화
+      // if (editForm.address !== undefined) updateData.address = editForm.address?.trim() || null
       if (editForm.bio !== undefined) updateData.bio = editForm.bio?.trim() || null
       if (editForm.region !== undefined) updateData.region = editForm.region?.trim() || null
       if (editForm.skin_type !== undefined) updateData.skin_type = editForm.skin_type?.trim() || null
@@ -911,6 +912,8 @@ const MyPageWithWithdrawal = () => {
                     )}
                   </div>
                   
+                  {/* 주소 필드는 데이터베이스 스키마 적용 후 활성화 */}
+                  {/* 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
                       {t.address}
@@ -928,6 +931,7 @@ const MyPageWithWithdrawal = () => {
                       <p className="mt-1 text-sm text-gray-900">{profile?.address || (language === 'ja' ? '未登録' : '등록되지 않음')}</p>
                     )}
                   </div>
+                  */}
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700">{t.skinType}</label>
