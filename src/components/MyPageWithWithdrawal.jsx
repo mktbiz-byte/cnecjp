@@ -514,7 +514,7 @@ const MyPageWithWithdrawal = () => {
         .insert([{
           user_id: user.id,
           amount: -requestAmount, // 음수로 출금 표시
-          transaction_type: 'withdrawal_request',
+          transaction_type: 'pending',
           description: `출금 신청: ${requestAmount}P (PayPal: ${withdrawForm.paypalEmail || withdrawForm.paypalName || user.email})`,
           created_at: new Date().toISOString()
         }])
@@ -545,7 +545,7 @@ const MyPageWithWithdrawal = () => {
         .insert([{
           user_id: user.id,
           amount: -requestAmount,
-          transaction_type: 'withdrawal',
+          transaction_type: 'spent',
           description: language === 'ja' ? `出金申請: ${requestAmount}ポイント` : `출금 신청: ${requestAmount}포인트`,
           created_at: new Date().toISOString()
         }])
