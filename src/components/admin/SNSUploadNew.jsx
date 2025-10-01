@@ -189,13 +189,15 @@ const SNSUploadNew = () => {
             name,
             email,
             phone,
-            instagram_handle,
-            tiktok_handle,
-            youtube_handle,
-            follower_count
+            instagram_url,
+            tiktok_url,
+            youtube_url,
+            instagram_followers,
+            tiktok_followers,
+            youtube_subscribers
           )
         `)
-        .eq('status', 'completed')
+        .eq('status', 'approved')
         .order('updated_at', { ascending: false })
       
       if (campaignId && campaignId !== 'undefined') {
@@ -372,15 +374,15 @@ const SNSUploadNew = () => {
       '이름': app.user_profiles?.name || app.applicant_name || '',
       '이메일': app.user_profiles?.email || '',
       '전화번호': app.user_profiles?.phone || '',
-      '인스타그램 핸들': app.user_profiles?.instagram_handle || '',
-      '팔로워 수': app.user_profiles?.follower_count || '',
+      '인스타그램 URL': app.user_profiles?.instagram_url || '',
+      '인스타그램 팔로워': app.user_profiles?.instagram_followers || '',
       '캠페인': app.campaigns?.title || '',
       '브랜드': app.campaigns?.brand || '',
       '상태': app.status,
       'Instagram URL': app.instagram_url || '',
       'TikTok URL': app.tiktok_url || '',
       'YouTube URL': app.youtube_url || '',
-      'SNS 업로드 URL': app.sns_upload_url || '',
+      'SNS 업로드 URL': app.video_links || '',
       '관리자 피드백': app.admin_feedback || '',
       '완료일': app.completed_at ? new Date(app.completed_at).toLocaleDateString() : '',
       '피드백 업데이트일': app.feedback_updated_at ? new Date(app.feedback_updated_at).toLocaleDateString() : ''
@@ -519,16 +521,16 @@ const SNSUploadNew = () => {
                                   <span>{application.user_profiles.phone}</span>
                                 </div>
                               )}
-                              {application.user_profiles.instagram_handle && (
+                              {application.user_profiles.instagram_url && (
                                 <div className="flex items-center space-x-2">
                                   <Instagram className="h-4 w-4 text-pink-500" />
-                                  <span>@{application.user_profiles.instagram_handle}</span>
+                                  <span>Instagram</span>
                                 </div>
                               )}
-                              {application.user_profiles.follower_count && (
+                              {application.user_profiles.instagram_followers && (
                                 <div className="flex items-center space-x-2">
                                   <Users className="h-4 w-4 text-blue-500" />
-                                  <span>{application.user_profiles.follower_count.toLocaleString()} 팔로워</span>
+                                  <span>{application.user_profiles.instagram_followers.toLocaleString()} 팔로워</span>
                                 </div>
                               )}
                             </div>
@@ -589,11 +591,11 @@ const SNSUploadNew = () => {
                         </div>
 
                         {/* SNS 업로드 URL */}
-                        {application.sns_upload_url && (
+                        {application.video_links && (
                           <div className="mb-4">
                             <h4 className="font-medium text-gray-700 mb-2">업로드된 콘텐츠</h4>
                             <a 
-                              href={application.sns_upload_url}
+                              href={application.video_links}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 p-2 border rounded bg-blue-50"
