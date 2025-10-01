@@ -465,7 +465,14 @@ const ConfirmedCreatorsNew = () => {
                         <div className="mb-4">
                           <h4 className="font-medium text-gray-700 mb-2">{t.contactInfo}</h4>
                           <div className="space-y-2 text-sm">
-                            <div className="flex items-center space                        {/* 배송 주소 */}
+                            <div className="flex items-center space-x-2">
+                              <Phone className="h-4 w-4" />
+                              <span>{application.phone_number || '연락처 없음'}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 배송 주소 */}
                         <div className="mb-4">
                           <h4 className="font-medium text-gray-700 mb-2">{t.shippingAddress}</h4>
                           <div className="flex items-start space-x-2 text-sm">
@@ -476,9 +483,9 @@ const ConfirmedCreatorsNew = () => {
                                 : '주소 정보 없음'}
                             </span>
                           </div>
-                        </div>                          </div>
+                        </div>
                           
-                          <div className="space-y-2">
+                        <div className="space-y-2">
                             {!campaignId && (
                               <div className="flex items-center space-x-2 text-sm text-gray-600">
                                 <FileText className="h-4 w-4" />
