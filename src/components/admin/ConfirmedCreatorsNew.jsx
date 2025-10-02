@@ -215,7 +215,6 @@ const ConfirmedCreatorsNew = () => {
         .update({ 
           tracking_number: trackingNumber.trim(),
           shipping_status: 'shipped',
-          shipped_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .eq('id', selectedCreator.id)
@@ -230,8 +229,7 @@ const ConfirmedCreatorsNew = () => {
           ? { 
               ...app, 
               tracking_number: trackingNumber.trim(),
-              shipping_status: 'shipped',
-              shipped_at: new Date().toISOString()
+              shipping_status: 'shipped'
             }
           : app
       ))
@@ -453,48 +451,74 @@ const ConfirmedCreatorsNew = () => {
             ) : (
               <div className="space-y-4">
                 {applications.map((application) => (
-                  <div key={application.id} className="border rounded-lg p-6 bg-white">
+                  <div key={application.id} className="border rounded-lg p-6 bg-white shadow-sm">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-3">
-                          <h3 className="text-lg font-semibold text-gray-800">
+                        {/* 이름과 상태 */}
+                        <div className="flex items-center space-x-3 mb-6">
+                          <h3 className="text-xl font-bold text-gray-800">
                             {application.applicant_name || '이름 없음'}
                           </h3>
                           {getStatusBadge(application)}
-                         {/* 연락처 정보 */}
-                        <div className="mb-4">
-                          <h4 className="font-medium text-gray-700 mb-2">{t.contactInfo}</h4>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex items-center space-x-2">
-                              <Phone className="h-4 w-4" />
-                              <span>{application.phone_number || '연락처 없음'}</span>
-                            </div>
-                          </div>
                         </div>
 
-                        {/* 배송 주소 */}
-                        <div className="mb-4">
-                          <h4 className="font-medium text-gray-700 mb-2">{t.shippingAddress}</h4>
-                          <div className="flex items-start space-x-2 text-sm">
-                            <MapPin className="h-4 w-4" />
-                            <span>
-                              {application.postal_code && application.address
-                                ? `(${application.postal_code}) ${application.address}`
-                                : '주소 정보 없음'}
-                            </span>
-                          </div>
-                        </div>
-                          
-                        <div className="space-y-2">
-                            {!campaignId && (
-                              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                <FileText className="h-4 w-4" />
-                                <span>{application.campaigns?.title || '캠페인 정보 없음'}</span>
+                        {/* 정보 그리드 */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {/* 연락처 정보 카드 */}
+                          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                            <h4 className="font-semibold text-blue-800 mb-3 flex items-center">
+                              <Phone className="h-4 w-4 mr-2" />
+                              연락처 정보
+                            </h4>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex items-center justify-between">
+                                <span className="text-gray-600">전화번호:</span>
+                                <span className="font-medium">{application.phone_number || '연락처 없음'}</span>
                               </div>
-                            )}
-                            <div className="flex items-center space-x-2 text-sm text-gray-600">
-                              <Package className="h-4 w-4" />
-                              <span>
+                            </div>
+                          </div>
+
+                          {/* 배송 주소 카드 */}
+                          <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                            <h4 className="font-semibold text-green-800 mb-3 flex items-center">
+                              <MapPin className="h-4 w-4 mr-2" />
+                              배송 주소
+                            </h4>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex items-center justify-between">
+                                <span className="text-gray-600">우편번호:</span>
+                                <span className="font-medium">{application.postal_code || '없음'}</span>
+                              </div>
+                              <div className="flex items-start justify-between">
+                                <span className="text-gray-600">주소:</span>
+                                <span className="font-medium text-right max-w-48 break-words">
+                                  {application.address || '주소 정보 없음'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* 캠페인 정보 카드 */}
+                          {!campaignId && (
+                            <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                              <h4 className="font-semibold text-purple-800 mb-3 flex items-center">
+                                <FileText className="h-4 w-4 mr-2" />
+                                캠페인 정보
+                              </h4>
+                              <div className="text-sm">
+                                <span className="font-medium">{application.campaigns?.title || '캠페인 정보 없음'}</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 송장번호 카드 */}
+                          <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                            <h4 className="font-semibold text-orange-800 mb-3 flex items-center">
+                              <Package className="h-4 w-4 mr-2" />
+                              송장번호
+                            </h4>
+                            <div className="text-sm">
+                              <span className="font-medium">
                                 {application.tracking_number || '송장번호 미입력'}
                               </span>
                             </div>
