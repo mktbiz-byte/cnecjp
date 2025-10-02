@@ -32,6 +32,7 @@ import ApplicationsReportSimple from './components/admin/ApplicationsReportSimpl
 // import ConfirmedCreatorsReport from './components/admin/ConfirmedCreatorsReport';
 // import SNSUploadFinalReport from './components/admin/SNSUploadFinalReport';
 import ConfirmedCreatorsReport_multilingual from './components/admin/ConfirmedCreatorsReport_multilingual';
+import AdminConfirmedCreators from './components/admin/AdminConfirmedCreators';
 import SNSUploadFinalReport_multilingual from './components/admin/SNSUploadFinalReport_multilingual';
 import ConfirmedCreatorsNew from './components/admin/ConfirmedCreatorsNew';
 import SNSUploadNew from './components/admin/SNSUploadNew';
@@ -89,7 +90,7 @@ const AppContent = () => {
         <Route path="/campaigns-manage" element={<AdminCampaignsWithQuestions />} />
         <Route path="/campaign-create" element={<CampaignCreationWithTranslator />} />
         <Route path="/applications-manage" element={<ApplicationsReportSimple />} />
-        <Route path="/confirmed-creators" element={<ConfirmedCreatorsReport_multilingual />} />
+        <Route path="/confirmed-creators" element={<AdminConfirmedCreators />} />
         <Route path="/confirmed-creators/:campaignId" element={<ConfirmedCreatorsNew />} />
         <Route path="/sns-uploads" element={<SNSUploadNew />} />
         <Route path="/sns-uploads/:campaignId" element={<SNSUploadNew />} />
