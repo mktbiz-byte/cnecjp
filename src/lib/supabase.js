@@ -387,7 +387,55 @@ export const database = {
         console.log('getByCampaign 호출 - 캠페인 ID:', campaignId)
         
         try {
-          // 먼저 campaign_applications 테이블 확인
+          // 먼저 applications 테이블 확인 (우선순위)
+          const { data: appsData, error: appsError } = await supabase
+            .from('applications')
+            .select('*')
+            .eq('campaign_id', campaignId)
+            .order('created_at', { ascending: false })
+          
+          if (!appsError && appsData && appsData.length > 0) {
+            console.log('Applications에서 데이터 발견:', appsData.length, '개')
+            
+            // 사용자 프로필 정보 별도 조회
+            const userIds = [...new Set(appsData.map(app => app.user_id).filter(Boolean))]
+            let userProfiles = []
+            
+            if (userIds.length > 0) {
+              const { data: profiles, error: profilesError } = await supabase
+                .from('user_profiles')
+                .select('*')
+                .in('user_id', userIds)
+              
+              if (!profilesError && profiles) {
+                userProfiles = profiles
+              }
+            }
+            
+            // 데이터 병합
+            const enrichedData = appsData.map(application => {
+              const userProfile = userProfiles.find(up => up.user_id === application.user_id)
+              
+              return {
+                ...application,
+                // 사용자 프로필 정보 우선, 없으면 application 데이터 사용
+                applicant_name: userProfile?.name || application.applicant_name || '-',
+                age: userProfile?.age || application.age || '-',
+                skin_type: userProfile?.skin_type || application.skin_type || '-',
+                instagram_url: userProfile?.instagram_url || application.instagram_url || '',
+                tiktok_url: userProfile?.tiktok_url || application.tiktok_url || '',
+                youtube_url: userProfile?.youtube_url || application.youtube_url || '',
+                other_sns_url: userProfile?.other_sns_url || application.other_sns_url || '',
+                // 사용자 프로필 정보 추가
+                user_profiles: userProfile
+              }
+            })
+            
+            return enrichedData
+          }
+          
+          // applications가 비어있으면 campaign_applications 테이블 확인 (백업)
+          console.log('Applications 테이블에서 데이터 없음, Campaign Applications 테이블 확인')
           const { data: campaignAppsData, error: campaignAppsError } = await supabase
             .from('campaign_applications')
             .select('*')
@@ -399,26 +447,13 @@ export const database = {
             return campaignAppsData
           }
           
-          // campaign_applications가 비어있으면 기존 applications 테이블 확인
-          console.log('Campaign Applications 테이블에서 데이터 없음, 기존 applications 테이블 확인')
-          const { data: appsData, error: appsError } = await supabase
-            .from('applications')
-            .select('*')
-            .eq('campaign_id', campaignId)
-            .order('created_at', { ascending: false })
-          
-          if (!appsError && appsData) {
-            console.log('기존 Applications에서 데이터 발견:', appsData.length, '개')
-            return appsData
-          }
-          
           // 둘 다 실패하면 오류 처리
-          if (campaignAppsError && appsError) {
-            console.error('두 테이블 모두 접근 실패:', { campaignAppsError, appsError })
-            if (campaignAppsError.message.includes('permission denied') || appsError.message.includes('permission denied')) {
+          if (appsError && campaignAppsError) {
+            console.error('두 테이블 모두 접근 실패:', { appsError, campaignAppsError })
+            if (appsError.message.includes('permission denied') || campaignAppsError.message.includes('permission denied')) {
               return []
             }
-            throw campaignAppsError
+            throw appsError
           }
           
           console.log('두 테이블 모두에서 데이터 없음')

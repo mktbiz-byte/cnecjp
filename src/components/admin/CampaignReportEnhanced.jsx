@@ -590,6 +590,11 @@ const CampaignReportEnhanced = () => {
                               </div>
                             ) : null
                           })}
+                          {application.additional_info && (
+                            <div className="text-xs border-t pt-1 mt-1">
+                              <span className="font-medium text-blue-600">추가 메시지:</span> {application.additional_info.substring(0, 50)}{application.additional_info.length > 50 ? '...' : ''}
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
