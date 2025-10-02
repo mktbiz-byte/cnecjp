@@ -404,28 +404,62 @@ const CompanyReportNew = () => {
                         <div className="mb-4">
                           <h4 className="font-medium text-gray-700 mb-2">{t.questions}</h4>
                           <div className="space-y-3">
-                            {campaign?.question_1 && application.answer_1 && (
+                            {/* 질문 1 */}
+                            {(campaign?.question_1 || application.question1) && (application.answer_1 || application.question1_answer) && (
                               <div className="bg-gray-50 p-3 rounded">
-                                <p className="text-sm font-medium text-gray-600 mb-1">{campaign.question_1}</p>
-                                <p className="text-sm text-gray-800">{application.answer_1}</p>
+                                <p className="text-sm font-medium text-gray-600 mb-1">
+                                  {campaign?.question_1 || application.question1 || '질문 1'}
+                                </p>
+                                <p className="text-sm text-gray-800">
+                                  {application.answer_1 || application.question1_answer}
+                                </p>
                               </div>
                             )}
-                            {campaign?.question_2 && application.answer_2 && (
+                            
+                            {/* 질문 2 */}
+                            {(campaign?.question_2 || application.question2) && (application.answer_2 || application.question2_answer) && (
                               <div className="bg-gray-50 p-3 rounded">
-                                <p className="text-sm font-medium text-gray-600 mb-1">{campaign.question_2}</p>
-                                <p className="text-sm text-gray-800">{application.answer_2}</p>
+                                <p className="text-sm font-medium text-gray-600 mb-1">
+                                  {campaign?.question_2 || application.question2 || '질문 2'}
+                                </p>
+                                <p className="text-sm text-gray-800">
+                                  {application.answer_2 || application.question2_answer}
+                                </p>
                               </div>
                             )}
-                            {campaign?.question_3 && application.answer_3 && (
+                            
+                            {/* 질문 3 */}
+                            {(campaign?.question_3 || application.question3) && (application.answer_3 || application.question3_answer) && (
                               <div className="bg-gray-50 p-3 rounded">
-                                <p className="text-sm font-medium text-gray-600 mb-1">{campaign.question_3}</p>
-                                <p className="text-sm text-gray-800">{application.answer_3}</p>
+                                <p className="text-sm font-medium text-gray-600 mb-1">
+                                  {campaign?.question_3 || application.question3 || '질문 3'}
+                                </p>
+                                <p className="text-sm text-gray-800">
+                                  {application.answer_3 || application.question3_answer}
+                                </p>
                               </div>
                             )}
-                            {campaign?.question_4 && application.answer_4 && (
+                            
+                            {/* 질문 4 */}
+                            {(campaign?.question_4 || application.question4) && (application.answer_4 || application.question4_answer) && (
                               <div className="bg-gray-50 p-3 rounded">
-                                <p className="text-sm font-medium text-gray-600 mb-1">{campaign.question_4}</p>
-                                <p className="text-sm text-gray-800">{application.answer_4}</p>
+                                <p className="text-sm font-medium text-gray-600 mb-1">
+                                  {campaign?.question_4 || application.question4 || '질문 4'}
+                                </p>
+                                <p className="text-sm text-gray-800">
+                                  {application.answer_4 || application.question4_answer}
+                                </p>
+                              </div>
+                            )}
+                            
+                            {/* 디버깅용 - 실제 데이터 확인 */}
+                            {process.env.NODE_ENV === 'development' && (
+                              <div className="bg-yellow-50 p-3 rounded text-xs">
+                                <p><strong>디버깅 정보:</strong></p>
+                                <p>answer_1: {application.answer_1 || 'null'}</p>
+                                <p>question1_answer: {application.question1_answer || 'null'}</p>
+                                <p>question1: {application.question1 || 'null'}</p>
+                                <p>campaign.question_1: {campaign?.question_1 || 'null'}</p>
                               </div>
                             )}
                           </div>
