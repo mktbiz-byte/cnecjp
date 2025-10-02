@@ -143,7 +143,7 @@ const CompanyReportNew = () => {
       // 신청서 데이터 로드 (실제 데이터베이스 구조에 맞게)
       const { data: applicationsData, error: applicationsError } = await supabase
         .from('applications')
-        .select('*')
+        .select('*, user_profiles(*)')
         .eq('campaign_id', campaignId)
         .order('created_at', { ascending: false })
       
@@ -388,7 +388,15 @@ const CompanyReportNew = () => {
                         <div className="mb-4">
                           <h4 className="font-medium text-gray-700 mb-2">{t.skinType}</h4>
                           <Badge variant="outline">
-                            {application.skin_type || '정보 없음'}
+                            {application.user_profiles?.skin_type || '정보 없음'}
+                          </Badge>
+                        </div>
+
+                        {/* 나이 정보 */}
+                        <div className="mb-4">
+                          <h4 className="font-medium text-gray-700 mb-2">나이</h4>
+                          <Badge variant="outline">
+                            {application.user_profiles?.age || '정보 없음'}
                           </Badge>
                         </div>
 
@@ -396,28 +404,28 @@ const CompanyReportNew = () => {
                         <div className="mb-4">
                           <h4 className="font-medium text-gray-700 mb-2">{t.questions}</h4>
                           <div className="space-y-3">
-                            {application.question1 && (
+                            {campaign?.question_1 && application.answer_1 && (
                               <div className="bg-gray-50 p-3 rounded">
-                                <p className="text-sm font-medium text-gray-600 mb-1">질문 1:</p>
-                                <p className="text-sm text-gray-800">{application.question1}</p>
+                                <p className="text-sm font-medium text-gray-600 mb-1">{campaign.question_1}</p>
+                                <p className="text-sm text-gray-800">{application.answer_1}</p>
                               </div>
                             )}
-                            {application.question2 && (
+                            {campaign?.question_2 && application.answer_2 && (
                               <div className="bg-gray-50 p-3 rounded">
-                                <p className="text-sm font-medium text-gray-600 mb-1">질문 2:</p>
-                                <p className="text-sm text-gray-800">{application.question2}</p>
+                                <p className="text-sm font-medium text-gray-600 mb-1">{campaign.question_2}</p>
+                                <p className="text-sm text-gray-800">{application.answer_2}</p>
                               </div>
                             )}
-                            {application.question3 && (
+                            {campaign?.question_3 && application.answer_3 && (
                               <div className="bg-gray-50 p-3 rounded">
-                                <p className="text-sm font-medium text-gray-600 mb-1">질문 3:</p>
-                                <p className="text-sm text-gray-800">{application.question3}</p>
+                                <p className="text-sm font-medium text-gray-600 mb-1">{campaign.question_3}</p>
+                                <p className="text-sm text-gray-800">{application.answer_3}</p>
                               </div>
                             )}
-                            {application.question4 && (
+                            {campaign?.question_4 && application.answer_4 && (
                               <div className="bg-gray-50 p-3 rounded">
-                                <p className="text-sm font-medium text-gray-600 mb-1">질문 4:</p>
-                                <p className="text-sm text-gray-800">{application.question4}</p>
+                                <p className="text-sm font-medium text-gray-600 mb-1">{campaign.question_4}</p>
+                                <p className="text-sm text-gray-800">{application.answer_4}</p>
                               </div>
                             )}
                           </div>

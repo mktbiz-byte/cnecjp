@@ -173,6 +173,14 @@ const ConfirmedCreatorsNew = () => {
             title,
             brand,
             reward_amount
+          ),
+          user_profiles (
+            name,
+            email,
+            phone,
+            age,
+            skin_type,
+            instagram_url
           )
         `)
         .eq('status', 'approved')

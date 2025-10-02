@@ -36,7 +36,7 @@ const AdminConfirmedCreators = () => {
           campaigns!inner(id, title),
           user_profiles(name, email, phone, instagram_url, age, skin_type)
         `)
-        .eq('status', 'confirmed')
+        .eq('status', 'approved')
         .order('updated_at', { ascending: false });
 
       if (applicationsError) throw applicationsError;
