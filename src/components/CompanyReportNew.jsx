@@ -143,7 +143,10 @@ const CompanyReportNew = () => {
       // 신청서 데이터 로드 (실제 데이터베이스 구조에 맞게)
       const { data: applicationsData, error: applicationsError } = await supabase
         .from('applications')
-        .select('*, user_profiles(*)')
+        .select(`
+          *,
+          user_profiles(name, email, phone, age, skin_type, instagram_url)
+        `)
         .eq('campaign_id', campaignId)
         .order('created_at', { ascending: false })
       
