@@ -143,10 +143,7 @@ const CompanyReportNew = () => {
       // 신청서 데이터 로드 (실제 데이터베이스 구조에 맞게)
       const { data: applicationsData, error: applicationsError } = await supabase
         .from('applications')
-        .select(`
-          *,
-          user_profiles(name, email, phone, age, skin_type, instagram_url)
-        `)
+        .select('*')
         .eq('campaign_id', campaignId)
         .order('created_at', { ascending: false })
       
@@ -391,7 +388,7 @@ const CompanyReportNew = () => {
                         <div className="mb-4">
                           <h4 className="font-medium text-gray-700 mb-2">{t.skinType}</h4>
                           <Badge variant="outline">
-                            {application.user_profiles?.skin_type || '정보 없음'}
+                            {application.skin_type || '정보 없음'}
                           </Badge>
                         </div>
 
@@ -399,7 +396,7 @@ const CompanyReportNew = () => {
                         <div className="mb-4">
                           <h4 className="font-medium text-gray-700 mb-2">나이</h4>
                           <Badge variant="outline">
-                            {application.user_profiles?.age || '정보 없음'}
+                            {application.age || '정보 없음'}
                           </Badge>
                         </div>
 
