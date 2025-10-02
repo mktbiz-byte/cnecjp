@@ -198,6 +198,8 @@ const SNSUploadNew = () => {
           )
         `)
         .eq('status', 'approved')
+        .not('video_links', 'is', null)
+        .neq('video_links', '')
         .order('updated_at', { ascending: false })
       
       if (campaignId && campaignId !== 'undefined') {
