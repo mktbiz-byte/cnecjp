@@ -90,6 +90,7 @@ const AppContent = () => {
         <Route path="/campaigns-manage" element={<AdminCampaignsWithQuestions />} />
         <Route path="/campaign-create" element={<CampaignCreationWithTranslator />} />
         <Route path="/applications-manage" element={<ApplicationsReportSimple />} />
+        <Route path="/applications-report" element={<ApplicationsReportSimple />} />
         <Route path="/confirmed-creators" element={<AdminConfirmedCreators />} />
         <Route path="/confirmed-creators/:campaignId" element={<ConfirmedCreatorsNew />} />
         <Route path="/sns-uploads" element={<SNSUploadNew />} />

@@ -457,20 +457,22 @@ const CompanyReportNew = () => {
                               return questionsAndAnswers
                             })()}
                             
-                            {/* 디버깅용 - 실제 데이터 확인 */}
-                            <div className="bg-yellow-50 p-3 rounded text-xs">
-                              <p><strong>디버깅 정보:</strong></p>
-                              <p><strong>캠페인 질문:</strong></p>
-                              {[1,2,3,4,5].map(i => (
-                                <p key={`q${i}`}>question_{i}: {campaign?.[`question_${i}`] || 'null'}</p>
-                              ))}
-                              <p><strong>신청서 답변:</strong></p>
-                              {[1,2,3,4,5].map(i => (
-                                <p key={`a${i}`}>answer_{i}: {application[`answer_${i}`] || 'null'}</p>
-                              ))}
-                              <p><strong>모든 application 키:</strong></p>
-                              <p className="text-xs break-all">{Object.keys(application).join(', ')}</p>
-                            </div>
+                            {/* 디버깅용 - 개발 환경에서만 표시 */}
+                            {process.env.NODE_ENV === 'development' && (
+                              <div className="bg-yellow-50 p-3 rounded text-xs">
+                                <p><strong>디버깅 정보:</strong></p>
+                                <p><strong>캠페인 질문:</strong></p>
+                                {[1,2,3,4,5].map(i => (
+                                  <p key={`q${i}`}>question_{i}: {campaign?.[`question_${i}`] || 'null'}</p>
+                                ))}
+                                <p><strong>신청서 답변:</strong></p>
+                                {[1,2,3,4,5].map(i => (
+                                  <p key={`a${i}`}>answer_{i}: {application[`answer_${i}`] || 'null'}</p>
+                                ))}
+                                <p><strong>모든 application 키:</strong></p>
+                                <p className="text-xs break-all">{Object.keys(application).join(', ')}</p>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
