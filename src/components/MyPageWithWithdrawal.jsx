@@ -12,10 +12,22 @@ import {
 const extractPayPalFromDescription = (description) => {
   if (!description) return ''
   
+  // "출금 신청: 50000포인트 (PayPal: MKT@HOWLAB.CO.KR)" 형식에서 이메일 추출
+  const paypalMatch1 = description.match(/\(PayPal:\s*([^)]+)\)/)
+  if (paypalMatch1) {
+    return paypalMatch1[1].trim()
+  }
+  
   // "PayPal: email@example.com" 형식에서 이메일 추출
-  const paypalMatch = description.match(/PayPal:\s*([^)]+)/)
-  if (paypalMatch) {
-    return paypalMatch[1].trim()
+  const paypalMatch2 = description.match(/PayPal:\s*([^)]+)/)
+  if (paypalMatch2) {
+    return paypalMatch2[1].trim()
+  }
+  
+  // "출금 신청: 20000 (PayPal: 123)" 형식에서 정보 추출
+  const paypalMatch3 = description.match(/\(PayPal:\s*([^)]+)\)/)
+  if (paypalMatch3) {
+    return paypalMatch3[1].trim()
   }
   
   // 이메일 패턴 직접 추출
@@ -327,18 +339,30 @@ const MyPageWithWithdrawal = () => {
           setWithdrawals([])
         } else {
           // point_transactions 데이터를 withdrawal_requests 형식으로 변환
-          const formattedWithdrawals = (pointWithdrawals || []).map(item => ({
-            id: item.id,
-            user_id: item.user_id,
-            amount: Math.abs(item.amount),
-            status: 'pending', // 모든 출금 신청을 pending으로 설정
-            withdrawal_method: 'paypal',
-            paypal_email: extractPayPalFromDescription(item.description),
-            paypal_name: extractPayPalFromDescription(item.description),
-            reason: item.description,
-            created_at: item.created_at,
-            updated_at: item.updated_at
-          }))
+          const formattedWithdrawals = (pointWithdrawals || []).map(item => {
+            // description에서 상태 추출
+            let status = 'pending'
+            if (item.description?.includes('[상태:승인됨]') || item.description?.includes('[状態:承認済み]')) {
+              status = 'approved'
+            } else if (item.description?.includes('[상태:완료됨]') || item.description?.includes('[状態:完了]')) {
+              status = 'completed'
+            } else if (item.description?.includes('[상태:거부됨]') || item.description?.includes('[状態:拒否済み]')) {
+              status = 'rejected'
+            }
+            
+            return {
+              id: item.id,
+              user_id: item.user_id,
+              amount: Math.abs(item.amount),
+              status: status,
+              withdrawal_method: 'paypal',
+              paypal_email: extractPayPalFromDescription(item.description),
+              paypal_name: extractPayPalFromDescription(item.description),
+              reason: item.description,
+              created_at: item.created_at,
+              updated_at: item.updated_at
+            }
+          })
           
           // 중복 제거: 같은 사용자, 같은 금액, 같은 날짜의 출금 신청을 하나로 합침
           const uniqueWithdrawals = []
@@ -810,10 +834,17 @@ const MyPageWithWithdrawal = () => {
   const getTransactionTypeText = (type) => {
     const types = {
       earn: t.earned,
+      earned: t.earned,
       bonus: t.bonus,
       admin_add: t.bonus,
       spend: t.spent,
-      admin_subtract: t.spent
+      spent: t.spent,
+      admin_subtract: t.spent,
+      pending: language === 'ja' ? '申請中' : '신청중',
+      approved: language === 'ja' ? '承認済み' : '승인됨',
+      rejected: language === 'ja' ? '拒否済み' : '거부됨',
+      completed: language === 'ja' ? '完了' : '완료',
+      reward: language === 'ja' ? '報酬' : '보상'
     }
     return types[type] || type
   }
