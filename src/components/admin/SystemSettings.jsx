@@ -266,7 +266,7 @@ const SystemSettings = () => {
       `
       
       // Gmail SMTP 직접 발송 서비스 사용
-      const gmailEmailService = await import('../../../lib/gmailEmailService.js')
+      const gmailEmailService = await import('../../lib/gmailEmailService.js')
       const emailService = gmailEmailService.default
       
       console.log('📧 Gmail SMTP 실제 발송 시작:', {
