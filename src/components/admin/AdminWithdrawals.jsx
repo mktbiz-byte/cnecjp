@@ -168,50 +168,45 @@ const AdminWithdrawals = () => {
         let withdrawalsData = null
         let error = null
         
-        // 마이페이지와 동일한 방식으로 point_transactions에서 출금 데이터 가져오기
-        console.log('point_transactions 테이블에서 출금 데이터 로드 시작...')
+        // withdrawal_requests 테이블에서 출금 데이터 가져오기
+        console.log('withdrawal_requests 테이블에서 출금 데이터 로드 시작...')
         const result = await supabase
-          .from('point_transactions')
+          .from('withdrawal_requests')
           .select(`
             *,
-            user_profiles(name, email, phone)
+            user_profiles!withdrawal_requests_user_id_fkey(name, email, phone)
           `)
-          .lt('amount', 0) // 음수 금액 (출금/차감)
           .order('created_at', { ascending: false })
         
         withdrawalsData = result.data
         error = result.error
-        console.log('point_transactions 테이블에서 출금 데이터 로드:', withdrawalsData?.length || 0, '건')
+        console.log('withdrawal_requests 테이블에서 출금 데이터 로드:', withdrawalsData?.length || 0, '건')
         
         if (error) {
           console.error('출금 요청 데이터 로드 오류:', error)
           throw error
         }
         
-        // 마이페이지와 동일한 방식으로 point_transactions 데이터 변환
+        // withdrawal_requests 테이블 데이터 변환
         const processedData = (withdrawalsData || []).map(item => {
-          // description에서 PayPal 정보 추출
-          const paypalMatch = item.description?.match(/PayPal:\s*([^)]+)/)
-          const paypalInfo = paypalMatch ? paypalMatch[1] : (item.user_profiles?.email || '')
-          
           return {
             id: item.id,
             user_id: item.user_id,
-            amount: Math.abs(item.amount), // 음수를 양수로 변환
-            points_amount: Math.abs(item.amount),
-            status: item.transaction_type || 'pending', // transaction_type을 status로 사용
+            amount: item.amount,
+            points_amount: item.amount,
+            status: item.status || 'pending',
             created_at: item.created_at,
             updated_at: item.updated_at,
-            reason: item.description,
-            paypal_email: paypalInfo,
-            paypal_name: item.user_profiles?.name || paypalInfo,
+            reason: item.reason,
+            paypal_email: item.paypal_email,
+            paypal_name: item.paypal_name,
             user_name: item.user_profiles?.name || '-',
             user_email: item.user_profiles?.email || '-',
             user_phone: item.user_profiles?.phone || '-',
-            bank_name: 'PayPal',
-            account_number: paypalInfo,
-            account_holder: item.user_profiles?.name || '-',
-            transaction_type: item.transaction_type
+            bank_name: item.withdrawal_method === 'paypal' ? 'PayPal' : item.bank_name || '-',
+            account_number: item.paypal_email || item.account_number || '-',
+            account_holder: item.paypal_name || item.account_holder || '-',
+            withdrawal_method: item.withdrawal_method
           }
         })
         
@@ -251,40 +246,33 @@ const AdminWithdrawals = () => {
       
       console.log('출금 상태 업데이트:', withdrawalId, newStatus)
 
-      // point_transactions 테이블에서 transaction_type 업데이트
-      let newTransactionType = 'pending'
-      if (newStatus === 'approved') {
-        newTransactionType = 'approved'
-      } else if (newStatus === 'rejected') {
-        newTransactionType = 'rejected'
-      } else if (newStatus === 'completed') {
-        newTransactionType = 'spent'
-      }
-
+      // withdrawal_requests 테이블에서 상태 업데이트
       const updateData = {
-        transaction_type: newTransactionType,
+        status: newStatus,
         updated_at: new Date().toISOString()
       }
 
-      // description에 관리자 메모 추가
+      // 관리자 메모 추가
       if (adminNotes) {
-        const { data: currentData } = await supabase
-          .from('point_transactions')
-          .select('description')
-          .eq('id', withdrawalId)
-          .single()
-        
-        if (currentData) {
-          updateData.description = `${currentData.description} [관리자 메모: ${adminNotes}]`
-        }
+        updateData.admin_notes = adminNotes
+      }
+
+      // 거래 ID 추가
+      if (transactionId) {
+        updateData.transaction_id = transactionId
+      }
+
+      // 완료 시간 기록
+      if (newStatus === 'completed') {
+        updateData.completed_at = new Date().toISOString()
       }
 
       const { error } = await supabase
-        .from('point_transactions')
+        .from('withdrawal_requests')
         .update(updateData)
         .eq('id', withdrawalId)
       
-      console.log('point_transactions 테이블 업데이트 완료')
+      console.log('withdrawal_requests 테이블 업데이트 완료')
       
       if (error) {
         throw error
