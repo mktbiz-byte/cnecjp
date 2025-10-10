@@ -229,7 +229,9 @@ const AdminWithdrawals = () => {
             user_id: item.user_id,
             amount: Math.abs(item.amount),
             points_amount: Math.abs(item.amount),
-            status: 'pending', // 모든 출금 신청을 pending으로 설정 (관리자가 직접 승인해야 함)
+            status: item.transaction_type === 'approved' ? 'approved' : 
+                    item.transaction_type === 'rejected' ? 'rejected' :
+                    item.transaction_type === 'completed' ? 'completed' : 'pending',
             created_at: item.created_at,
             updated_at: item.updated_at,
             reason: item.description,
@@ -293,40 +295,59 @@ const AdminWithdrawals = () => {
       
       console.log('출금 상태 업데이트:', withdrawalId, newStatus)
 
-      // withdrawal_requests 테이블에서 상태 업데이트
-      const updateData = {
-        status: newStatus,
-        updated_at: new Date().toISOString()
+      // point_transactions 테이블에서 상태 업데이트
+      // 실제로는 상태를 변경하는 대신 새로운 레코드를 생성하거나 기존 레코드를 업데이트
+      if (newStatus === 'approved') {
+        // 승인 시: transaction_type을 'approved'로 업데이트
+        const { error } = await supabase
+          .from('point_transactions')
+          .update({ 
+            transaction_type: 'approved',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', withdrawalId)
+        
+        if (error) {
+          throw error
+        }
+        
+        console.log('출금 승인 완료')
+        setSuccess('출금이 승인되었습니다.')
+        
+      } else if (newStatus === 'rejected') {
+        // 거부 시: transaction_type을 'rejected'로 업데이트
+        const { error } = await supabase
+          .from('point_transactions')
+          .update({ 
+            transaction_type: 'rejected',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', withdrawalId)
+        
+        if (error) {
+          throw error
+        }
+        
+        console.log('출금 거부 완료')
+        setSuccess('출금이 거부되었습니다.')
+        
+      } else if (newStatus === 'completed') {
+        // 완료 시: transaction_type을 'completed'로 업데이트
+        const { error } = await supabase
+          .from('point_transactions')
+          .update({ 
+            transaction_type: 'completed',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', withdrawalId)
+        
+        if (error) {
+          throw error
+        }
+        
+        console.log('출금 완료 처리')
+        setSuccess('출금이 완료되었습니다.')
       }
-
-      // 관리자 메모 추가
-      if (adminNotes) {
-        updateData.admin_notes = adminNotes
-      }
-
-      // 거래 ID 추가
-      if (transactionId) {
-        updateData.transaction_id = transactionId
-      }
-
-      // 완료 시간 기록
-      if (newStatus === 'completed') {
-        updateData.completed_at = new Date().toISOString()
-      }
-
-      const { error } = await supabase
-        .from('withdrawal_requests')
-        .update(updateData)
-        .eq('id', withdrawalId)
-      
-      console.log('withdrawal_requests 테이블 업데이트 완료')
-      
-      if (error) {
-        throw error
-      }
-      
-      console.log('상태 업데이트 완료')
-      setSuccess(t.success)
       
       // 데이터 다시 로드
       setTimeout(() => {
@@ -342,25 +363,10 @@ const AdminWithdrawals = () => {
   }
 
   const handleStatusChange = async (withdrawal, newStatus) => {
-    let confirmMessage = ''
+    console.log('상태 변경 요청:', withdrawal.id, newStatus)
     
-    switch (newStatus) {
-      case 'approved':
-        confirmMessage = t.confirmApprove
-        break
-      case 'rejected':
-        confirmMessage = t.confirmReject
-        break
-      case 'completed':
-        confirmMessage = t.confirmComplete
-        break
-      default:
-        return
-    }
-
-    if (confirm(confirmMessage)) {
-      await updateWithdrawalStatus(withdrawal.id, newStatus)
-    }
+    // 확인 없이 바로 실행 (테스트용)
+    await updateWithdrawalStatus(withdrawal.id, newStatus)
   }
 
   const openProcessModal = (withdrawal) => {
