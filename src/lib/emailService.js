@@ -727,50 +727,51 @@ export const sendEmail = async (templateType, recipientEmail, data) => {
       console.error('Email log error:', logError)
     }
 
-    // 실제 이메일 발송 - 시스템 설정에서 SMTP 정보 가져오기
+    // Gmail SMTP 직접 발송 - 시스템 설정에서 SMTP 정보 가져오기
     const emailSettings = JSON.parse(localStorage.getItem('cnec_email_settings') || '{}')
     
     if (emailSettings.smtpHost && emailSettings.smtpUser && emailSettings.smtpPass) {
       try {
-        // Netlify Functions를 통한 실제 이메일 발송
-        const response = await fetch('/.netlify/functions/send-email', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            to: recipientEmail,
-            subject: template.subject,
-            html: template.template(data),
-            settings: emailSettings
-          })
-        })
+        // Gmail 직접 발송 서비스 사용
+        const gmailEmailService = await import('./gmailEmailService.js')
+        const emailService = gmailEmailService.default
+        
+        const result = await emailService.sendEmailDirect(
+          recipientEmail,
+          template.subject,
+          template.template(data)
+        )
 
-        if (response.ok) {
-          console.log('✅ 실제 이메일 발송 성공:', {
+        if (result.success) {
+          console.log('✅ Gmail 실제 이메일 발송 성공:', {
             type: templateType,
             to: recipientEmail,
-            subject: template.subject
+            subject: template.subject,
+            messageId: result.messageId
           })
           
           // 성공 시 로그 업데이트
           if (logData?.[0]?.id) {
             await supabase
               .from('email_logs')
-              .update({ status: 'sent', sent_at: new Date().toISOString() })
+              .update({ 
+                status: 'sent', 
+                sent_at: new Date().toISOString(),
+                message_id: result.messageId
+              })
               .eq('id', logData[0].id)
           }
         } else {
-          throw new Error(`SMTP 발송 실패: ${response.status}`)
+          throw new Error(result.error || 'Gmail 발송 실패')
         }
-      } catch (smtpError) {
-        console.error('SMTP 발송 오류:', smtpError)
-        // SMTP 실패 시에도 로그는 남기고 콘솔 출력
-        console.log('📧 이메일 발송 (SMTP 실패, 콘솔 출력):', {
+      } catch (gmailError) {
+        console.error('Gmail 발송 오류:', gmailError)
+        // Gmail 실패 시에도 로그는 남기고 콘솔 출력
+        console.log('📧 이메일 발송 (Gmail 실패, 콘솔 출력):', {
           type: templateType,
           to: recipientEmail,
           subject: template.subject,
-          error: smtpError.message
+          error: gmailError.message
         })
       }
     } else {
@@ -779,7 +780,7 @@ export const sendEmail = async (templateType, recipientEmail, data) => {
         type: templateType,
         to: recipientEmail,
         subject: template.subject,
-        note: '시스템 설정에서 SMTP 정보를 입력하면 실제 발송됩니다.'
+        note: '시스템 설정에서 Gmail SMTP 정보를 입력하면 실제 발송됩니다.'
       })
     }
 
