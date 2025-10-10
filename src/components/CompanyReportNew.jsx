@@ -404,64 +404,73 @@ const CompanyReportNew = () => {
                         <div className="mb-4">
                           <h4 className="font-medium text-gray-700 mb-2">{t.questions}</h4>
                           <div className="space-y-3">
-                            {/* 질문 1 */}
-                            {(campaign?.question_1 || application.question1) && (application.answer_1 || application.question1_answer) && (
-                              <div className="bg-gray-50 p-3 rounded">
-                                <p className="text-sm font-medium text-gray-600 mb-1">
-                                  {campaign?.question_1 || application.question1 || '질문 1'}
-                                </p>
-                                <p className="text-sm text-gray-800">
-                                  {application.answer_1 || application.question1_answer}
-                                </p>
-                              </div>
-                            )}
-                            
-                            {/* 질문 2 */}
-                            {(campaign?.question_2 || application.question2) && (application.answer_2 || application.question2_answer) && (
-                              <div className="bg-gray-50 p-3 rounded">
-                                <p className="text-sm font-medium text-gray-600 mb-1">
-                                  {campaign?.question_2 || application.question2 || '질문 2'}
-                                </p>
-                                <p className="text-sm text-gray-800">
-                                  {application.answer_2 || application.question2_answer}
-                                </p>
-                              </div>
-                            )}
-                            
-                            {/* 질문 3 */}
-                            {(campaign?.question_3 || application.question3) && (application.answer_3 || application.question3_answer) && (
-                              <div className="bg-gray-50 p-3 rounded">
-                                <p className="text-sm font-medium text-gray-600 mb-1">
-                                  {campaign?.question_3 || application.question3 || '질문 3'}
-                                </p>
-                                <p className="text-sm text-gray-800">
-                                  {application.answer_3 || application.question3_answer}
-                                </p>
-                              </div>
-                            )}
-                            
-                            {/* 질문 4 */}
-                            {(campaign?.question_4 || application.question4) && (application.answer_4 || application.question4_answer) && (
-                              <div className="bg-gray-50 p-3 rounded">
-                                <p className="text-sm font-medium text-gray-600 mb-1">
-                                  {campaign?.question_4 || application.question4 || '질문 4'}
-                                </p>
-                                <p className="text-sm text-gray-800">
-                                  {application.answer_4 || application.question4_answer}
-                                </p>
-                              </div>
-                            )}
+                            {/* 동적으로 모든 질문과 답변 표시 */}
+                            {(() => {
+                              const questionsAndAnswers = []
+                              
+                              // 최대 10개의 질문까지 확인 (확장 가능)
+                              for (let i = 1; i <= 10; i++) {
+                                // 다양한 질문 컬럼명 패턴 확인
+                                const questionSources = [
+                                  campaign?.[`question_${i}`],
+                                  campaign?.[`question${i}`],
+                                  application[`question_${i}`],
+                                  application[`question${i}`]
+                                ]
+                                
+                                // 다양한 답변 컬럼명 패턴 확인
+                                const answerSources = [
+                                  application[`answer_${i}`],
+                                  application[`answer${i}`],
+                                  application[`question${i}_answer`],
+                                  application[`question_${i}_answer`]
+                                ]
+                                
+                                // 질문과 답변 찾기
+                                const question = questionSources.find(q => q && q.trim())
+                                const answer = answerSources.find(a => a && a.trim())
+                                
+                                // 질문이나 답변이 있으면 표시
+                                if (question || answer) {
+                                  questionsAndAnswers.push(
+                                    <div key={i} className="bg-gray-50 p-3 rounded">
+                                      <p className="text-sm font-medium text-gray-600 mb-1">
+                                        {question || `질문 ${i}`}
+                                      </p>
+                                      <p className="text-sm text-gray-800">
+                                        {answer || '답변 없음'}
+                                      </p>
+                                    </div>
+                                  )
+                                }
+                              }
+                              
+                              // 질문과 답변이 없으면 메시지 표시
+                              if (questionsAndAnswers.length === 0) {
+                                questionsAndAnswers.push(
+                                  <div key="no-qa" className="bg-gray-50 p-3 rounded text-center">
+                                    <p className="text-sm text-gray-500">질문과 답변이 없습니다.</p>
+                                  </div>
+                                )
+                              }
+                              
+                              return questionsAndAnswers
+                            })()}
                             
                             {/* 디버깅용 - 실제 데이터 확인 */}
-                            {process.env.NODE_ENV === 'development' && (
-                              <div className="bg-yellow-50 p-3 rounded text-xs">
-                                <p><strong>디버깅 정보:</strong></p>
-                                <p>answer_1: {application.answer_1 || 'null'}</p>
-                                <p>question1_answer: {application.question1_answer || 'null'}</p>
-                                <p>question1: {application.question1 || 'null'}</p>
-                                <p>campaign.question_1: {campaign?.question_1 || 'null'}</p>
-                              </div>
-                            )}
+                            <div className="bg-yellow-50 p-3 rounded text-xs">
+                              <p><strong>디버깅 정보:</strong></p>
+                              <p><strong>캠페인 질문:</strong></p>
+                              {[1,2,3,4,5].map(i => (
+                                <p key={`q${i}`}>question_{i}: {campaign?.[`question_${i}`] || 'null'}</p>
+                              ))}
+                              <p><strong>신청서 답변:</strong></p>
+                              {[1,2,3,4,5].map(i => (
+                                <p key={`a${i}`}>answer_{i}: {application[`answer_${i}`] || 'null'}</p>
+                              ))}
+                              <p><strong>모든 application 키:</strong></p>
+                              <p className="text-xs break-all">{Object.keys(application).join(', ')}</p>
+                            </div>
                           </div>
                         </div>
                       </div>
