@@ -302,8 +302,7 @@ const AdminWithdrawals = () => {
         const { error } = await supabase
           .from('point_transactions')
           .update({ 
-            transaction_type: 'approved',
-            updated_at: new Date().toISOString()
+            transaction_type: 'approved'
           })
           .eq('id', withdrawalId)
         
@@ -319,8 +318,7 @@ const AdminWithdrawals = () => {
         const { error } = await supabase
           .from('point_transactions')
           .update({ 
-            transaction_type: 'rejected',
-            updated_at: new Date().toISOString()
+            transaction_type: 'rejected'
           })
           .eq('id', withdrawalId)
         
@@ -336,8 +334,7 @@ const AdminWithdrawals = () => {
         const { error } = await supabase
           .from('point_transactions')
           .update({ 
-            transaction_type: 'completed',
-            updated_at: new Date().toISOString()
+            transaction_type: 'completed'
           })
           .eq('id', withdrawalId)
         
