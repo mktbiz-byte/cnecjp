@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useLanguage } from '../../contexts/LanguageContext'
+import AdminNavigation from './AdminNavigation'
 import {
   ArrowRight, Copy, ExternalLink, Download, Eye, Edit,
   Search, Filter, RefreshCw, X, Check, CheckSquare, Square
@@ -8,12 +9,18 @@ import {
 
 // PayPal 정보 추출 헬퍼 함수
 const extractPayPalFromDescription = (description) => {
-  if (!description) return ''
+  if (!description) return 'No PayPal info'
   
-  // "PayPal: email@example.com" 형식에서 이메일 추출
-  const paypalMatch = description.match(/PayPal:\s*([^)]+)/)
+  // "출금 신청: 50000포인트 (PayPal: MKT@HOWLAB.CO.KR)" 형식에서 이메일 추출
+  const paypalMatch = description.match(/PayPal:\s*([^)]+)\)/)
   if (paypalMatch) {
     return paypalMatch[1].trim()
+  }
+  
+  // "PayPal: email@example.com" 형식에서 이메일 추출
+  const paypalMatch2 = description.match(/PayPal:\s*([^\s,)]+)/)
+  if (paypalMatch2) {
+    return paypalMatch2[1].trim()
   }
   
   // 이메일 패턴 직접 추출
@@ -22,7 +29,7 @@ const extractPayPalFromDescription = (description) => {
     return emailMatch[1]
   }
   
-  return ''
+  return 'No PayPal info'
 }
 
 const AdminWithdrawals = () => {
@@ -44,6 +51,17 @@ const AdminWithdrawals = () => {
   // 대량 처리를 위한 상태
   const [selectedItems, setSelectedItems] = useState([])
   const [bulkProcessing, setBulkProcessing] = useState(false)
+  
+  // 거부 모달 상태
+  const [rejectModal, setRejectModal] = useState(false)
+  const [rejectForm, setRejectForm] = useState({
+    withdrawalId: null,
+    reason: '',
+    customReason: '',
+    userEmail: '',
+    userName: '',
+    amount: 0
+  })
   
   // 모달 상태
   const [detailModal, setDetailModal] = useState(false)
@@ -80,7 +98,16 @@ const AdminWithdrawals = () => {
       bulkApprove: '선택 항목 승인',
       bulkComplete: '선택 항목 완료',
       selectAll: '전체 선택',
-      selected: '개 선택됨'
+      selected: '개 선택됨',
+      rejectWithReason: '거부 사유 선택',
+      rejectReason: '거부 사유',
+      selectReason: '사유를 선택해주세요',
+      customReason: '직접 입력',
+      customReasonPlaceholder: '거부 사유를 직접 입력해주세요...',
+      sendRejectEmail: '거부 메일 발송',
+      cancel: '취소',
+      emailSent: '거부 메일이 발송되었습니다',
+      emailSendFailed: '메일 발송에 실패했습니다'
     },
     ja: {
       title: '出金管理',
@@ -106,7 +133,16 @@ const AdminWithdrawals = () => {
       bulkApprove: '選択項目を承認',
       bulkComplete: '選択項目を完了',
       selectAll: '全て選択',
-      selected: '個選択中'
+      selected: '個選択中',
+      rejectWithReason: '拒否理由選択',
+      rejectReason: '拒否理由',
+      selectReason: '理由を選択してください',
+      customReason: '直接入力',
+      customReasonPlaceholder: '拒否理由を直接入力してください...',
+      sendRejectEmail: '拒否メール送信',
+      cancel: 'キャンセル',
+      emailSent: '拒否メールが送信されました',
+      emailSendFailed: 'メール送信に失敗しました'
     }
   }
 
@@ -240,7 +276,7 @@ const AdminWithdrawals = () => {
         console.log('승인 처리 중...')
         
       } else if (newStatus === 'rejected') {
-        newDescription = newDescription.replace(/\[상태:.*?\]/g, '') + ' [상태:거부됨]'
+        newDescription = newDescription.replace(/\[상태:.*?\]/g, '') + ` [상태:거부됨] [사유:${adminNotes}]`
         console.log('거부 처리 중...')
         
       } else if (newStatus === 'completed') {
@@ -274,6 +310,78 @@ const AdminWithdrawals = () => {
     } catch (error) {
       console.error('상태 업데이트 실패:', error)
       setError(`상태 업데이트에 실패했습니다: ${error.message}`)
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  // 거부 모달 열기
+  const openRejectModal = (withdrawal) => {
+    setRejectForm({
+      withdrawalId: withdrawal.id,
+      reason: '',
+      customReason: '',
+      userEmail: withdrawal.user_profiles?.email || '',
+      userName: withdrawal.user_profiles?.name || '',
+      amount: withdrawal.amount
+    })
+    setRejectModal(true)
+  }
+
+  // 거부 이메일 발송
+  const sendRejectEmail = async () => {
+    try {
+      setProcessing(true)
+      
+      const finalReason = rejectForm.reason === 'custom' ? rejectForm.customReason : rejectForm.reason
+      
+      if (!finalReason) {
+        setError('거부 사유를 선택하거나 입력해주세요.')
+        return
+      }
+
+      // 1. 출금 상태를 거부로 업데이트
+      await updateWithdrawalStatus(rejectForm.withdrawalId, 'rejected', finalReason)
+
+      // 2. 이메일 발송
+      const emailData = {
+        to: rejectForm.userEmail,
+        subject: '출금 신청 거부 안내',
+        template: 'withdrawal_rejected',
+        data: {
+          userName: rejectForm.userName,
+          amount: rejectForm.amount,
+          reason: finalReason,
+          date: new Date().toLocaleDateString('ko-KR')
+        }
+      }
+
+      const response = await fetch('/.netlify/functions/send-gmail', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(emailData)
+      })
+
+      if (response.ok) {
+        setSuccess(t.emailSent)
+        setRejectModal(false)
+        setRejectForm({
+          withdrawalId: null,
+          reason: '',
+          customReason: '',
+          userEmail: '',
+          userName: '',
+          amount: 0
+        })
+      } else {
+        throw new Error('이메일 발송 실패')
+      }
+
+    } catch (error) {
+      console.error('거부 이메일 발송 오류:', error)
+      setError(t.emailSendFailed + ': ' + error.message)
     } finally {
       setProcessing(false)
     }
@@ -359,7 +467,9 @@ const AdminWithdrawals = () => {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <AdminNavigation />
+      <div className="p-6 max-w-7xl mx-auto">
       {/* 헤더 */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">{t.title}</h1>
@@ -630,9 +740,9 @@ const AdminWithdrawals = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{withdrawal.method}</div>
+                        <div className="text-sm text-gray-900">PayPal</div>
                         <div className="text-sm text-gray-500">
-                          {withdrawal.paypal_email || 'No PayPal info'}
+                          {extractPayPalFromDescription(withdrawal.description)}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -679,13 +789,22 @@ const AdminWithdrawals = () => {
                             <Edit className="h-4 w-4" />
                           </button>
                           {withdrawal.status === 'pending' && (
-                            <button
-                              onClick={() => updateWithdrawalStatus(withdrawal.id, 'approved')}
-                              disabled={processing}
-                              className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 disabled:opacity-50"
-                            >
-                              {t.approve}
-                            </button>
+                            <>
+                              <button
+                                onClick={() => updateWithdrawalStatus(withdrawal.id, 'approved')}
+                                disabled={processing}
+                                className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 disabled:opacity-50"
+                              >
+                                {t.approve}
+                              </button>
+                              <button
+                                onClick={() => openRejectModal(withdrawal)}
+                                disabled={processing}
+                                className="px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 disabled:opacity-50"
+                              >
+                                {t.reject}
+                              </button>
+                            </>
                           )}
                           {withdrawal.status === 'approved' && (
                             <button
@@ -727,6 +846,95 @@ const AdminWithdrawals = () => {
           </div>
         </div>
       )}
+
+      {/* 거부 사유 모달 */}
+      {rejectModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              {t.rejectWithReason}
+            </h3>
+            
+            <div className="space-y-4">
+              {/* 사용자 정보 */}
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-600">
+                  <strong>사용자:</strong> {rejectForm.userName} ({rejectForm.userEmail})
+                </p>
+                <p className="text-sm text-gray-600">
+                  <strong>출금 금액:</strong> ¥{rejectForm.amount?.toLocaleString()}
+                </p>
+              </div>
+
+              {/* 거부 사유 선택 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t.rejectReason}
+                </label>
+                <select
+                  value={rejectForm.reason}
+                  onChange={(e) => setRejectForm(prev => ({ ...prev, reason: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">{t.selectReason}</option>
+                  <option value="계정 정보 불일치">계정 정보 불일치</option>
+                  <option value="최소 출금 금액 미달">최소 출금 금액 미달</option>
+                  <option value="PayPal 계정 오류">PayPal 계정 오류</option>
+                  <option value="서류 미제출">필요 서류 미제출</option>
+                  <option value="중복 신청">중복 신청</option>
+                  <option value="계정 제재">계정 제재 상태</option>
+                  <option value="기타 정책 위반">기타 정책 위반</option>
+                  <option value="custom">{t.customReason}</option>
+                </select>
+              </div>
+
+              {/* 직접 입력 */}
+              {rejectForm.reason === 'custom' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    상세 사유
+                  </label>
+                  <textarea
+                    value={rejectForm.customReason}
+                    onChange={(e) => setRejectForm(prev => ({ ...prev, customReason: e.target.value }))}
+                    placeholder={t.customReasonPlaceholder}
+                    rows={3}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* 버튼 */}
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setRejectModal(false)
+                  setRejectForm({
+                    withdrawalId: null,
+                    reason: '',
+                    customReason: '',
+                    userEmail: '',
+                    userName: '',
+                    amount: 0
+                  })
+                }}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                {t.cancel}
+              </button>
+              <button
+                onClick={sendRejectEmail}
+                disabled={processing || (!rejectForm.reason || (rejectForm.reason === 'custom' && !rejectForm.customReason))}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+              >
+                {processing ? '처리중...' : t.sendRejectEmail}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      </div>
     </div>
   )
 }
