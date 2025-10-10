@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { database, supabase } from '../../lib/supabase'
+import AdminNavigation from './AdminNavigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -417,28 +418,18 @@ const SNSUploadNew = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-8">
-      <div className="container mx-auto px-4 max-w-7xl">
+    <div className="min-h-screen bg-gray-50">
+      <AdminNavigation />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 헤더 */}
         <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="outline"
-              onClick={() => navigate('/admin')}
-              className="flex items-center space-x-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>{t.backToDashboard}</span>
-            </Button>
-            
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">
-                {t.title}
-              </h1>
-              <p className="text-gray-600">
-                {campaign ? `${campaign.title} - ${t.subtitle}` : t.subtitle}
-              </p>
-            </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {t.title}
+            </h1>
+            <p className="text-gray-600 mt-2">
+              {campaign ? `${campaign.title} - ${t.subtitle}` : t.subtitle}
+            </p>
           </div>
           
           <div className="flex space-x-2">
