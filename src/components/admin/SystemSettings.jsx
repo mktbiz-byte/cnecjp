@@ -265,10 +265,7 @@ const SystemSettings = () => {
         </div>
       `
       
-      // Gmail SMTP 직접 발송 서비스 사용
-      const gmailEmailService = await import('../../lib/gmailEmailService.js')
-      const emailService = gmailEmailService.default
-      
+      // Netlify Functions를 통한 실제 Gmail SMTP 발송
       console.log('📧 Gmail SMTP 실제 발송 시작:', {
         to: emailSettings.testEmail,
         from: emailSettings.fromEmail,
@@ -276,8 +273,35 @@ const SystemSettings = () => {
         secure: emailSettings.smtpSecure
       })
       
-      // 실제 Gmail을 통한 테스트 이메일 발송
-      const result = await emailService.sendTestEmail(emailSettings.testEmail)
+      // Netlify Functions로 실제 Gmail 발송
+      const response = await fetch('/.netlify/functions/send-gmail', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          emailSettings: {
+            smtpHost: emailSettings.smtpHost,
+            smtpPort: emailSettings.smtpPort,
+            smtpUser: emailSettings.smtpUser,
+            smtpPass: emailSettings.smtpPass,
+            smtpSecure: emailSettings.smtpSecure,
+            senderEmail: emailSettings.fromEmail,
+            senderName: emailSettings.fromName,
+            replyEmail: emailSettings.replyToEmail
+          },
+          testEmail: emailSettings.testEmail,
+          subject: 'CNEC Japan - Gmail 테스트 이메일',
+          message: testEmailHtml
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.details || errorData.error || '이메일 발송에 실패했습니다.')
+      }
+
+      const result = await response.json()
       
       if (result.success) {
         setSuccess(`🎉 Gmail을 통해 실제 이메일이 발송되었습니다!
