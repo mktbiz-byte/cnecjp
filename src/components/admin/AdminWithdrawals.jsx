@@ -245,8 +245,20 @@ const AdminWithdrawals = () => {
           }
         }))
         
-        setWithdrawals(processedData)
-        console.log('출금 요청 데이터 로드 성공:', processedData.length)
+        // 중복 제거: 같은 사용자, 같은 금액, 같은 날짜의 출금 신청을 하나로 합침
+        const uniqueWithdrawals = []
+        const seen = new Set()
+        
+        for (const withdrawal of processedData) {
+          const key = `${withdrawal.user_id}-${withdrawal.amount}-${withdrawal.created_at.split('T')[0]}`
+          if (!seen.has(key)) {
+            seen.add(key)
+            uniqueWithdrawals.push(withdrawal)
+          }
+        }
+        
+        setWithdrawals(uniqueWithdrawals)
+        console.log('출금 요청 데이터 로드 성공:', uniqueWithdrawals.length, '(중복 제거 후)')
         
       } catch (error) {
         console.warn('출금 요청 데이터 로드 실패:', error)

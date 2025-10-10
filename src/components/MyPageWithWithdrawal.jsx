@@ -331,7 +331,7 @@ const MyPageWithWithdrawal = () => {
             id: item.id,
             user_id: item.user_id,
             amount: Math.abs(item.amount),
-            status: item.transaction_type === 'spent' ? 'completed' : 'pending',
+            status: 'pending', // 모든 출금 신청을 pending으로 설정
             withdrawal_method: 'paypal',
             paypal_email: extractPayPalFromDescription(item.description),
             paypal_name: extractPayPalFromDescription(item.description),
@@ -339,8 +339,21 @@ const MyPageWithWithdrawal = () => {
             created_at: item.created_at,
             updated_at: item.updated_at
           }))
-          setWithdrawals(formattedWithdrawals)
-          console.log('출금 내역 로딩 성공:', formattedWithdrawals.length)
+          
+          // 중복 제거: 같은 사용자, 같은 금액, 같은 날짜의 출금 신청을 하나로 합침
+          const uniqueWithdrawals = []
+          const seen = new Set()
+          
+          for (const withdrawal of formattedWithdrawals) {
+            const key = `${withdrawal.user_id}-${withdrawal.amount}-${withdrawal.created_at.split('T')[0]}`
+            if (!seen.has(key)) {
+              seen.add(key)
+              uniqueWithdrawals.push(withdrawal)
+            }
+          }
+          
+          setWithdrawals(uniqueWithdrawals)
+          console.log('출금 내역 로딩 성공:', uniqueWithdrawals.length, '(중복 제거 후)')
         }
       } catch (withdrawErr) {
         console.warn('출금 내역 로딩 실패:', withdrawErr)
