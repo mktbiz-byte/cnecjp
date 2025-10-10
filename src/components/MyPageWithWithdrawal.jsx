@@ -311,52 +311,36 @@ const MyPageWithWithdrawal = () => {
       const applicationsData = await database.applications.getByUser(user.id)
       setApplications(applicationsData || [])
       
-      // 출금 내역 로딩 (withdrawal_requests 테이블에서 가져오기)
+      // 출금 내역 로딩 (point_transactions 테이블에서 직접 가져오기)
       try {
         console.log('출금 내역 로딩 시작 - 사용자 ID:', user.id)
         
-        // 먼저 withdrawal_requests 테이블이 존재하는지 확인
-        const { data: withdrawalData, error: withdrawalError } = await supabase
-          .from('withdrawal_requests')
+        const { data: pointWithdrawals, error: pointError } = await supabase
+          .from('point_transactions')
           .select('*')
           .eq('user_id', user.id)
+          .lt('amount', 0) // 음수 금액 (출금)
           .order('created_at', { ascending: false })
-        
-        if (withdrawalError) {
-          console.warn('withdrawal_requests 테이블 조회 실패, point_transactions 사용:', withdrawalError)
-          
-          // withdrawal_requests 테이블이 없거나 오류가 있으면 point_transactions에서 출금 데이터 가져오기
-          const { data: pointWithdrawals, error: pointError } = await supabase
-            .from('point_transactions')
-            .select('*')
-            .eq('user_id', user.id)
-            .lt('amount', 0) // 음수 금액 (출금)
-            .order('created_at', { ascending: false })
-          
-          if (pointError) {
-            console.warn('point_transactions에서도 출금 데이터 로드 실패:', pointError)
-            setWithdrawals([])
-          } else {
-            // point_transactions 데이터를 withdrawal_requests 형식으로 변환
-            const formattedWithdrawals = (pointWithdrawals || []).map(item => ({
-              id: item.id,
-              user_id: item.user_id,
-              amount: Math.abs(item.amount),
-              status: item.transaction_type === 'spent' ? 'completed' : 'pending',
-              withdrawal_method: 'paypal',
-              paypal_email: extractPayPalFromDescription(item.description),
-              paypal_name: extractPayPalFromDescription(item.description),
-              reason: item.description,
-              created_at: item.created_at,
-              updated_at: item.updated_at
-            }))
-            
-            console.log('point_transactions에서 출금 내역 로딩 성공:', formattedWithdrawals.length, '개')
-            setWithdrawals(formattedWithdrawals)
-          }
+             if (pointError) {
+          console.warn('point_transactions에서 출금 데이터 로드 실패:', pointError)
+          setWithdrawals([])
         } else {
-          console.log('withdrawal_requests에서 출금 내역 로딩 성공:', withdrawalData?.length || 0, '개')
-          setWithdrawals(withdrawalData || [])
+          // point_transactions 데이터를 withdrawal_requests 형식으로 변환
+          const formattedWithdrawals = (pointWithdrawals || []).map(item => ({
+            id: item.id,
+            user_id: item.user_id,
+            amount: Math.abs(item.amount),
+            status: item.transaction_type === 'spent' ? 'completed' : 'pending',
+            withdrawal_method: 'paypal',
+            paypal_email: extractPayPalFromDescription(item.description),
+            paypal_name: extractPayPalFromDescription(item.description),
+            reason: item.description,
+            created_at: item.created_at,
+            updated_at: item.updated_at
+          }))
+          setWithdrawals(formattedWithdrawals)
+          console.log('출금 내역 로딩 성공:', formattedWithdrawals.length)
+        }thdrawalData || [])
         }
       } catch (withdrawErr) {
         console.warn('출금 내역 로딩 실패:', withdrawErr)
