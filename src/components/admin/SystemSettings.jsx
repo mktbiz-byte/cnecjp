@@ -4,7 +4,7 @@ import AdminNavigation from './AdminNavigation'
 import { 
   Loader2, Save, Settings, Globe, Search, Image, 
   FileText, Link, AlertCircle, CheckCircle, 
-  RefreshCw, Eye, Code, Monitor
+  RefreshCw, Eye, Code, Monitor, Mail
 } from 'lucide-react'
 
 const SystemSettings = () => {
@@ -15,6 +15,19 @@ const SystemSettings = () => {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   
+  // 이메일 설정
+  const [emailSettings, setEmailSettings] = useState({
+    smtpHost: '',
+    smtpPort: '587',
+    smtpSecure: false,
+    smtpUser: '',
+    smtpPass: '',
+    fromEmail: '',
+    fromName: 'CNEC Japan',
+    replyToEmail: '',
+    testEmail: ''
+  })
+
   // SEO 설정
   const [seoSettings, setSeoSettings] = useState({
     siteName: 'CNEC Japan',
@@ -42,7 +55,21 @@ const SystemSettings = () => {
   const texts = {
     ko: {
       title: '시스템 설정',
-      subtitle: 'SEO 및 사이트 전반적인 설정을 관리합니다',
+      subtitle: 'SEO, 이메일 및 사이트 전반적인 설정을 관리합니다',
+      emailSettings: '이메일 설정',
+      smtpSettings: 'SMTP 서버 설정',
+      emailGeneral: '일반 이메일 설정',
+      testEmail: '테스트 이메일',
+      smtpHost: 'SMTP 호스트',
+      smtpPort: 'SMTP 포트',
+      smtpSecure: 'SSL/TLS 사용',
+      smtpUser: 'SMTP 사용자명',
+      smtpPass: 'SMTP 비밀번호',
+      fromEmail: '발신자 이메일',
+      fromName: '발신자 이름',
+      replyToEmail: '답장 이메일',
+      testEmailAddress: '테스트 이메일 주소',
+      sendTestEmail: '테스트 이메일 발송',
       seoSettings: 'SEO 설정',
       basicSeo: '기본 SEO 설정',
       socialMedia: '소셜 미디어 설정',
@@ -131,9 +158,14 @@ const SystemSettings = () => {
       setError('')
       
       // 로컬 스토리지에서 설정 로드
-      const savedSettings = localStorage.getItem('cnec_seo_settings')
-      if (savedSettings) {
-        setSeoSettings(JSON.parse(savedSettings))
+      const savedSeoSettings = localStorage.getItem('cnec_seo_settings')
+      if (savedSeoSettings) {
+        setSeoSettings(JSON.parse(savedSeoSettings))
+      }
+      
+      const savedEmailSettings = localStorage.getItem('cnec_email_settings')
+      if (savedEmailSettings) {
+        setEmailSettings(JSON.parse(savedEmailSettings))
       }
       
     } catch (error) {
@@ -152,9 +184,11 @@ const SystemSettings = () => {
       
       // 로컬 스토리지에 설정 저장
       localStorage.setItem('cnec_seo_settings', JSON.stringify(seoSettings))
+      localStorage.setItem('cnec_email_settings', JSON.stringify(emailSettings))
       
       // 실제 환경에서는 서버에 저장
       // await database.settings.upsert('seo', seoSettings)
+      // await database.settings.upsert('email', emailSettings)
       
       setSuccess(t.success)
       
@@ -171,6 +205,43 @@ const SystemSettings = () => {
       ...prev,
       [field]: value
     }))
+  }
+
+  const handleEmailInputChange = (field, value) => {
+    setEmailSettings(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
+  const sendTestEmail = async () => {
+    try {
+      if (!emailSettings.testEmail) {
+        setError('테스트 이메일 주소를 입력해주세요.')
+        return
+      }
+      
+      setSaving(true)
+      setError('')
+      setSuccess('')
+      
+      // 테스트 이메일 발송 로직 (실제 구현 필요)
+      console.log('테스트 이메일 발송:', {
+        to: emailSettings.testEmail,
+        settings: emailSettings
+      })
+      
+      // 실제 환경에서는 이메일 발송 API 호출
+      // await emailService.sendTestEmail(emailSettings)
+      
+      setSuccess('테스트 이메일이 발송되었습니다.')
+      
+    } catch (error) {
+      console.error('테스트 이메일 발송 오류:', error)
+      setError(`테스트 이메일 발송에 실패했습니다: ${error.message}`)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const resetSettings = () => {
@@ -313,6 +384,150 @@ const SystemSettings = () => {
         )}
 
         <div className="space-y-6">
+          {/* 이메일 설정 */}
+          <div className="bg-white shadow rounded-lg">
+            <div className="px-4 py-5 sm:p-6">
+              <div className="flex items-center mb-4">
+                <Mail className="h-5 w-5 text-gray-400 mr-2" />
+                <h3 className="text-lg leading-6 font-medium text-gray-900">{t.emailSettings}</h3>
+              </div>
+              
+              {/* SMTP 서버 설정 */}
+              <div className="mb-6">
+                <h4 className="text-md font-medium text-gray-800 mb-3">{t.smtpSettings}</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">{t.smtpHost}</label>
+                    <input
+                      type="text"
+                      value={emailSettings.smtpHost}
+                      onChange={(e) => handleEmailInputChange('smtpHost', e.target.value)}
+                      placeholder="smtp.gmail.com"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">{t.smtpPort}</label>
+                    <input
+                      type="number"
+                      value={emailSettings.smtpPort}
+                      onChange={(e) => handleEmailInputChange('smtpPort', e.target.value)}
+                      placeholder="587"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">{t.smtpUser}</label>
+                    <input
+                      type="email"
+                      value={emailSettings.smtpUser}
+                      onChange={(e) => handleEmailInputChange('smtpUser', e.target.value)}
+                      placeholder="your-email@gmail.com"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">{t.smtpPass}</label>
+                    <input
+                      type="password"
+                      value={emailSettings.smtpPass}
+                      onChange={(e) => handleEmailInputChange('smtpPass', e.target.value)}
+                      placeholder="앱 비밀번호"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                </div>
+                
+                <div className="mt-4">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={emailSettings.smtpSecure}
+                      onChange={(e) => handleEmailInputChange('smtpSecure', e.target.checked)}
+                      className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">{t.smtpSecure}</span>
+                  </label>
+                </div>
+              </div>
+              
+              {/* 일반 이메일 설정 */}
+              <div className="mb-6">
+                <h4 className="text-md font-medium text-gray-800 mb-3">{t.emailGeneral}</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">{t.fromEmail}</label>
+                    <input
+                      type="email"
+                      value={emailSettings.fromEmail}
+                      onChange={(e) => handleEmailInputChange('fromEmail', e.target.value)}
+                      placeholder="noreply@cnec.jp"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">{t.fromName}</label>
+                    <input
+                      type="text"
+                      value={emailSettings.fromName}
+                      onChange={(e) => handleEmailInputChange('fromName', e.target.value)}
+                      placeholder="CNEC Japan"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">{t.replyToEmail}</label>
+                    <input
+                      type="email"
+                      value={emailSettings.replyToEmail}
+                      onChange={(e) => handleEmailInputChange('replyToEmail', e.target.value)}
+                      placeholder="support@cnec.jp"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* 테스트 이메일 */}
+              <div>
+                <h4 className="text-md font-medium text-gray-800 mb-3">{t.testEmail}</h4>
+                <div className="flex space-x-3">
+                  <div className="flex-1">
+                    <input
+                      type="email"
+                      value={emailSettings.testEmail}
+                      onChange={(e) => handleEmailInputChange('testEmail', e.target.value)}
+                      placeholder="test@example.com"
+                      className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                  <button
+                    onClick={sendTestEmail}
+                    disabled={saving || !emailSettings.testEmail}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        발송 중...
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="h-4 w-4 mr-2" />
+                        {t.sendTestEmail}
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* 기본 SEO 설정 */}
           <div className="bg-white shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">

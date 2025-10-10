@@ -298,8 +298,7 @@ const CompanyReportNew = () => {
                 <span>{campaign.title}</span>
               </CardTitle>
               <CardDescription>
-                브랜드: {campaign.brand} | 보상금: ₩{campaign.reward_amount?.toLocaleString()} | 
-                마감일: {new Date(campaign.deadline).toLocaleDateString()}
+                브랜드: {campaign.brand} | 마감일: {new Date(campaign.deadline).toLocaleDateString()}
               </CardDescription>
             </CardHeader>
           </Card>
