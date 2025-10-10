@@ -292,14 +292,13 @@ const MyPageWithWithdrawal = () => {
       const applicationsData = await database.applications.getByUser(user.id)
       setApplications(applicationsData || [])
       
-      // 출금 내역 로딩 (point_transactions에서 출금 신청 기록 가져오기)
+      // 출금 내역 로딩 (withdrawal_requests 테이블에서 가져오기)
       try {
         console.log('출금 내역 로딩 시작 - 사용자 ID:', user.id)
         const { data: withdrawalData, error: withdrawalError } = await supabase
-          .from('point_transactions')
+          .from('withdrawal_requests')
           .select('*')
           .eq('user_id', user.id)
-          .lt('amount', 0) // 음수 금액 (출금/차감)
           .order('created_at', { ascending: false })
         
         if (withdrawalError) {
@@ -308,34 +307,35 @@ const MyPageWithWithdrawal = () => {
           setWithdrawals([])
         } else {
           console.log('출금 내역 로딩 성공:', withdrawalData?.length || 0, '개')
-          // point_transactions 형식을 withdrawal_requests 형식으로 변환
-          const formattedWithdrawals = withdrawalData?.map(item => ({
-            id: item.id,
-            amount: Math.abs(item.amount), // 음수를 양수로 변환
-            status: 'pending', // 기본값으로 pending 설정
-            created_at: item.created_at,
-            description: item.description
-          })) || []
-          setWithdrawals(formattedWithdrawals)
+          setWithdrawals(withdrawalData || [])
         }
       } catch (withdrawErr) {
         console.warn('출금 내역 로딩 실패:', withdrawErr)
         setWithdrawals([])
       }
       
-      // 포인트 거래 내역 로딩 (point_transactions 테이블 직접 사용)
+      // 포인트 거래 내역 로딩 (출금 관련 항목 제외)
       try {
         const { data: pointData, error: pointError } = await supabase
           .from('point_transactions')
           .select('*')
           .eq('user_id', user.id)
+          .not('description', 'like', '%출금 신청%') // 출금 신청 관련 항목 제외
+          .not('description', 'like', '%出金申請%') // 일본어 출금 신청 관련 항목 제외
           .order('created_at', { ascending: false })
         
         if (pointError) {
           console.warn('포인트 거래 내역 로딩 오류:', pointError)
           setPointTransactions([])
         } else {
-          setPointTransactions(pointData || [])
+          // 추가로 클라이언트 사이드에서도 출금 관련 항목 필터링
+          const filteredPointData = (pointData || []).filter(item => {
+            const desc = item.description || ''
+            return !desc.includes('출금 신청') && 
+                   !desc.includes('出金申請') && 
+                   !(item.amount < 0 && (item.transaction_type === 'pending' || item.transaction_type === 'spent'))
+          })
+          setPointTransactions(filteredPointData)
         }
       } catch (pointErr) {
         console.warn('포인트 거래 내역 로딩 실패:', pointErr)
@@ -508,14 +508,17 @@ const MyPageWithWithdrawal = () => {
       setProcessing(true)
       setError('')
 
-      // point_transactions 테이블에 출금 신청 기록 (임시)
+      // withdrawal_requests 테이블에 출금 신청 기록
       const { data: withdrawalData, error: withdrawalError } = await supabase
-        .from('point_transactions')
+        .from('withdrawal_requests')
         .insert([{
           user_id: user.id,
-          amount: -requestAmount, // 음수로 출금 표시
-          transaction_type: 'pending',
-          description: `출금 신청: ${requestAmount}P (PayPal: ${withdrawForm.paypalEmail || withdrawForm.paypalName || user.email})`,
+          amount: requestAmount,
+          withdrawal_method: 'paypal',
+          paypal_email: withdrawForm.paypalEmail,
+          paypal_name: withdrawForm.paypalName,
+          reason: withdrawForm.reason || (language === 'ja' ? 'ポイント出金申請' : '포인트 출금 신청'),
+          status: 'pending',
           created_at: new Date().toISOString()
         }])
         .select()
@@ -539,14 +542,14 @@ const MyPageWithWithdrawal = () => {
         throw new Error('포인트 차감에 실패했습니다.')
       }
 
-      // 포인트 차감 기록을 point_transactions에 추가
+      // 포인트 차감 기록을 point_transactions에 추가 (출금 신청이 아닌 포인트 사용으로 기록)
       const { error: pointError } = await supabase
         .from('point_transactions')
         .insert([{
           user_id: user.id,
           amount: -requestAmount,
           transaction_type: 'spent',
-          description: language === 'ja' ? `出金申請: ${requestAmount}ポイント` : `출금 신청: ${requestAmount}포인트`,
+          description: language === 'ja' ? `ポイント使用: 出金申請` : `포인트 사용: 출금 신청`,
           created_at: new Date().toISOString()
         }])
 
