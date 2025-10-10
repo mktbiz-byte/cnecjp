@@ -372,7 +372,20 @@ const MyPageWithWithdrawal = () => {
           console.warn('포인트 거래 내역 로딩 오류:', pointError)
           setPointTransactions([])
         } else {
-          setPointTransactions(pointData || [])
+          // 포인트 내역에서도 중복 제거: 같은 사용자, 같은 금액, 같은 날짜의 거래를 하나로 합침
+          const uniquePointTransactions = []
+          const seen = new Set()
+          
+          for (const transaction of (pointData || [])) {
+            const key = `${transaction.user_id}-${transaction.amount}-${transaction.created_at.split('T')[0]}-${transaction.description || ''}`
+            if (!seen.has(key)) {
+              seen.add(key)
+              uniquePointTransactions.push(transaction)
+            }
+          }
+          
+          setPointTransactions(uniquePointTransactions)
+          console.log('포인트 거래 내역 로딩 성공:', uniquePointTransactions.length, '(중복 제거 후)')
         }
       } catch (pointErr) {
         console.warn('포인트 거래 내역 로딩 실패:', pointErr)
