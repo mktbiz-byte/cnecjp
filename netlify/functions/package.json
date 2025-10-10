@@ -1,0 +1,9 @@
+{
+  "name": "cnec-netlify-functions",
+  "version": "1.0.0",
+  "description": "Netlify Functions for CNEC Japan",
+  "main": "send-email.js",
+  "dependencies": {
+    "nodemailer": "^6.9.8"
+  }
+}

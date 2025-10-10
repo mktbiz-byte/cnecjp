@@ -1,5 +1,3 @@
-const nodemailer = require('nodemailer')
-
 exports.handler = async (event, context) => {
   // CORS 헤더 설정
   const headers = {
@@ -27,6 +25,23 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    // nodemailer 동적 import (Netlify Functions 환경에서 더 안전)
+    let nodemailer
+    try {
+      nodemailer = require('nodemailer')
+    } catch (requireError) {
+      console.error('nodemailer require 오류:', requireError)
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ 
+          success: false,
+          error: 'nodemailer 라이브러리를 로드할 수 없습니다.',
+          details: requireError.message
+        })
+      }
+    }
+
     const { to, subject, html, text, settings } = JSON.parse(event.body)
 
     // 필수 파라미터 검증
