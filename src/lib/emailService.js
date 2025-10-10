@@ -727,17 +727,61 @@ export const sendEmail = async (templateType, recipientEmail, data) => {
       console.error('Email log error:', logError)
     }
 
-    // 실제 이메일 발송 (여기서는 콘솔 로그로 대체)
-    console.log('Email sent:', {
-      type: templateType,
-      to: recipientEmail,
-      subject: template.subject
-    })
+    // 실제 이메일 발송 - 시스템 설정에서 SMTP 정보 가져오기
+    const emailSettings = JSON.parse(localStorage.getItem('cnec_email_settings') || '{}')
+    
+    if (emailSettings.smtpHost && emailSettings.smtpUser && emailSettings.smtpPass) {
+      try {
+        // Netlify Functions를 통한 실제 이메일 발송
+        const response = await fetch('/.netlify/functions/send-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            to: recipientEmail,
+            subject: template.subject,
+            html: template.template(data),
+            settings: emailSettings
+          })
+        })
 
-    // 실제 환경에서는 SendGrid, AWS SES, 또는 다른 이메일 서비스 사용
-    // await sendGridClient.send(emailData)
-    // 또는
-    // await sesClient.sendEmail(emailData)
+        if (response.ok) {
+          console.log('✅ 실제 이메일 발송 성공:', {
+            type: templateType,
+            to: recipientEmail,
+            subject: template.subject
+          })
+          
+          // 성공 시 로그 업데이트
+          if (logData?.[0]?.id) {
+            await supabase
+              .from('email_logs')
+              .update({ status: 'sent', sent_at: new Date().toISOString() })
+              .eq('id', logData[0].id)
+          }
+        } else {
+          throw new Error(`SMTP 발송 실패: ${response.status}`)
+        }
+      } catch (smtpError) {
+        console.error('SMTP 발송 오류:', smtpError)
+        // SMTP 실패 시에도 로그는 남기고 콘솔 출력
+        console.log('📧 이메일 발송 (SMTP 실패, 콘솔 출력):', {
+          type: templateType,
+          to: recipientEmail,
+          subject: template.subject,
+          error: smtpError.message
+        })
+      }
+    } else {
+      // SMTP 설정이 없으면 콘솔 출력만
+      console.log('📧 이메일 발송 (SMTP 미설정, 콘솔 출력):', {
+        type: templateType,
+        to: recipientEmail,
+        subject: template.subject,
+        note: '시스템 설정에서 SMTP 정보를 입력하면 실제 발송됩니다.'
+      })
+    }
 
     return { success: true, logId: logData?.[0]?.id }
 

@@ -235,24 +235,62 @@ const SystemSettings = () => {
         return
       }
       
+      // 필수 SMTP 설정 확인
+      if (!emailSettings.smtpHost || !emailSettings.smtpUser || !emailSettings.smtpPass) {
+        setError('SMTP 설정을 먼저 완료해주세요.')
+        return
+      }
+      
       setSaving(true)
       setError('')
       setSuccess('')
       
-      // 테스트 이메일 발송 로직 (실제 구현 필요)
-      console.log('테스트 이메일 발송:', {
-        to: emailSettings.testEmail,
-        settings: emailSettings
+      // 테스트 이메일 내용 생성
+      const testEmailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">CNEC Japan - 테스트 이메일</h2>
+          <p>안녕하세요!</p>
+          <p>이 이메일은 CNEC Japan 시스템의 SMTP 설정이 올바르게 구성되었는지 확인하기 위한 테스트 이메일입니다.</p>
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #28a745; margin-top: 0;">✅ 이메일 발송 성공!</h3>
+            <p>SMTP 설정이 올바르게 구성되어 이메일이 정상적으로 발송되었습니다.</p>
+          </div>
+          <p><strong>발송 시간:</strong> ${new Date().toLocaleString('ko-KR')}</p>
+          <p><strong>발송자:</strong> ${emailSettings.fromName || 'CNEC Japan'}</p>
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+          <p style="color: #666; font-size: 12px;">
+            이 이메일은 CNEC Japan 관리자 시스템에서 자동으로 발송되었습니다.<br>
+            문의사항이 있으시면 ${emailSettings.replyToEmail || 'support@cnec.jp'}로 연락해주세요.
+          </p>
+        </div>
+      `
+      
+      // Netlify Functions를 통한 실제 이메일 발송
+      const response = await fetch('/.netlify/functions/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: emailSettings.testEmail,
+          subject: 'CNEC Japan - 테스트 이메일',
+          html: testEmailHtml,
+          settings: emailSettings
+        })
       })
-      
-      // 실제 환경에서는 이메일 발송 API 호출
-      // await emailService.sendTestEmail(emailSettings)
-      
-      setSuccess('테스트 이메일이 발송되었습니다.')
+
+      const result = await response.json()
+
+      if (response.ok && result.success) {
+        setSuccess(`✅ 테스트 이메일이 성공적으로 발송되었습니다! (${emailSettings.testEmail})`)
+        console.log('테스트 이메일 발송 성공:', result)
+      } else {
+        throw new Error(result.error || result.details || '이메일 발송에 실패했습니다.')
+      }
       
     } catch (error) {
       console.error('테스트 이메일 발송 오류:', error)
-      setError(`테스트 이메일 발송에 실패했습니다: ${error.message}`)
+      setError(`❌ 테스트 이메일 발송 실패: ${error.message}`)
     } finally {
       setSaving(false)
     }
