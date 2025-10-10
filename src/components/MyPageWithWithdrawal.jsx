@@ -321,7 +321,8 @@ const MyPageWithWithdrawal = () => {
           .eq('user_id', user.id)
           .lt('amount', 0) // 음수 금액 (출금)
           .order('created_at', { ascending: false })
-             if (pointError) {
+        
+        if (pointError) {
           console.warn('point_transactions에서 출금 데이터 로드 실패:', pointError)
           setWithdrawals([])
         } else {
@@ -340,7 +341,6 @@ const MyPageWithWithdrawal = () => {
           }))
           setWithdrawals(formattedWithdrawals)
           console.log('출금 내역 로딩 성공:', formattedWithdrawals.length)
-        }thdrawalData || [])
         }
       } catch (withdrawErr) {
         console.warn('출금 내역 로딩 실패:', withdrawErr)
