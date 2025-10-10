@@ -58,7 +58,7 @@ exports.handler = async (event, context) => {
     });
 
     // Gmail SMTP 설정
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host: emailSettings.smtpHost,
       port: parseInt(emailSettings.smtpPort) || 587,
       secure: emailSettings.smtpPort === '465', // 465는 SSL, 587은 TLS
