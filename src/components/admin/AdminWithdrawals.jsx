@@ -9,6 +9,25 @@ import {
   Search, Filter, RefreshCw, X
 } from 'lucide-react'
 
+// PayPal 정보 추출 헬퍼 함수
+const extractPayPalFromDescription = (description) => {
+  if (!description) return ''
+  
+  // "PayPal: email@example.com" 형식에서 이메일 추출
+  const paypalMatch = description.match(/PayPal:\s*([^)]+)/)
+  if (paypalMatch) {
+    return paypalMatch[1].trim()
+  }
+  
+  // 이메일 패턴 직접 추출
+  const emailMatch = description.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/)
+  if (emailMatch) {
+    return emailMatch[1]
+  }
+  
+  return ''
+}
+
 const AdminWithdrawals = () => {
   const { language } = useLanguage()
   
@@ -168,14 +187,11 @@ const AdminWithdrawals = () => {
         let withdrawalsData = null
         let error = null
         
-        // withdrawal_requests 테이블에서 출금 데이터 가져오기
+        // withdrawal_requests 테이블에서 출금 데이터 가져오기 (외래키 조인 없이)
         console.log('withdrawal_requests 테이블에서 출금 데이터 로드 시작...')
         const result = await supabase
           .from('withdrawal_requests')
-          .select(`
-            *,
-            user_profiles!withdrawal_requests_user_id_fkey(name, email, phone)
-          `)
+          .select('*')
           .order('created_at', { ascending: false })
         
         withdrawalsData = result.data
@@ -183,30 +199,75 @@ const AdminWithdrawals = () => {
         console.log('withdrawal_requests 테이블에서 출금 데이터 로드:', withdrawalsData?.length || 0, '건')
         
         if (error) {
-          console.error('출금 요청 데이터 로드 오류:', error)
-          throw error
+          console.error('withdrawal_requests 테이블 조회 실패, point_transactions 사용:', error)
+          
+          // withdrawal_requests 테이블 조회 실패 시 point_transactions에서 출금 데이터 가져오기
+          const fallbackResult = await supabase
+            .from('point_transactions')
+            .select('*')
+            .lt('amount', 0) // 음수 금액 (출금)
+            .in('transaction_type', ['pending', 'spent'])
+            .like('description', '%출금%')
+            .order('created_at', { ascending: false })
+          
+          withdrawalsData = fallbackResult.data
+          error = fallbackResult.error
+          console.log('point_transactions에서 출금 데이터 로드:', withdrawalsData?.length || 0, '건')
+          
+          if (error) {
+            console.error('point_transactions에서도 출금 데이터 로드 실패:', error)
+            throw error
+          }
         }
         
-        // withdrawal_requests 테이블 데이터 변환
+        // 데이터 변환 (withdrawal_requests 또는 point_transactions 구조에 맞게)
         const processedData = (withdrawalsData || []).map(item => {
-          return {
-            id: item.id,
-            user_id: item.user_id,
-            amount: item.amount,
-            points_amount: item.amount,
-            status: item.status || 'pending',
-            created_at: item.created_at,
-            updated_at: item.updated_at,
-            reason: item.reason,
-            paypal_email: item.paypal_email,
-            paypal_name: item.paypal_name,
-            user_name: item.user_profiles?.name || '-',
-            user_email: item.user_profiles?.email || '-',
-            user_phone: item.user_profiles?.phone || '-',
-            bank_name: item.withdrawal_method === 'paypal' ? 'PayPal' : item.bank_name || '-',
-            account_number: item.paypal_email || item.account_number || '-',
-            account_holder: item.paypal_name || item.account_holder || '-',
-            withdrawal_method: item.withdrawal_method
+          // withdrawal_requests 테이블 구조인지 point_transactions 구조인지 확인
+          const isWithdrawalRequest = item.hasOwnProperty('withdrawal_method')
+          
+          if (isWithdrawalRequest) {
+            // withdrawal_requests 테이블 데이터 변환
+            return {
+              id: item.id,
+              user_id: item.user_id,
+              amount: item.amount,
+              points_amount: item.amount,
+              status: item.status || 'pending',
+              created_at: item.created_at,
+              updated_at: item.updated_at,
+              reason: item.reason,
+              paypal_email: item.paypal_email,
+              paypal_name: item.paypal_name,
+              user_name: '-', // 외래키 조인 없이는 사용자 정보 없음
+              user_email: '-',
+              user_phone: '-',
+              bank_name: item.withdrawal_method === 'paypal' ? 'PayPal' : item.bank_name || '-',
+              account_number: item.paypal_email || item.account_number || '-',
+              account_holder: item.paypal_name || item.account_holder || '-',
+              withdrawal_method: item.withdrawal_method
+            }
+          } else {
+            // point_transactions 테이블 데이터 변환
+            const paypalInfo = extractPayPalFromDescription(item.description || '')
+            return {
+              id: item.id,
+              user_id: item.user_id,
+              amount: Math.abs(item.amount),
+              points_amount: Math.abs(item.amount),
+              status: item.transaction_type === 'spent' ? 'completed' : 'pending',
+              created_at: item.created_at,
+              updated_at: item.updated_at,
+              reason: item.description,
+              paypal_email: paypalInfo,
+              paypal_name: paypalInfo,
+              user_name: '-',
+              user_email: '-',
+              user_phone: '-',
+              bank_name: 'PayPal',
+              account_number: paypalInfo,
+              account_holder: paypalInfo,
+              withdrawal_method: 'paypal'
+            }
           }
         })
         
