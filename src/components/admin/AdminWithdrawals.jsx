@@ -205,28 +205,45 @@ const AdminWithdrawals = () => {
         }
         
         // point_transactions 데이터를 출금 요청 형식으로 변환
-        const processedData = (withdrawalsData || []).map(item => {
+        const processedData = await Promise.all((withdrawalsData || []).map(async (item) => {
           const paypalInfo = extractPayPalFromDescription(item.description || '')
+          
+          // 사용자 정보 별도 조회
+          let userInfo = { name: '-', email: '-', phone: '-' }
+          try {
+            const { data: userProfile } = await supabase
+              .from('user_profiles')
+              .select('name, email, phone')
+              .eq('id', item.user_id)
+              .single()
+            
+            if (userProfile) {
+              userInfo = userProfile
+            }
+          } catch (userError) {
+            console.warn('사용자 정보 조회 실패:', userError)
+          }
+          
           return {
             id: item.id,
             user_id: item.user_id,
             amount: Math.abs(item.amount),
             points_amount: Math.abs(item.amount),
-            status: item.transaction_type === 'spent' ? 'completed' : 'pending',
+            status: 'pending', // 모든 출금 신청을 pending으로 설정 (관리자가 직접 승인해야 함)
             created_at: item.created_at,
             updated_at: item.updated_at,
             reason: item.description,
             paypal_email: paypalInfo,
             paypal_name: paypalInfo,
-            user_name: '-',
-            user_email: '-',
-            user_phone: '-',
+            user_name: userInfo.name || '-',
+            user_email: userInfo.email || '-',
+            user_phone: userInfo.phone || '-',
             bank_name: 'PayPal',
             account_number: paypalInfo,
             account_holder: paypalInfo,
             withdrawal_method: 'paypal'
           }
-        })
+        }))
         
         setWithdrawals(processedData)
         console.log('출금 요청 데이터 로드 성공:', processedData.length)
