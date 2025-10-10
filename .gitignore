@@ -1,9 +1,18 @@
-# Environment variables
+# Environment variables - 절대 커밋하지 말 것!
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env.production
+
+# API Keys and Secrets - 보안상 중요
+*.key
+*.pem
+config/keys.js
+config/prod.js
+secrets/
+.secrets
 
 # Dependencies
 node_modules/
