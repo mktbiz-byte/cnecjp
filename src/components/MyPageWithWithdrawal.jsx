@@ -331,8 +331,6 @@ const MyPageWithWithdrawal = () => {
             .select('*')
             .eq('user_id', user.id)
             .lt('amount', 0) // 음수 금액 (출금)
-            .in('transaction_type', ['pending', 'spent']) // 출금 관련 타입만
-            .like('description', '%출금%')
             .order('created_at', { ascending: false })
           
           if (pointError) {
@@ -365,28 +363,19 @@ const MyPageWithWithdrawal = () => {
         setWithdrawals([])
       }
       
-      // 포인트 거래 내역 로딩 (출금 관련 항목 제외)
+      // 포인트 거래 내역 로딩 (모든 포인트 거래 표시)
       try {
         const { data: pointData, error: pointError } = await supabase
           .from('point_transactions')
           .select('*')
           .eq('user_id', user.id)
-          .not('description', 'like', '%출금 신청%') // 출금 신청 관련 항목 제외
-          .not('description', 'like', '%出金申請%') // 일본어 출금 신청 관련 항목 제외
           .order('created_at', { ascending: false })
         
         if (pointError) {
           console.warn('포인트 거래 내역 로딩 오류:', pointError)
           setPointTransactions([])
         } else {
-          // 추가로 클라이언트 사이드에서도 출금 관련 항목 필터링
-          const filteredPointData = (pointData || []).filter(item => {
-            const desc = item.description || ''
-            return !desc.includes('출금 신청') && 
-                   !desc.includes('出金申請') && 
-                   !(item.amount < 0 && (item.transaction_type === 'pending' || item.transaction_type === 'spent'))
-          })
-          setPointTransactions(filteredPointData)
+          setPointTransactions(pointData || [])
         }
       } catch (pointErr) {
         console.warn('포인트 거래 내역 로딩 실패:', pointErr)
