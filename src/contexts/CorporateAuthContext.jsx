@@ -16,12 +16,19 @@ export const CorporateAuthProvider = ({ children }) => {
           console.error("Error getting session:", error);
           setCorporateUser(null);
         } else {
-          console.log("Session loaded:", session?.user?.email);
-          setCorporateUser(session?.user ?? null);
+          console.log("Corporate session check:", session?.user?.email);
           
-          // 기업 계정 정보 로드
+          // 기업 계정 확인
           if (session?.user) {
-            loadCorporateAccount(session.user.email);
+            const account = await loadCorporateAccount(session.user.email);
+            if (account) {
+              setCorporateUser(session.user);
+            } else {
+              // 기업 계정이 없는 경우 corporateUser는 null로 설정
+              setCorporateUser(null);
+            }
+          } else {
+            setCorporateUser(null);
           }
         }
       } catch (error) {
@@ -38,18 +45,31 @@ export const CorporateAuthProvider = ({ children }) => {
       console.log("Corporate auth state changed:", event, session?.user?.email);
       
       if (event === 'SIGNED_IN' && session?.user) {
-        setCorporateUser(session.user);
-        
-        // 기업 계정 정보 로드
-        loadCorporateAccount(session.user.email);
+        // 기업 계정 확인
+        const account = await loadCorporateAccount(session.user.email);
+        if (account) {
+          setCorporateUser(session.user);
+        } else {
+          // 기업 계정이 없는 경우 corporateUser는 null로 설정
+          setCorporateUser(null);
+        }
       } else if (event === 'SIGNED_OUT') {
         setCorporateUser(null);
         setCorporateAccount(null);
+        clearCorporateCookies();
       } else if (event === 'TOKEN_REFRESHED') {
-        console.log("Token refreshed successfully");
-        setCorporateUser(session?.user ?? null);
-      } else {
-        setCorporateUser(session?.user ?? null);
+        console.log("Token refreshed for corporate user");
+        // 토큰 갱신 시에도 기업 계정 확인
+        if (session?.user) {
+          const account = await loadCorporateAccount(session.user.email);
+          if (account) {
+            setCorporateUser(session.user);
+          } else {
+            setCorporateUser(null);
+          }
+        } else {
+          setCorporateUser(null);
+        }
       }
     });
 
@@ -57,6 +77,31 @@ export const CorporateAuthProvider = ({ children }) => {
       authListener?.subscription.unsubscribe();
     };
   }, []);
+
+  // 기업 전용 쿠키 정리 함수
+  const clearCorporateCookies = () => {
+    try {
+      // 기업 관련 쿠키만 삭제
+      document.cookie.split(";").forEach(cookie => {
+        const eqPos = cookie.indexOf("=");
+        const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+        if (name && name.startsWith('corporate_')) {
+          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+        }
+      });
+      
+      // 기업 관련 로컬 스토리지 항목 삭제
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('corporate_')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      console.log("Corporate cookies and storage cleared");
+    } catch (error) {
+      console.error("Error clearing corporate cookies:", error);
+    }
+  };
 
   // 기업 계정 정보 로드 함수
   const loadCorporateAccount = async (email) => {
@@ -111,6 +156,10 @@ export const CorporateAuthProvider = ({ children }) => {
 
   const signInWithEmail = async (email, password) => {
     try {
+      // 먼저 기존 세션 정리
+      await supabase.auth.signOut();
+      
+      // 로그인 시도
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -136,6 +185,9 @@ export const CorporateAuthProvider = ({ children }) => {
         throw new Error("기업 계정이 아직 승인되지 않았습니다. 관리자에게 문의하세요.");
       }
       
+      // 기업 사용자임을 나타내는 로컬 스토리지 설정
+      localStorage.setItem('corporate_user', 'true');
+      
       return data;
     } catch (error) {
       console.error("Sign in error:", error);
@@ -145,10 +197,19 @@ export const CorporateAuthProvider = ({ children }) => {
 
   const signUpWithEmail = async (email, password, companyData) => {
     try {
+      // 먼저 기존 세션 정리
+      await supabase.auth.signOut();
+      
       // 1. 사용자 계정 생성
       const { data, error } = await supabase.auth.signUp({
         email,
-        password
+        password,
+        options: {
+          data: {
+            user_type: 'corporate',
+            company_name: companyData.company_name
+          }
+        }
       });
       
       if (error) {
@@ -172,7 +233,6 @@ export const CorporateAuthProvider = ({ children }) => {
       if (corporateError) {
         console.error("Corporate account creation error:", corporateError);
         // 사용자 계정은 생성되었지만 기업 정보 저장에 실패한 경우
-        // 이 경우 관리자가 수동으로 처리해야 할 수 있음
         throw corporateError;
       }
       
@@ -185,13 +245,20 @@ export const CorporateAuthProvider = ({ children }) => {
 
   const signOut = async () => {
     try {
+      // 기업 관련 쿠키 및 스토리지 정리
+      clearCorporateCookies();
+      
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error("Sign out error:", error);
         throw error;
       }
+      
       setCorporateUser(null);
       setCorporateAccount(null);
+      
+      // 홈페이지로 리디렉션
+      window.location.href = '/';
     } catch (error) {
       console.error("Sign out error:", error);
       setCorporateUser(null);

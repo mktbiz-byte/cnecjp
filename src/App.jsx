@@ -1,11 +1,8 @@
-'''
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './lib/supabase';
-// import { AuthProvider } from './contexts/AuthContext'; // AuthProvider를 주석 처리
+import { AuthProvider } from './contexts/AuthContext';
 import { CorporateAuthProvider } from './contexts/CorporateAuthContext';
-
-// ... (기존 컴포넌트 import는 그대로 유지)
 
 // 기존 컴포넌트
 import HomePageExactReplica from './components/HomePageExactReplica';
@@ -40,7 +37,23 @@ import CorporateLoginPage from './components/corporate/CorporateLoginPage';
 import CorporateSignupPage from './components/corporate/CorporateSignupPage';
 import CorporateLayout from './components/corporate/CorporateLayout';
 import CorporateDashboard from './components/corporate/CorporateDashboard';
+import CorporateOrderList from './components/corporate/CorporateOrderList';
+import CorporateOrderCreate from './components/corporate/CorporateOrderCreate';
+import CorporateOrderDetail from './components/corporate/CorporateOrderDetail';
 
+// 인증 상태 관리를 위한 컨텍스트 래퍼
+const AuthContextWrapper = ({ children }) => {
+  // 기업 페이지 경로인지 확인
+  const isCorporatePath = window.location.pathname.startsWith('/corporate');
+  
+  // 기업 페이지인 경우 CorporateAuthProvider만 사용
+  if (isCorporatePath) {
+    return <CorporateAuthProvider>{children}</CorporateAuthProvider>;
+  }
+  
+  // 일반 페이지인 경우 AuthProvider만 사용
+  return <AuthProvider>{children}</AuthProvider>;
+};
 
 function App() {
   const [session, setSession] = useState(null);
@@ -72,40 +85,54 @@ function App() {
   }
 
   return (
-    // <AuthProvider>
-      <CorporateAuthProvider>
-        <Router>
-          <Routes>
-            {/* 공통 페이지 */}
-            <Route path="/" element={<HomePageExactReplica />} />
-            <Route path="/login" element={<LoginPageExactReplica />} />
-            <Route path="/signup" element={<SignupPageExactReplica />} />
-            <Route path="/auth/callback" element={<AuthCallbackSafe />} />
-            
-            {/* 사용자 페이지 (일시적으로 비활성화 또는 접근 제한 필요) */}
-            <Route path="/campaign-application" element={<div>페이지 준비 중</div>} />
-            <Route path="/mypage" element={<div>페이지 준비 중</div>} />
-            {/* ... 기타 사용자 페이지 ... */}
+    <AuthContextWrapper>
+      <Router>
+        <Routes>
+          {/* 공통 페이지 */}
+          <Route path="/" element={<HomePageExactReplica />} />
+          <Route path="/login" element={<LoginPageExactReplica />} />
+          <Route path="/signup" element={<SignupPageExactReplica />} />
+          <Route path="/auth/callback" element={<AuthCallbackSafe />} />
+          
+          {/* 사용자 페이지 */}
+          <Route path="/campaign-application" element={<CampaignApplicationPage />} />
+          <Route path="/mypage" element={<MyPageWithWithdrawal />} />
+          <Route path="/profile" element={<ProfileSettings />} />
+          <Route path="/paypal-withdrawal" element={<PayPalWithdrawal />} />
+          <Route path="/company-report/:campaignId" element={<CompanyReport />} />
+          <Route path="/profile-settings" element={<ProfileSettings />} />
+          
+          {/* 관리자 페이지 */}
+          <Route path="/secret-admin-login" element={<SecretAdminLogin />} />
+          <Route path="/test-admin-login" element={<TestAdminLogin />} />
+          <Route path="/admin" element={<AdminDashboardSimple />} />
+          <Route path="/admin/campaigns" element={<AdminCampaignsWithQuestions />} />
+          <Route path="/admin/campaign-create" element={<CampaignCreationWithTranslator />} />
+          <Route path="/admin/applications" element={<ApplicationsReportSimple />} />
+          <Route path="/admin/confirmed-creators" element={<ConfirmedCreatorsReport />} />
+          <Route path="/admin/confirmed-creators/:campaignId" element={<ConfirmedCreatorsReport />} />
+          <Route path="/admin/sns-uploads" element={<SNSUploadFinalReport />} />
+          <Route path="/admin/sns-uploads/:campaignId" element={<SNSUploadFinalReport />} />
+          <Route path="/admin/campaign-report/:campaignId" element={<CampaignReport />} />
+          <Route path="/admin/email-templates" element={<EmailTemplateManager />} />
+          <Route path="/admin/users" element={<UserApprovalManagerEnhanced />} />
+          <Route path="/admin/user-approval" element={<UserApprovalManagerEnhanced />} />
+          <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
+          <Route path="/admin/system-settings" element={<SystemSettings />} />
 
-            {/* 관리자 페이지 (일시적으로 비활성화 또는 접근 제한 필요) */}
-            <Route path="/admin" element={<div>페이지 준비 중</div>} />
-            {/* ... 기타 관리자 페이지 ... */}
-
-            {/* 기업 페이지 */}
-            <Route path="/corporate/login" element={<CorporateLoginPage />} />
-            <Route path="/corporate/signup" element={<CorporateSignupPage />} />
-            <Route path="/corporate" element={<CorporateLayout />}>
-              <Route path="dashboard" element={<CorporateDashboard />} />
-            </Route>
-
-            {/* 임시: 다른 모든 경로를 홈으로 리디렉션 */}
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </Router>
-      </CorporateAuthProvider>
-    // </AuthProvider>
+          {/* 기업 페이지 */}
+          <Route path="/corporate/login" element={<CorporateLoginPage />} />
+          <Route path="/corporate/signup" element={<CorporateSignupPage />} />
+          <Route path="/corporate" element={<CorporateLayout />}>
+            <Route path="dashboard" element={<CorporateDashboard />} />
+            <Route path="orders" element={<CorporateOrderList />} />
+            <Route path="orders/create" element={<CorporateOrderCreate />} />
+            <Route path="orders/:orderId" element={<CorporateOrderDetail />} />
+          </Route>
+        </Routes>
+      </Router>
+    </AuthContextWrapper>
   );
 }
 
 export default App;
-'''
