@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './lib/supabase';
-import { useTranslation } from 'react-i18next';
 
 // 기존 컴포넌트
 import HomePageExactReplica from './components/HomePageExactReplica';
@@ -48,7 +47,6 @@ import CorporateOrdersManager from './components/admin/CorporateOrdersManager';
 import GuideTemplatesManager from './components/admin/GuideTemplatesManager';
 
 function App() {
-  const { t, i18n } = useTranslation();
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -76,8 +74,8 @@ function App() {
   // 언어 설정
   useEffect(() => {
     const lang = localStorage.getItem('language') || 'ja';
-    i18n.changeLanguage(lang);
-  }, [i18n]);
+    // i18n 관련 코드 제거
+  }, []);
 
   if (loading) {
     return (
