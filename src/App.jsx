@@ -40,6 +40,7 @@ import CorporateDashboard from './components/corporate/CorporateDashboard';
 import CorporateOrderList from './components/corporate/CorporateOrderList';
 import CorporateOrderCreate from './components/corporate/CorporateOrderCreate';
 import CorporateOrderDetail from './components/corporate/CorporateOrderDetail';
+import CorporateLanding from './components/corporate/CorporateLanding';
 
 // 인증 상태 관리를 위한 컨텍스트 래퍼
 const AuthContextWrapper = ({ children }) => {
@@ -121,10 +122,11 @@ function App() {
           <Route path="/admin/system-settings" element={<SystemSettings />} />
 
           {/* 기업 페이지 */}
+          <Route path="/corporate" element={<CorporateLanding />} />
           <Route path="/corporate/login" element={<CorporateLoginPage />} />
           <Route path="/corporate/signup" element={<CorporateSignupPage />} />
-          <Route path="/corporate" element={<CorporateLayout />}>
-            <Route path="dashboard" element={<CorporateDashboard />} />
+          <Route path="/corporate/dashboard" element={<CorporateLayout />}>
+            <Route index element={<CorporateDashboard />} />
             <Route path="orders" element={<CorporateOrderList />} />
             <Route path="orders/create" element={<CorporateOrderCreate />} />
             <Route path="orders/:orderId" element={<CorporateOrderDetail />} />

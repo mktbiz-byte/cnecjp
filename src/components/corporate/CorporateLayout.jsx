@@ -9,10 +9,10 @@ const CorporateLayout = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-50 to-purple-50">
         <div className="flex flex-col items-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-600"></div>
-          <p className="mt-4 text-gray-600 font-medium">로딩 중...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-600"></div>
+          <p className="mt-4 text-purple-800 font-medium">로딩 중...</p>
         </div>
       </div>
     );
@@ -24,8 +24,8 @@ const CorporateLayout = () => {
 
   const isActive = (path) => {
     return location.pathname === path ? 
-      'bg-indigo-800 text-white' : 
-      'text-gray-300 hover:bg-indigo-700 hover:text-white transition-colors duration-200';
+      'bg-purple-800 text-white' : 
+      'text-gray-300 hover:bg-purple-700 hover:text-white transition-colors duration-200';
   };
 
   const menuItems = [
@@ -41,11 +41,11 @@ const CorporateLayout = () => {
       <div className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-white shadow-md">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center">
-            <span className="text-xl font-bold text-indigo-700">CNEC Corp</span>
+            <span className="text-xl font-bold text-purple-700">CNEC Corp</span>
           </div>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-md text-gray-600 hover:text-gray-900 focus:outline-none"
+            className="p-2 rounded-md text-gray-600 hover:text-gray-900 focus:outline-none transition duration-150 ease-in-out"
           >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               {isMobileMenuOpen ? (
@@ -61,12 +61,12 @@ const CorporateLayout = () => {
       {/* 모바일 사이드바 */}
       <div className={`lg:hidden fixed inset-0 z-20 transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-gray-600 opacity-75" onClick={() => setIsMobileMenuOpen(false)}></div>
-        <div className="fixed inset-y-0 left-0 max-w-xs w-full bg-indigo-900 shadow-xl transform transition-transform duration-300 ease-in-out z-30 flex flex-col">
-          <div className="flex items-center justify-between h-16 px-6 bg-indigo-800">
+        <div className="fixed inset-y-0 left-0 max-w-xs w-full bg-purple-900 shadow-xl transform transition-transform duration-300 ease-in-out z-30 flex flex-col">
+          <div className="flex items-center justify-between h-16 px-6 bg-purple-800">
             <span className="text-xl font-bold text-white">CNEC Corp</span>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
-              className="p-2 rounded-md text-indigo-200 hover:text-white focus:outline-none"
+              className="p-2 rounded-md text-purple-200 hover:text-white focus:outline-none transition duration-150 ease-in-out"
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -79,7 +79,7 @@ const CorporateLayout = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center px-4 py-3 text-base font-medium rounded-md ${isActive(item.path)}`}
+                  className={`flex items-center px-4 py-3 text-base font-medium rounded-md ${isActive(item.path)} transition duration-150 ease-in-out transform hover:scale-105`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <svg className="mr-3 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -90,20 +90,23 @@ const CorporateLayout = () => {
               ))}
             </nav>
           </div>
-          <div className="p-4 border-t border-indigo-800">
+          <div className="p-4 border-t border-purple-800">
             <div className="flex items-center mb-4">
-              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-700 flex items-center justify-center">
+              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gradient-to-r from-purple-600 to-blue-500 flex items-center justify-center">
                 <span className="text-xl font-medium text-white">{corporateAccount?.company_name?.charAt(0) || 'C'}</span>
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-white">{corporateAccount?.company_name || '기업명'}</p>
-                <p className="text-xs text-indigo-300 truncate">{corporateUser?.email}</p>
+                <p className="text-xs text-purple-300 truncate">{corporateUser?.email}</p>
               </div>
             </div>
             <button
               onClick={signOut}
-              className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none"
+              className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none transition duration-150 ease-in-out transform hover:scale-105"
             >
+              <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
+              </svg>
               로그아웃
             </button>
           </div>
@@ -113,8 +116,8 @@ const CorporateLayout = () => {
       {/* 데스크톱 레이아웃 */}
       <div className="flex h-screen">
         {/* 사이드바 */}
-        <div className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-indigo-900 shadow-xl z-10">
-          <div className="flex items-center h-16 px-6 bg-indigo-800">
+        <div className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-gradient-to-b from-purple-900 to-purple-800 shadow-xl z-10">
+          <div className="flex items-center h-16 px-6 bg-purple-800">
             <span className="text-xl font-bold text-white">CNEC Corp</span>
           </div>
           <div className="flex-1 flex flex-col overflow-y-auto">
@@ -123,7 +126,7 @@ const CorporateLayout = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center px-4 py-3 text-sm font-medium rounded-md ${isActive(item.path)}`}
+                  className={`flex items-center px-4 py-3 text-sm font-medium rounded-md ${isActive(item.path)} transition duration-150 ease-in-out transform hover:scale-105`}
                 >
                   <svg className="mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
@@ -133,20 +136,23 @@ const CorporateLayout = () => {
               ))}
             </nav>
           </div>
-          <div className="p-4 border-t border-indigo-800">
+          <div className="p-4 border-t border-purple-800">
             <div className="flex items-center mb-4">
-              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-700 flex items-center justify-center">
+              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gradient-to-r from-purple-600 to-blue-500 flex items-center justify-center">
                 <span className="text-xl font-medium text-white">{corporateAccount?.company_name?.charAt(0) || 'C'}</span>
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-white">{corporateAccount?.company_name || '기업명'}</p>
-                <p className="text-xs text-indigo-300 truncate">{corporateUser?.email}</p>
+                <p className="text-xs text-purple-300 truncate">{corporateUser?.email}</p>
               </div>
             </div>
             <button
               onClick={signOut}
-              className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none"
+              className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none transition duration-150 ease-in-out transform hover:scale-105"
             >
+              <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
+              </svg>
               로그아웃
             </button>
           </div>
@@ -167,7 +173,7 @@ const CorporateLayout = () => {
           </header>
 
           {/* 페이지 콘텐츠 */}
-          <main className="flex-1 overflow-y-auto bg-gray-50">
+          <main className="flex-1 overflow-y-auto bg-gradient-to-br from-blue-50 to-purple-50">
             <div className="py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
               <Outlet />
             </div>
