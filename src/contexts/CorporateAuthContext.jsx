@@ -23,12 +23,16 @@ export const CorporateAuthProvider = ({ children }) => {
             const account = await loadCorporateAccount(session.user.email);
             if (account) {
               setCorporateUser(session.user);
+              // 기업 사용자임을 나타내는 로컬 스토리지 설정
+              localStorage.setItem('corporate_user', 'true');
             } else {
               // 기업 계정이 없는 경우 corporateUser는 null로 설정
               setCorporateUser(null);
+              localStorage.removeItem('corporate_user');
             }
           } else {
             setCorporateUser(null);
+            localStorage.removeItem('corporate_user');
           }
         }
       } catch (error) {
@@ -49,14 +53,18 @@ export const CorporateAuthProvider = ({ children }) => {
         const account = await loadCorporateAccount(session.user.email);
         if (account) {
           setCorporateUser(session.user);
+          // 기업 사용자임을 나타내는 로컬 스토리지 설정
+          localStorage.setItem('corporate_user', 'true');
         } else {
           // 기업 계정이 없는 경우 corporateUser는 null로 설정
           setCorporateUser(null);
+          localStorage.removeItem('corporate_user');
         }
       } else if (event === 'SIGNED_OUT') {
         setCorporateUser(null);
         setCorporateAccount(null);
         clearCorporateCookies();
+        localStorage.removeItem('corporate_user');
       } else if (event === 'TOKEN_REFRESHED') {
         console.log("Token refreshed for corporate user");
         // 토큰 갱신 시에도 기업 계정 확인
@@ -64,11 +72,14 @@ export const CorporateAuthProvider = ({ children }) => {
           const account = await loadCorporateAccount(session.user.email);
           if (account) {
             setCorporateUser(session.user);
+            localStorage.setItem('corporate_user', 'true');
           } else {
             setCorporateUser(null);
+            localStorage.removeItem('corporate_user');
           }
         } else {
           setCorporateUser(null);
+          localStorage.removeItem('corporate_user');
         }
       }
     });
@@ -158,6 +169,7 @@ export const CorporateAuthProvider = ({ children }) => {
     try {
       // 먼저 기존 세션 정리
       await supabase.auth.signOut();
+      clearCorporateCookies();
       
       // 로그인 시도
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -175,6 +187,7 @@ export const CorporateAuthProvider = ({ children }) => {
       if (!account) {
         // 기업 계정이 없으면 로그아웃
         await supabase.auth.signOut();
+        clearCorporateCookies();
         throw new Error("기업 계정이 존재하지 않습니다.");
       }
       
@@ -182,11 +195,18 @@ export const CorporateAuthProvider = ({ children }) => {
       if (!account.is_approved) {
         // 승인되지 않은 계정이면 로그아웃
         await supabase.auth.signOut();
+        clearCorporateCookies();
         throw new Error("기업 계정이 아직 승인되지 않았습니다. 관리자에게 문의하세요.");
       }
       
       // 기업 사용자임을 나타내는 로컬 스토리지 설정
       localStorage.setItem('corporate_user', 'true');
+      
+      // 기업 전용 토큰 저장 (일반 사용자 토큰과 구분)
+      if (data.session?.access_token) {
+        localStorage.setItem('corporate_auth_token', data.session.access_token);
+        document.cookie = `corporate_token=${data.session.access_token}; path=/; max-age=86400`;
+      }
       
       return data;
     } catch (error) {
@@ -199,6 +219,7 @@ export const CorporateAuthProvider = ({ children }) => {
     try {
       // 먼저 기존 세션 정리
       await supabase.auth.signOut();
+      clearCorporateCookies();
       
       // 1. 사용자 계정 생성
       const { data, error } = await supabase.auth.signUp({
@@ -256,9 +277,11 @@ export const CorporateAuthProvider = ({ children }) => {
       
       setCorporateUser(null);
       setCorporateAccount(null);
+      localStorage.removeItem('corporate_user');
+      localStorage.removeItem('corporate_auth_token');
       
-      // 홈페이지로 리디렉션
-      window.location.href = '/';
+      // 기업 페이지로 리디렉션
+      window.location.href = '/corporate';
     } catch (error) {
       console.error("Sign out error:", error);
       setCorporateUser(null);
@@ -267,10 +290,13 @@ export const CorporateAuthProvider = ({ children }) => {
     }
   };
 
+  const isAuthenticated = !!corporateUser && !!corporateAccount;
+
   const value = {
     corporateUser,
     corporateAccount,
     loading,
+    isAuthenticated,
     signInWithEmail,
     signUpWithEmail,
     signOut,
