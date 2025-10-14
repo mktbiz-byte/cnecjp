@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { useCorporateAuth } from '../../contexts/CorporateAuthContext';
 
 const CorporateSignupPage = () => {
   const [formData, setFormData] = useState({
@@ -17,6 +17,7 @@ const CorporateSignupPage = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
+  const { signUpWithEmail } = useCorporateAuth();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -39,28 +40,14 @@ const CorporateSignupPage = () => {
     }
 
     try {
-      // 1. Supabase Auth로 사용자 계정 생성
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
+      // 기업 계정 생성
+      await signUpWithEmail(formData.email, formData.password, {
+        company_name: formData.companyName,
+        business_registration_number: formData.businessRegistrationNumber,
+        representative_name: formData.representativeName,
+        phone_number: formData.phoneNumber,
+        address: formData.address,
       });
-
-      if (authError) throw authError;
-
-      // 2. 기업 계정 정보 저장
-      const { error: corporateError } = await supabase.from('corporate_accounts').insert([
-        {
-          email: formData.email,
-          company_name: formData.companyName,
-          business_registration_number: formData.businessRegistrationNumber,
-          representative_name: formData.representativeName,
-          phone_number: formData.phoneNumber,
-          address: formData.address,
-          is_approved: false, // 관리자 승인 필요
-        },
-      ]);
-
-      if (corporateError) throw corporateError;
 
       // 성공 메시지 표시
       setSuccess(true);

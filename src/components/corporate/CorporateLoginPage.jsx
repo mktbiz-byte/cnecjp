@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { useCorporateAuth } from '../../contexts/CorporateAuthContext';
 
 const CorporateLoginPage = () => {
   const [email, setEmail] = useState('');
@@ -8,6 +8,7 @@ const CorporateLoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { signInWithEmail } = useCorporateAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -15,33 +16,7 @@ const CorporateLoginPage = () => {
     setError(null);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      // 로그인 성공 후 기업 계정 확인
-      const { data: corporateAccount, error: corporateError } = await supabase
-        .from('corporate_accounts')
-        .select('*')
-        .eq('email', email)
-        .single();
-
-      if (corporateError && corporateError.code !== 'PGRST116') {
-        throw corporateError;
-      }
-
-      if (!corporateAccount) {
-        throw new Error('기업 계정을 찾을 수 없습니다.');
-      }
-
-      if (!corporateAccount.is_approved) {
-        throw new Error('아직 승인되지 않은 계정입니다. 관리자 승인을 기다려주세요.');
-      }
-
-      // 로그인 성공 및 계정 확인 완료
+      await signInWithEmail(email, password);
       navigate('/corporate/dashboard');
     } catch (error) {
       console.error('로그인 오류:', error);

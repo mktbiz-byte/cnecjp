@@ -1,6 +1,11 @@
+'''
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './lib/supabase';
+// import { AuthProvider } from './contexts/AuthContext'; // AuthProvider를 주석 처리
+import { CorporateAuthProvider } from './contexts/CorporateAuthContext';
+
+// ... (기존 컴포넌트 import는 그대로 유지)
 
 // 기존 컴포넌트
 import HomePageExactReplica from './components/HomePageExactReplica';
@@ -33,21 +38,20 @@ import TestAdminLogin from './components/TestAdminLogin';
 // 기업 관련 컴포넌트
 import CorporateLoginPage from './components/corporate/CorporateLoginPage';
 import CorporateSignupPage from './components/corporate/CorporateSignupPage';
+import CorporateLayout from './components/corporate/CorporateLayout';
+import CorporateDashboard from './components/corporate/CorporateDashboard';
+
 
 function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 세션 상태 확인
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        setLoading(false);
-      }
-    );
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setLoading(false);
+    });
 
-    // 초기 세션 확인
     const getInitialSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
@@ -59,12 +63,6 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // 언어 설정
-  useEffect(() => {
-    const lang = localStorage.getItem('language') || 'ja';
-    // i18n 관련 코드 제거
-  }, []);
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -74,70 +72,40 @@ function App() {
   }
 
   return (
-    <Router>
-      <Routes>
-        {/* 공통 페이지 */}
-        <Route path="/" element={<HomePageExactReplica />} />
-        <Route path="/login" element={<LoginPageExactReplica />} />
-        <Route path="/signup" element={<SignupPageExactReplica />} />
-        <Route path="/auth/callback" element={<AuthCallbackSafe />} />
-        
-        {/* 사용자 페이지 */}
-        <Route path="/campaign-application" element={<CampaignApplicationPage />} />
-        <Route path="/mypage" element={<MyPageWithWithdrawal />} />
-        <Route path="/profile" element={<ProfileSettings />} />
-        <Route path="/paypal-withdrawal" element={<PayPalWithdrawal />} />
-        <Route path="/company-report/:campaignId" element={<CompanyReport />} />
-        <Route path="/profile-settings" element={<ProfileSettings />} />
-        
-        {/* 관리자 페이지 */}
-        <Route path="/secret-admin-login" element={<SecretAdminLogin />} />
-        <Route path="/test-admin-login" element={<TestAdminLogin />} />
-        <Route path="/admin" element={<AdminDashboardSimple />} />
-        <Route path="/admin/campaigns" element={<AdminCampaignsWithQuestions />} />
-        <Route path="/admin/campaign-create" element={<CampaignCreationWithTranslator />} />
-        <Route path="/admin/applications" element={<ApplicationsReportSimple />} />
-        <Route path="/admin/confirmed-creators" element={<ConfirmedCreatorsReport />} />
-        <Route path="/admin/confirmed-creators/:campaignId" element={<ConfirmedCreatorsReport />} />
-        <Route path="/admin/sns-uploads" element={<SNSUploadFinalReport />} />
-        <Route path="/admin/sns-uploads/:campaignId" element={<SNSUploadFinalReport />} />
-        <Route path="/admin/campaign-report/:campaignId" element={<CampaignReport />} />
-        <Route path="/admin/email-templates" element={<EmailTemplateManager />} />
-        <Route path="/admin/users" element={<UserApprovalManagerEnhanced />} />
-        <Route path="/admin/user-approval" element={<UserApprovalManagerEnhanced />} />
-        <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
-        <Route path="/admin/system-settings" element={<SystemSettings />} />
+    // <AuthProvider>
+      <CorporateAuthProvider>
+        <Router>
+          <Routes>
+            {/* 공통 페이지 */}
+            <Route path="/" element={<HomePageExactReplica />} />
+            <Route path="/login" element={<LoginPageExactReplica />} />
+            <Route path="/signup" element={<SignupPageExactReplica />} />
+            <Route path="/auth/callback" element={<AuthCallbackSafe />} />
+            
+            {/* 사용자 페이지 (일시적으로 비활성화 또는 접근 제한 필요) */}
+            <Route path="/campaign-application" element={<div>페이지 준비 중</div>} />
+            <Route path="/mypage" element={<div>페이지 준비 중</div>} />
+            {/* ... 기타 사용자 페이지 ... */}
 
-        {/* 기업 페이지 */}
-        <Route path="/corporate/login" element={<CorporateLoginPage />} />
-        <Route path="/corporate/signup" element={<CorporateSignupPage />} />
-        <Route
-          path="/corporate/dashboard"
-          element={session ? <div>기업 대시보드 (개발 중)</div> : <Navigate to="/corporate/login" />}
-        />
-        <Route
-          path="/corporate/orders"
-          element={session ? <div>기업 주문 목록 (개발 중)</div> : <Navigate to="/corporate/login" />}
-        />
-        <Route
-          path="/corporate/orders/create"
-          element={session ? <div>기업 주문 생성 (개발 중)</div> : <Navigate to="/corporate/login" />}
-        />
-        <Route
-          path="/corporate/orders/:orderId"
-          element={session ? <div>기업 주문 상세 (개발 중)</div> : <Navigate to="/corporate/login" />}
-        />
-        <Route
-          path="/corporate/creators"
-          element={session ? <div>크리에이터 목록 (개발 중)</div> : <Navigate to="/corporate/login" />}
-        />
-        <Route
-          path="/corporate/guides"
-          element={session ? <div>가이드 관리 (개발 중)</div> : <Navigate to="/corporate/login" />}
-        />
-      </Routes>
-    </Router>
+            {/* 관리자 페이지 (일시적으로 비활성화 또는 접근 제한 필요) */}
+            <Route path="/admin" element={<div>페이지 준비 중</div>} />
+            {/* ... 기타 관리자 페이지 ... */}
+
+            {/* 기업 페이지 */}
+            <Route path="/corporate/login" element={<CorporateLoginPage />} />
+            <Route path="/corporate/signup" element={<CorporateSignupPage />} />
+            <Route path="/corporate" element={<CorporateLayout />}>
+              <Route path="dashboard" element={<CorporateDashboard />} />
+            </Route>
+
+            {/* 임시: 다른 모든 경로를 홈으로 리디렉션 */}
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </Router>
+      </CorporateAuthProvider>
+    // </AuthProvider>
   );
 }
 
 export default App;
+'''
