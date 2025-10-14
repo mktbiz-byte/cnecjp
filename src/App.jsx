@@ -30,6 +30,10 @@ import SystemSettings from './components/admin/SystemSettings';
 import SecretAdminLogin from './components/SecretAdminLogin';
 import TestAdminLogin from './components/TestAdminLogin';
 
+// 기업 관련 컴포넌트
+import CorporateLoginPage from './components/corporate/CorporateLoginPage';
+import CorporateSignupPage from './components/corporate/CorporateSignupPage';
+
 function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -104,9 +108,33 @@ function App() {
         <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
         <Route path="/admin/system-settings" element={<SystemSettings />} />
 
-        {/* 기업 페이지 라우트는 나중에 추가 예정 */}
-        <Route path="/corporate/login" element={<div>기업 로그인 페이지 (개발 중)</div>} />
-        <Route path="/corporate/signup" element={<div>기업 회원가입 페이지 (개발 중)</div>} />
+        {/* 기업 페이지 */}
+        <Route path="/corporate/login" element={<CorporateLoginPage />} />
+        <Route path="/corporate/signup" element={<CorporateSignupPage />} />
+        <Route
+          path="/corporate/dashboard"
+          element={session ? <div>기업 대시보드 (개발 중)</div> : <Navigate to="/corporate/login" />}
+        />
+        <Route
+          path="/corporate/orders"
+          element={session ? <div>기업 주문 목록 (개발 중)</div> : <Navigate to="/corporate/login" />}
+        />
+        <Route
+          path="/corporate/orders/create"
+          element={session ? <div>기업 주문 생성 (개발 중)</div> : <Navigate to="/corporate/login" />}
+        />
+        <Route
+          path="/corporate/orders/:orderId"
+          element={session ? <div>기업 주문 상세 (개발 중)</div> : <Navigate to="/corporate/login" />}
+        />
+        <Route
+          path="/corporate/creators"
+          element={session ? <div>크리에이터 목록 (개발 중)</div> : <Navigate to="/corporate/login" />}
+        />
+        <Route
+          path="/corporate/guides"
+          element={session ? <div>가이드 관리 (개발 중)</div> : <Navigate to="/corporate/login" />}
+        />
       </Routes>
     </Router>
   );
