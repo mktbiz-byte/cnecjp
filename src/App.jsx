@@ -30,22 +30,6 @@ import SystemSettings from './components/admin/SystemSettings';
 import SecretAdminLogin from './components/SecretAdminLogin';
 import TestAdminLogin from './components/TestAdminLogin';
 
-// 기업 관련 컴포넌트
-import CorporateLoginPage from './components/corporate/CorporateLoginPage';
-import CorporateSignupPage from './components/corporate/CorporateSignupPage';
-import CorporateDashboard from './components/corporate/CorporateDashboard';
-import CorporateOrderList from './components/corporate/CorporateOrderList';
-import CorporateOrderCreate from './components/corporate/CorporateOrderCreate';
-import CorporateOrderDetail from './components/corporate/CorporateOrderDetail';
-import CorporateCreatorList from './components/corporate/CorporateCreatorList';
-import CorporateGuideManagement from './components/corporate/CorporateGuideManagement';
-
-// 관리자 컴포넌트
-import AdminLayout from './components/admin/AdminLayout';
-import CorporateAccountsManager from './components/admin/CorporateAccountsManager';
-import CorporateOrdersManager from './components/admin/CorporateOrdersManager';
-import GuideTemplatesManager from './components/admin/GuideTemplatesManager';
-
 function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -120,47 +104,9 @@ function App() {
         <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
         <Route path="/admin/system-settings" element={<SystemSettings />} />
 
-        {/* 기업 페이지 */}
-        <Route path="/corporate/login" element={<CorporateLoginPage />} />
-        <Route path="/corporate/signup" element={<CorporateSignupPage />} />
-        <Route
-          path="/corporate/dashboard"
-          element={session ? <CorporateDashboard /> : <Navigate to="/corporate/login" />}
-        />
-        <Route
-          path="/corporate/orders"
-          element={session ? <CorporateOrderList /> : <Navigate to="/corporate/login" />}
-        />
-        <Route
-          path="/corporate/orders/create"
-          element={session ? <CorporateOrderCreate /> : <Navigate to="/corporate/login" />}
-        />
-        <Route
-          path="/corporate/orders/:orderId"
-          element={session ? <CorporateOrderDetail /> : <Navigate to="/corporate/login" />}
-        />
-        <Route
-          path="/corporate/creators"
-          element={session ? <CorporateCreatorList /> : <Navigate to="/corporate/login" />}
-        />
-        <Route
-          path="/corporate/guides"
-          element={session ? <CorporateGuideManagement /> : <Navigate to="/corporate/login" />}
-        />
-
-        {/* 기업 관리자 페이지 */}
-        <Route
-          path="/admin/corporate-accounts"
-          element={session ? <AdminLayout><CorporateAccountsManager /></AdminLayout> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/admin/corporate-orders"
-          element={session ? <AdminLayout><CorporateOrdersManager /></AdminLayout> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/admin/guide-templates"
-          element={session ? <AdminLayout><GuideTemplatesManager /></AdminLayout> : <Navigate to="/login" />}
-        />
+        {/* 기업 페이지 라우트는 나중에 추가 예정 */}
+        <Route path="/corporate/login" element={<div>기업 로그인 페이지 (개발 중)</div>} />
+        <Route path="/corporate/signup" element={<div>기업 회원가입 페이지 (개발 중)</div>} />
       </Routes>
     </Router>
   );
