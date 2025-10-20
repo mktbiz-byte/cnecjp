@@ -100,25 +100,29 @@ const SignupPageExactReplica = () => {
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center p-4">
-        <Card className="max-w-md mx-auto text-center shadow-xl border-0">
-          <CardContent className="pt-8">
-            <div className="text-6xl mb-4">📧</div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              メール確認が必要です
-            </h2>
-            <p className="text-gray-600 mb-6">
-              会員登録が完了しました！メールを確認してアカウントを有効化してください。
-            </p>
-            <div className="space-y-3">
-              <Button onClick={() => navigate('/login')} className="w-full bg-purple-600 hover:bg-purple-700">
-                ログインページへ
-              </Button>
-              <Button variant="outline" onClick={() => navigate('/')} className="w-full">
-                ホームに戻る
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="max-w-md mx-auto text-center bg-white rounded-lg shadow-xl p-8">
+          <div className="text-6xl mb-4">📧</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            メール確認が必要です
+          </h2>
+          <p className="text-gray-600 mb-6">
+            会員登録が完了しました！メールを確認してアカウントを有効化してください。
+          </p>
+          <div className="space-y-3">
+            <button 
+              onClick={() => navigate('/login')} 
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-md transition-colors"
+            >
+              ログインページへ
+            </button>
+            <button 
+              onClick={() => navigate('/')} 
+              className="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-md transition-colors"
+            >
+              ホームに戻る
+            </button>
+          </div>
+        </div>
       </div>
     )
   }
