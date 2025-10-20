@@ -160,7 +160,13 @@ const CampaignApplicationUpdated = () => {
       postalCodeRequired: '郵便番号は必須です',
       addressRequired: '住所は必須です',
       phoneRequired: '電話番号は必須です',
-      instagramRequired: 'Instagram URLは必須です'
+      instagramRequired: 'Instagram URLは必須です',
+      portraitRightsRequired: '肖像権の使用許諾への同意が必要です',
+      
+      // 肖像権使用許諾
+      portraitRightsTitle: '肖像権使用許諾について',
+      portraitRightsConsent: '本キャンペーンにおいて制作する動画コンテンツに含まれる私の肖像（顔、姿、音声を含む）について、ブランド及びCNECプラットフォームが、マーケティング、プロモーション、商業目的で使用することを、コンテンツ提出日から1年間許諾します。当該コンテンツは、ソーシャルメディア、ウェブサイト、広告、販促資料等、様々なメディアチャネルで使用される可能性があることを理解しています。',
+      portraitRightsConsentShort: '動画コンテンツの肖像権を1年間使用することに同意します'
     }
   }
 
