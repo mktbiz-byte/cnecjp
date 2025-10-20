@@ -47,7 +47,10 @@ const CampaignApplicationUpdated = () => {
     
     // 오프라인 방문 관련
     offline_visit_available: false,
-    offline_visit_notes: ''
+    offline_visit_notes: '',
+    
+    // 초상권 동의
+    portrait_rights_consent: false
   })
 
   // 다국어 텍스트
@@ -156,11 +159,17 @@ const CampaignApplicationUpdated = () => {
       youtubePlaceholder: 'https://youtube.com/@username',
       tiktokPlaceholder: 'https://tiktok.com/@username',
       
-      // 검증 메시지
+      // 検証 メッセージ
       postalCodeRequired: '郵便番号は必須です',
       addressRequired: '住所は必須です',
       phoneRequired: '電話番号は必須です',
-      instagramRequired: 'Instagram URLは必須です'
+      instagramRequired: 'Instagram URLは必須です',
+      portraitRightsRequired: '肖像権の使用許諾への同意が必要です',
+      
+      // 肖像権使用許諾
+      portraitRightsTitle: '肖像権使用許諾について',
+      portraitRightsConsent: '本キャンペーンにおいて制作する動画コンテンツに含まれる私の肖像（顔、姿、音声を含む）について、ブランド及びCNECプラットフォームが、マーケティング、プロモーション、商業目的で使用することを、コンテンツ提出日から1年間許諾します。当該コンテンツは、ソーシャルメディア、ウェブサイト、広告、販促資料等、様々なメディアチャネルで使用される可能性があることを理解しています。',
+      portraitRightsConsentShort: '動画コンテンツの肖像権を1年間使用することに同意します'}
     }
   }
 
@@ -291,6 +300,11 @@ const CampaignApplicationUpdated = () => {
       errors.push(language === 'ja' ? '質問 4は必須です' : '질문 4는 필수입니다')
     }
 
+    // 초상권 동의 검증
+    if (!applicationData.portrait_rights_consent) {
+      errors.push(t.portraitRightsRequired)
+    }
+
     return errors
   }
 
@@ -327,6 +341,7 @@ const CampaignApplicationUpdated = () => {
         additional_info: applicationData.additional_info || null,
         offline_visit_available: applicationData.offline_visit_available || false,
         offline_visit_notes: applicationData.offline_visit_notes || null,
+        portrait_rights_consent: applicationData.portrait_rights_consent || false,
         status: 'pending',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -1004,6 +1019,31 @@ const CampaignApplicationUpdated = () => {
                   </div>
                 </div>
               )}
+
+              {/* 초상권 동의 섹션 */}
+              <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-3">
+                  {t.portraitRightsTitle}
+                </h3>
+                <div className="bg-white rounded p-4 mb-4 text-sm text-gray-700 leading-relaxed">
+                  {t.portraitRightsConsent}
+                </div>
+                <label className="flex items-start cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={applicationData.portrait_rights_consent}
+                    onChange={(e) => setApplicationData(prev => ({
+                      ...prev,
+                      portrait_rights_consent: e.target.checked
+                    }))}
+                    className="mt-1 mr-3 h-5 w-5 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                    required
+                  />
+                  <span className="text-sm font-medium text-gray-900">
+                    {t.portraitRightsConsentShort} <span className="text-red-500">*</span>
+                  </span>
+                </label>
+              </div>
 
               {/* 추가 정보 섹션 */}
               <div>
