@@ -47,6 +47,7 @@ import EmailSettings from './components/admin/EmailSettings';
 import SecretAdminLogin from './components/SecretAdminLogin';
 import TestAdminLogin from './components/TestAdminLogin';
 import CampaignApplicationUpdated from './components/CampaignApplicationUpdated';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // 다국어 지원 초기화
 import i18n from './lib/i18n';
@@ -86,22 +87,22 @@ const AppContent = () => {
         {/* 관리자 페이지 - 보안을 위해 /admin/ 경로 제거 */}
         <Route path="/secret-admin-login" element={<SecretAdminLogin />} />
         <Route path="/test-admin-login" element={<TestAdminLogin />} />
-        <Route path="/dashboard" element={<AdminDashboardSimple />} />
-        <Route path="/campaigns-manage" element={<AdminCampaignsWithQuestions />} />
-        <Route path="/campaign-create" element={<CampaignCreationWithTranslator />} />
-        <Route path="/applications-manage" element={<ApplicationsReportSimple />} />
-        <Route path="/applications-report" element={<ApplicationsReportSimple />} />
-        <Route path="/confirmed-creators" element={<AdminConfirmedCreators />} />
-        <Route path="/confirmed-creators/:campaignId" element={<ConfirmedCreatorsNew />} />
-        <Route path="/sns-uploads" element={<SNSUploadNew />} />
-        <Route path="/sns-uploads/:campaignId" element={<SNSUploadNew />} />
-        <Route path="/campaign-report/:campaignId" element={<CampaignReportEnhanced />} />
-        <Route path="/email-templates" element={<EmailTemplateManager />} />
-        <Route path="/users-manage" element={<UserApprovalManagerEnhanced />} />
-        <Route path="/user-approval" element={<UserApprovalManagerEnhanced />} />
-        <Route path="/withdrawals-manage" element={<AdminWithdrawals />} />
-        <Route path="/system-settings" element={<SystemSettings />} />
-        <Route path="/email-settings" element={<EmailSettings />} />
+        <Route path="/dashboard" element={<ProtectedRoute requireAdmin={true}><AdminDashboardSimple /></ProtectedRoute>} />
+        <Route path="/campaigns-manage" element={<ProtectedRoute requireAdmin={true}><AdminCampaignsWithQuestions /></ProtectedRoute>} />
+        <Route path="/campaign-create" element={<ProtectedRoute requireAdmin={true}><CampaignCreationWithTranslator /></ProtectedRoute>} />
+        <Route path="/applications-manage" element={<ProtectedRoute requireAdmin={true}><ApplicationsReportSimple /></ProtectedRoute>} />
+        <Route path="/applications-report" element={<ProtectedRoute requireAdmin={true}><ApplicationsReportSimple /></ProtectedRoute>} />
+        <Route path="/confirmed-creators" element={<ProtectedRoute requireAdmin={true}><AdminConfirmedCreators /></ProtectedRoute>} />
+        <Route path="/confirmed-creators/:campaignId" element={<ProtectedRoute requireAdmin={true}><ConfirmedCreatorsNew /></ProtectedRoute>} />
+        <Route path="/sns-uploads" element={<ProtectedRoute requireAdmin={true}><SNSUploadNew /></ProtectedRoute>} />
+        <Route path="/sns-uploads/:campaignId" element={<ProtectedRoute requireAdmin={true}><SNSUploadNew /></ProtectedRoute>} />
+        <Route path="/campaign-report/:campaignId" element={<ProtectedRoute requireAdmin={true}><CampaignReportEnhanced /></ProtectedRoute>} />
+        <Route path="/email-templates" element={<ProtectedRoute requireAdmin={true}><EmailTemplateManager /></ProtectedRoute>} />
+        <Route path="/users-manage" element={<ProtectedRoute requireAdmin={true}><UserApprovalManagerEnhanced /></ProtectedRoute>} />
+        <Route path="/user-approval" element={<ProtectedRoute requireAdmin={true}><UserApprovalManagerEnhanced /></ProtectedRoute>} />
+        <Route path="/withdrawals-manage" element={<ProtectedRoute requireAdmin={true}><AdminWithdrawals /></ProtectedRoute>} />
+        <Route path="/system-settings" element={<ProtectedRoute requireAdmin={true}><SystemSettings /></ProtectedRoute>} />
+        <Route path="/email-settings" element={<ProtectedRoute requireAdmin={true}><EmailSettings /></ProtectedRoute>} />
       </Routes>
     </div>
   );
