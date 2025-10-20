@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useLanguage } from '../../contexts/LanguageContext'
-import { database } from '../../lib/supabase'
+import { database, storage } from '../../lib/supabase'
 import AdminNavigation from './AdminNavigation'
 
 const CampaignCreationWithTranslator = () => {
@@ -16,6 +16,7 @@ const CampaignCreationWithTranslator = () => {
     description: '',
     requirements: '',
     category: 'beauty',
+    image_url: '',
     reward_amount: '',
     max_participants: '',
     application_deadline: '',
@@ -49,6 +50,8 @@ const CampaignCreationWithTranslator = () => {
   const [processing, setProcessing] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [imageFile, setImageFile] = useState(null)
 
   // 번역기 상태
   const [koreanText, setKoreanText] = useState('')
@@ -114,6 +117,51 @@ const CampaignCreationWithTranslator = () => {
     }
   }
 
+  // 이미지 업로드 핸들러
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // 파일 크기 체크 (5MB 제한)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('イメージファイルのサイズは5MB以下である必要があります。')
+      return
+    }
+
+    // 파일 형식 체크
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      setError('JPG、PNG、WEBP形式の画像のみアップロード可能です。')
+      return
+    }
+
+    try {
+      setUploadingImage(true)
+      setError('')
+      setImageFile(file)
+
+      // Supabase Storage에 업로드
+      const result = await storage.uploadCampaignImage(file)
+
+      if (result.success) {
+        // 업로드 성공 시 URL을 폼에 설정
+        setCampaignForm(prev => ({
+          ...prev,
+          image_url: result.url
+        }))
+        setSuccess('画像が正常にアップロードされました！')
+        setTimeout(() => setSuccess(''), 3000)
+      } else {
+        throw new Error(result.error || '画像のアップロードに失敗しました。')
+      }
+    } catch (error) {
+      console.error('Image upload error:', error)
+      setError(error.message || '画像のアップロード中にエラーが発生しました。')
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
   // 수정 모드일 때 기존 캠페인 데이터 로드
   useEffect(() => {
     const loadCampaignForEdit = async () => {
@@ -129,6 +177,7 @@ const CampaignCreationWithTranslator = () => {
               description: campaign.description || '',
               requirements: campaign.requirements || '',
               category: campaign.category || 'beauty',
+              image_url: campaign.image_url || '',
               reward_amount: campaign.reward_amount || '',
               max_participants: campaign.max_participants || '',
               application_deadline: campaign.application_deadline || '',
@@ -361,6 +410,35 @@ const CampaignCreationWithTranslator = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="브랜드명을 입력하세요"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  キャンペーン画像
+                </label>
+                <div className="space-y-2">
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    onChange={handleImageUpload}
+                    disabled={uploadingImage}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {uploadingImage && (
+                    <p className="text-sm text-blue-600">画像をアップロード中...</p>
+                  )}
+                  {campaignForm.image_url && (
+                    <div className="mt-2">
+                      <img 
+                        src={campaignForm.image_url} 
+                        alt="Campaign preview" 
+                        className="h-32 w-auto object-cover rounded border"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">画像が正常にアップロードされました</p>
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-500">最大ファイルサイズ: 5MB. 形式: JPG, PNG, WEBP</p>
+                </div>
               </div>
 
               <div>

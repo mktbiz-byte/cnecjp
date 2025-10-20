@@ -342,13 +342,22 @@ const HomePageExactReplica = () => {
               <p className="text-gray-500">新しいキャンペーンが開始されるまでお待ちください。</p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
               {campaigns.map((campaign) => (
                 <Card 
                   key={campaign.id} 
-                  className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-white"
+                  className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-white overflow-hidden"
                   onClick={() => handleCampaignClick(campaign)}
                 >
+                  {campaign.image_url && (
+                    <div className="w-full h-48 overflow-hidden">
+                      <img 
+                        src={campaign.image_url} 
+                        alt={campaign.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
                   <CardHeader className="pb-4">
                     <div className="flex justify-between items-start mb-2">
                       <CardTitle className="text-lg font-bold text-gray-800 leading-tight">

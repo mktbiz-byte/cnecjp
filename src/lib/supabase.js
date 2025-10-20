@@ -1040,3 +1040,65 @@ export const database = {
 }
 
 export default supabase
+
+
+// Storage helper functions for image uploads
+export const storage = {
+  async uploadCampaignImage(file) {
+    try {
+      // Generate unique filename
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+      const filePath = `campaigns/${fileName}`
+
+      // Upload file to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('campaign-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        })
+
+      if (error) {
+        console.error('Upload error:', error)
+        throw error
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('campaign-images')
+        .getPublicUrl(filePath)
+
+      return {
+        success: true,
+        url: publicUrl,
+        path: filePath
+      }
+    } catch (error) {
+      console.error('Storage upload error:', error)
+      return {
+        success: false,
+        error: error.message
+      }
+    }
+  },
+
+  async deleteCampaignImage(filePath) {
+    try {
+      const { error } = await supabase.storage
+        .from('campaign-images')
+        .remove([filePath])
+
+      if (error) throw error
+
+      return { success: true }
+    } catch (error) {
+      console.error('Storage delete error:', error)
+      return {
+        success: false,
+        error: error.message
+      }
+    }
+  }
+}
+
