@@ -267,6 +267,9 @@ const CampaignCreationWithTranslator = () => {
       }
 
       // 캠페인 데이터 준비
+      console.log('=== 캠페인 저장 시작 ===');
+      console.log('campaignForm.image_url:', campaignForm.image_url);
+      
       const campaignData = {
         ...campaignForm,
         reward_amount: parseInt(campaignForm.reward_amount) || 0,
@@ -287,10 +290,15 @@ const CampaignCreationWithTranslator = () => {
         question4_options: campaignForm.question4_options || ''
       }
 
+      console.log('campaignData:', campaignData);
+      console.log('campaignData.image_url:', campaignData.image_url);
+      
       let result
       if (editId) {
         // 수정 모드
+        console.log('캠페인 수정 모드 - ID:', editId);
         result = await database.campaigns.update(editId, campaignData)
+        console.log('수정 결과:', result);
       } else {
         // 생성 모드
         result = await database.campaigns.create(campaignData)
@@ -310,6 +318,7 @@ const CampaignCreationWithTranslator = () => {
         description: '',
         requirements: '',
         category: 'beauty',
+        image_url: '',
         reward_amount: '',
         max_participants: '',
         application_deadline: '',
