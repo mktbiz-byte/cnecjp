@@ -272,6 +272,7 @@ const CampaignCreationWithTranslator = () => {
       
       const campaignData = {
         ...campaignForm,
+        image_url: campaignForm.image_url || '',
         reward_amount: parseInt(campaignForm.reward_amount) || 0,
         max_participants: parseInt(campaignForm.max_participants) || 0,
         target_platforms: campaignForm.target_platforms,
