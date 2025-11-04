@@ -655,6 +655,7 @@ const HomePageExactReplica = () => {
                 <li><a href="#guide" className="hover:text-white transition-colors">参加方法</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">よくある質問</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">お問い合わせ</a></li>
+                <li><a href="/privacy" className="hover:text-white transition-colors">プライバシーポリシー</a></li>
               </ul>
             </div>
             
