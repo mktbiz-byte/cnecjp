@@ -47,7 +47,7 @@ const AuthCallbackSafe = () => {
             
             // 관리자인지 확인하고 적절한 페이지로 리다이렉트
             const userEmail = sessionData.session.user.email
-            const isAdmin = userEmail?.includes('mkt_biz@cnec.co.kr') || userEmail?.includes('admin@cnec.test')
+            const isAdmin = userEmail?.includes('mkt_biz@cnec.co.kr') || userEmail?.includes('admin@cnec.test') || userEmail?.includes('acrossx@howlab.co.kr') || userEmail?.includes('appearyong@gmail.com')
             
             setTimeout(() => {
               if (isAdmin) {
@@ -73,7 +73,7 @@ const AuthCallbackSafe = () => {
                 try {
                   const { data: newSession } = await supabase.auth.getSession()
                   const userEmail = newSession?.session?.user?.email
-                  const isAdmin = userEmail?.includes('mkt_biz@cnec.co.kr') || userEmail?.includes('admin@cnec.test')
+                  const isAdmin = userEmail?.includes('mkt_biz@cnec.co.kr') || userEmail?.includes('admin@cnec.test') || userEmail?.includes('acrossx@howlab.co.kr') || userEmail?.includes('appearyong@gmail.com')
                   
                   if (isAdmin) {
                     navigate('/dashboard', { replace: true })

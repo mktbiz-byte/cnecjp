@@ -31,7 +31,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     // 관리자 권한 확인 - 테스트 계정 포함
-    if (!user || (!user.email?.includes('mkt_biz@cnec.co.kr') && !user.email?.includes('admin@cnec.test') && !user.email?.includes('acrossx@howlab.co.kr'))) {
+    if (!user || (!user.email?.includes('mkt_biz@cnec.co.kr') && !user.email?.includes('admin@cnec.test') && !user.email?.includes('acrossx@howlab.co.kr') && !user.email?.includes('appearyong@gmail.com'))) {
       console.log('관리자 권한 없음:', user?.email)
       navigate('/')
       return

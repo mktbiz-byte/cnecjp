@@ -43,7 +43,7 @@ const AdminCampaigns = () => {
 
   useEffect(() => {
     // 관리자 권한 확인
-    if (!user || !user.email?.includes('mkt_biz@cnec.co.kr')) {
+    if (!user || (!user.email?.includes('mkt_biz@cnec.co.kr') && !user.email?.includes('admin@cnec.test') && !user.email?.includes('acrossx@howlab.co.kr') && !user.email?.includes('appearyong@gmail.com'))) {
       navigate('/')
       return
     }
