@@ -191,21 +191,16 @@ export const AuthProvider = ({ children }) => {
 
   const signInWithGoogle = async () => {
     try {
-      // iOS 환경 감지
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-      const isInAppBrowser = /(FBAN|FBAV|Instagram|Line|Twitter|WebView)/i.test(navigator.userAgent);
-      
-      // OAuth 요청 옵션 설정
+      // OAuth 요청 옵션 설정 - Google 정책 준수
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
           skipBrowserRedirect: false,
+          flowType: 'pkce', // PKCE flow 명시적 설정
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent',
-            // iOS에서 WebView로 인식되지 않도록 추가 파라미터 설정
-            ...(isIOS && { display: 'page' })
+            prompt: 'select_account'
           }
         }
       });
