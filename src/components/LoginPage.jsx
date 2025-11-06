@@ -23,7 +23,7 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false)
 
   // 로그인 후 리다이렉트할 경로
-  const from = location.state?.from?.pathname || '/'
+  const from = location.state?.from?.pathname || '/mypage'
 
   const handleInputChange = (e) => {
     const { name, value } = e.target

@@ -37,9 +37,9 @@ const AuthCallback = () => {
             : 'ログインが完了しました。しばらくしてホームページに移動します。'
           )
           
-          // 2초 후 홈페이지로 리다이렉트
+          // 2초 후 마이페이지로 리다이렉트
           setTimeout(() => {
-            navigate('/', { replace: true })
+            navigate('/mypage', { replace: true })
           }, 2000)
         } else {
           setStatus('error')
@@ -61,10 +61,10 @@ const AuthCallback = () => {
     handleAuthCallback()
   }, [language, navigate])
 
-  // 이미 로그인된 사용자는 홈으로 리다이렉트
+  // 이미 로그인된 사용자는 마이페이지로 리다이렉트
   useEffect(() => {
     if (user && status === 'loading') {
-      navigate('/', { replace: true })
+      navigate('/mypage', { replace: true })
     }
   }, [user, status, navigate])
 
