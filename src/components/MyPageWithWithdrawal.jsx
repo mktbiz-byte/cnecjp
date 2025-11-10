@@ -1394,6 +1394,42 @@ const MyPageWithWithdrawal = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             {application.status === 'approved' ? (
                               <div className="space-y-2">
+                                {/* 송장번호 및 가이드 URL */}
+                                {(application.tracking_number || application.guide_url) && (
+                                  <div className="mb-3 p-3 bg-blue-50 rounded-lg">
+                                    {application.tracking_number && (
+                                      <div className="text-xs mb-2">
+                                        <span className="font-medium text-gray-700">
+                                          {language === 'ko' ? '송장번호:' : '追跡番号:'}
+                                        </span>
+                                        <span className="ml-2 text-gray-900">{application.tracking_number}</span>
+                                      </div>
+                                    )}
+                                    {application.shipping_date && (
+                                      <div className="text-xs mb-2">
+                                        <span className="font-medium text-gray-700">
+                                          {language === 'ko' ? '발송일:' : '発送日:'}
+                                        </span>
+                                        <span className="ml-2 text-gray-900">
+                                          {new Date(application.shipping_date).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'ja-JP')}
+                                        </span>
+                                      </div>
+                                    )}
+                                    {application.guide_url && (
+                                      <div className="text-xs">
+                                        <a
+                                          href={application.guide_url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium"
+                                        >
+                                          📖 {language === 'ko' ? '가이드 보기' : 'ガイドを見る'}
+                                        </a>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                                
                                 <div className="flex flex-wrap gap-2">
                                   {application.google_drive_url && (
                                     <a
