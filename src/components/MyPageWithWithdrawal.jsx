@@ -92,7 +92,10 @@ const MyPageWithWithdrawal = () => {
     other_sns_url: '',
     instagram_followers: '',
     tiktok_followers: '',
-    youtube_subscribers: ''
+    youtube_subscribers: '',
+    
+    sms_consent: true,
+    email_consent: true
   })
 
   // 다국어 텍스트
@@ -315,7 +318,10 @@ const MyPageWithWithdrawal = () => {
           other_sns_url: profileData.other_sns_url || '',
           instagram_followers: profileData.instagram_followers || '',
           tiktok_followers: profileData.tiktok_followers || '',
-          youtube_subscribers: profileData.youtube_subscribers || ''
+          youtube_subscribers: profileData.youtube_subscribers || '',
+          
+          sms_consent: profileData.sms_consent !== undefined ? profileData.sms_consent : true,
+          email_consent: profileData.email_consent !== undefined ? profileData.email_consent : true
         })
       }
       
@@ -523,6 +529,10 @@ const MyPageWithWithdrawal = () => {
           updateData.youtube_subscribers = null
         }
       }
+      
+      // 마케팅 수신 동의
+      if (editForm.sms_consent !== undefined) updateData.sms_consent = editForm.sms_consent
+      if (editForm.email_consent !== undefined) updateData.email_consent = editForm.email_consent
       
       // 업데이트 시간 추가
       updateData.updated_at = new Date().toISOString()
@@ -1296,6 +1306,41 @@ const MyPageWithWithdrawal = () => {
                         {profile?.youtube_subscribers ? profile.youtube_subscribers.toLocaleString() : (language === 'ja' ? '未設定' : '설정되지 않음')}
                       </p>
                     )}
+                  </div>
+                </div>
+              </div>
+
+              {/* 마케팅 수신 동의 */}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  {language === 'ja' ? 'マーケティング受信同意' : '마케팅 수신 동의'}
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="sms_consent"
+                      checked={editForm.sms_consent}
+                      onChange={(e) => setEditForm({...editForm, sms_consent: e.target.checked})}
+                      disabled={!isEditing}
+                      className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 disabled:opacity-50"
+                    />
+                    <label htmlFor="sms_consent" className="ml-2 block text-sm text-gray-700">
+                      {language === 'ja' ? 'SMS受信同意' : 'SMS 수신 동의'}
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="email_consent"
+                      checked={editForm.email_consent}
+                      onChange={(e) => setEditForm({...editForm, email_consent: e.target.checked})}
+                      disabled={!isEditing}
+                      className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 disabled:opacity-50"
+                    />
+                    <label htmlFor="email_consent" className="ml-2 block text-sm text-gray-700">
+                      {language === 'ja' ? 'メール受信同意' : '이메일 수신 동의'}
+                    </label>
                   </div>
                 </div>
               </div>
