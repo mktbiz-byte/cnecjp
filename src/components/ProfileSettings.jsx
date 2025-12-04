@@ -30,7 +30,9 @@ const ProfileSettings = () => {
     instagram_url: '',
     youtube_url: '',
     tiktok_url: '',
-    bio: ''
+    bio: '',
+    sms_consent: true,
+    email_consent: true
   })
   
   const [passwordData, setPasswordData] = useState({
@@ -67,6 +69,9 @@ const ProfileSettings = () => {
       save: '저장',
       saving: '저장 중...',
       backToHome: '홈으로 돌아가기',
+      marketingConsent: '마케팅 수신 동의',
+      smsConsent: 'SMS 수신 동의',
+      emailConsent: '이메일 수신 동의',
       skinTypes: {
         dry: '건성',
         oily: '지성',
@@ -96,6 +101,9 @@ const ProfileSettings = () => {
       save: '保存',
       saving: '保存中...',
       backToHome: 'ホームに戻る',
+      marketingConsent: 'マーケティング受信同意',
+      smsConsent: 'SMS受信同意',
+      emailConsent: 'メール受信同意',
       skinTypes: {
         dry: '乾燥肌',
         oily: '脂性肌',
@@ -410,6 +418,39 @@ const ProfileSettings = () => {
                     onChange={(e) => setProfile(prev => ({ ...prev, tiktok_url: e.target.value }))}
                     placeholder="https://tiktok.com/@username"
                   />
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* 마케팅 수신 동의 */}
+              <div className="space-y-4">
+                <Label className="text-base font-semibold">{t.marketingConsent}</Label>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="sms_consent"
+                      checked={profile.sms_consent}
+                      onChange={(e) => setProfile(prev => ({ ...prev, sms_consent: e.target.checked }))}
+                      className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    />
+                    <Label htmlFor="sms_consent" className="font-normal cursor-pointer">
+                      {t.smsConsent}
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="email_consent"
+                      checked={profile.email_consent}
+                      onChange={(e) => setProfile(prev => ({ ...prev, email_consent: e.target.checked }))}
+                      className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    />
+                    <Label htmlFor="email_consent" className="font-normal cursor-pointer">
+                      {t.emailConsent}
+                    </Label>
+                  </div>
                 </div>
               </div>
 
