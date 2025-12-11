@@ -492,7 +492,7 @@ const HomePageJP = () => {
                       </div>
                       <div className="flex items-center text-sm text-gray-600">
                         <Users className="h-4 w-4 mr-2" />
-                        {campaign.total_slots} 名募集
+                        {campaign.max_participants || campaign.total_slots} 名募集
                       </div>
                       <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={(e) => {
                         e.stopPropagation()
@@ -584,7 +584,7 @@ const HomePageJP = () => {
                     <Users className="h-5 w-5 text-purple-600 mr-2" />
                     <div>
                       <div className="text-sm text-gray-600">募集人数</div>
-                      <div className="font-semibold">{selectedCampaign.total_slots} 名</div>
+                      <div className="font-semibold">{selectedCampaign.max_participants || selectedCampaign.total_slots} 名</div>
                     </div>
                   </div>
                   <div className="flex items-center">
