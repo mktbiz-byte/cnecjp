@@ -488,7 +488,7 @@ const HomePageJP = () => {
                     <div className="space-y-3">
                       <div className="flex items-center text-sm text-gray-600">
                         <Calendar className="h-4 w-4 mr-2" />
-                        応募締切: {formatDate(campaign.deadline)}
+                        応募締切: {formatDate(campaign.application_deadline)}
                       </div>
                       <div className="flex items-center text-sm text-gray-600">
                         <Users className="h-4 w-4 mr-2" />
@@ -577,7 +577,7 @@ const HomePageJP = () => {
                     <Calendar className="h-5 w-5 text-blue-600 mr-2" />
                     <div>
                       <div className="text-sm text-gray-600">締切</div>
-                      <div className="font-semibold">{formatDate(selectedCampaign.deadline)}</div>
+                      <div className="font-semibold">{formatDate(selectedCampaign.application_deadline)}</div>
                     </div>
                   </div>
                   <div className="flex items-center">
