@@ -455,7 +455,15 @@ const HomePageJP = () => {
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-              {campaigns.map((campaign) => (
+              {campaigns.filter((campaign) => {
+                // Filter out campaigns past their application deadline
+                const deadline = campaign.application_deadline
+                if (!deadline) return true
+                const deadlineDate = new Date(deadline)
+                const today = new Date()
+                today.setHours(0, 0, 0, 0) // Compare dates only, not time
+                return deadlineDate >= today
+              }).map((campaign) => (
                 <Card key={campaign.id} className="hover:shadow-lg transition-shadow cursor-pointer border-2 overflow-hidden" onClick={() => handleCampaignClick(campaign)}>
                   {campaign.image_url && (
                     <div className="w-full h-48 overflow-hidden bg-gray-100">
