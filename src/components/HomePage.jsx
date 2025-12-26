@@ -295,27 +295,27 @@ const HomePage = () => {
         </div>
       </header>
 
-      {/* Hero Section - Compact */}
-      <section className="py-10 md:py-16 text-center relative overflow-hidden">
+      {/* Hero Section - Mobile Optimized */}
+      <section className="py-12 md:py-20 text-center relative overflow-hidden">
         <div className="container mx-auto px-4 relative z-10">
           {/* Social Proof Badge */}
-          <div className="inline-flex items-center bg-white/90 rounded-full px-4 py-2 shadow-md mb-4">
+          <div className="inline-flex items-center bg-white/95 rounded-full px-5 py-2.5 shadow-lg mb-6">
             <div className="flex -space-x-2 mr-3">
               {[1,2,3].map(i => (
-                <div key={i} className="w-6 h-6 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 border-2 border-white" />
+                <div key={i} className="w-7 h-7 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 border-2 border-white" />
               ))}
             </div>
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm md:text-base font-medium text-gray-700">
               <span className="text-purple-600 font-bold">2,500+</span> {language === 'ko' ? '크리에이터' : 'クリエイター'}
             </span>
           </div>
 
-          <h1 className="text-3xl md:text-5xl font-bold text-gray-800 mb-4">
-            K-Beauty × <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
+          <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold text-gray-800 mb-4 leading-tight">
+            K-Beauty × <br className="sm:hidden" /><span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
               {language === 'ko' ? '숏폼 콜라보' : 'ショート動画コラボ'}
             </span>
           </h1>
-          <p className="text-lg md:text-xl text-gray-600 mb-6 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto px-2 leading-relaxed">
             {language === 'ko'
               ? '한국 코스메틱 브랜드와 협업하고 은행 송금으로 보상받으세요'
               : '韓国コスメブランドとコラボして銀行振込で報酬を受け取ろう'
@@ -323,46 +323,50 @@ const HomePage = () => {
           </p>
 
           {/* Trust Badges - Inline */}
-          <div className="flex flex-wrap justify-center gap-3 mb-6">
-            <div className="flex items-center text-xs text-gray-600 bg-white/80 rounded-full px-3 py-1.5">
-              <Shield className="h-3 w-3 text-green-600 mr-1" />
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-8">
+            <div className="flex items-center text-xs sm:text-sm text-gray-600 bg-white/90 rounded-full px-4 py-2 shadow-sm">
+              <Shield className="h-4 w-4 text-green-600 mr-1.5" />
               {language === 'ko' ? '안전' : '安全'}
             </div>
-            <div className="flex items-center text-xs text-gray-600 bg-white/80 rounded-full px-3 py-1.5">
-              <Zap className="h-3 w-3 text-yellow-600 mr-1" />
+            <div className="flex items-center text-xs sm:text-sm text-gray-600 bg-white/90 rounded-full px-4 py-2 shadow-sm">
+              <Zap className="h-4 w-4 text-yellow-600 mr-1.5" />
               {language === 'ko' ? '빠른 승인' : '迅速承認'}
             </div>
-            <div className="flex items-center text-xs text-gray-600 bg-white/80 rounded-full px-3 py-1.5">
-              <DollarSign className="h-3 w-3 text-green-600 mr-1" />
+            <div className="flex items-center text-xs sm:text-sm text-gray-600 bg-white/90 rounded-full px-4 py-2 shadow-sm">
+              <DollarSign className="h-4 w-4 text-green-600 mr-1.5" />
               {language === 'ko' ? '은행 송금' : '銀行振込'}
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link to="/signup">
-              <Button size="lg" className="bg-purple-600 hover:bg-purple-700 px-6">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center px-4">
+            <Link to="/signup" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 px-8 py-6 text-base sm:text-lg">
                 {language === 'ko' ? '수익 시작하기' : '収益を始める'}
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Campaigns Section - MOVED UP & COMPACT CARDS */}
-      <section id="campaigns" className="py-8 bg-white/50">
+      {/* Campaigns Section - Mobile Optimized */}
+      <section id="campaigns" className="py-10 md:py-12 bg-white/50">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 md:mb-8 gap-3">
             <div>
-              <h2 className="text-xl md:text-2xl font-bold text-gray-800">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-1">
                 {language === 'ko' ? '모집 중인 캠페인' : '募集中のキャンペーン'}
               </h2>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm md:text-base text-gray-600">
                 {language === 'ko' ? 'K-Beauty 캠페인에 지원하세요' : 'K-Beautyキャンペーンに応募しよう'}
               </p>
             </div>
-            <Badge variant="outline" className="text-purple-600 border-purple-200">
-              {campaigns.length} {language === 'ko' ? '개 오픈' : '件オープン'}
+            <Badge variant="outline" className="text-purple-600 border-purple-300 px-3 py-1.5 text-sm font-medium self-start sm:self-auto">
+              {campaigns.filter((c) => {
+                const deadline = c.application_deadline || c.deadline || c.end_date
+                if (!deadline) return true
+                return new Date(deadline) >= new Date()
+              }).length} {language === 'ko' ? '개 오픈' : '件オープン'}
             </Badge>
           </div>
 
@@ -387,17 +391,22 @@ const HomePage = () => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-              {campaigns.map((campaign) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
+              {campaigns.filter((campaign) => {
+                // Filter out campaigns past their deadline
+                const deadline = campaign.application_deadline || campaign.deadline || campaign.end_date
+                if (!deadline) return true
+                return new Date(deadline) >= new Date()
+              }).map((campaign) => (
                 <Card
                   key={campaign.id}
-                  className="hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 border-0 shadow-md cursor-pointer overflow-hidden group"
+                  className="hover:shadow-xl transition-all duration-200 hover:-translate-y-1 border-0 shadow-lg cursor-pointer overflow-hidden group bg-white"
                   onClick={() => handleCampaignClick(campaign)}
                 >
-                  {/* Compact Image */}
+                  {/* Image with better aspect ratio for mobile */}
                   <div className="relative">
                     {campaign.image_url ? (
-                      <div className="w-full aspect-square overflow-hidden bg-gray-100">
+                      <div className="w-full aspect-[4/3] sm:aspect-square overflow-hidden bg-gray-100">
                         <img
                           src={campaign.image_url}
                           alt={campaign.title}
@@ -405,48 +414,53 @@ const HomePage = () => {
                         />
                       </div>
                     ) : (
-                      <div className="w-full aspect-square bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-                        <span className="text-4xl">✨</span>
+                      <div className="w-full aspect-[4/3] sm:aspect-square bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
+                        <span className="text-5xl">✨</span>
                       </div>
                     )}
 
                     {/* Urgency Badge - Top Left */}
-                    <div className="absolute top-2 left-2">
+                    <div className="absolute top-3 left-3">
                       {getUrgencyBadge(campaign.application_deadline || campaign.deadline || campaign.end_date)}
                     </div>
 
                     {/* Reward Badge - Top Right */}
-                    <div className="absolute top-2 right-2">
-                      <Badge className="bg-purple-600 text-white text-xs font-bold">
+                    <div className="absolute top-3 right-3">
+                      <Badge className="bg-purple-600 text-white text-sm font-bold px-3 py-1">
                         {formatCurrency(campaign.reward_amount)}
                       </Badge>
                     </div>
                   </div>
 
-                  {/* Compact Content */}
-                  <div className="p-3">
-                    <div className="flex items-center gap-1 mb-1">
-                      <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs px-1.5 py-0">
-                        <Zap className="w-2.5 h-2.5" />
+                  {/* Content with better readability */}
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs px-2 py-0.5">
+                        <Zap className="w-3 h-3 mr-1" />
+                        {language === 'ko' ? '모집중' : '募集中'}
                       </Badge>
-                      <span className="text-xs text-purple-600 font-medium truncate">{campaign.brand}</span>
+                      <span className="text-sm text-purple-600 font-semibold truncate">{campaign.brand}</span>
                     </div>
 
-                    <h3 className="font-semibold text-sm text-gray-800 line-clamp-2 mb-2 leading-tight">
+                    <h3 className="font-bold text-base sm:text-lg text-gray-800 line-clamp-2 mb-3 leading-snug">
                       {campaign.title}
                     </h3>
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex gap-0.5">
-                        {getActivePlatforms(campaign).slice(0, 2).map((platform) => (
-                          <span key={platform} className="text-gray-400">
+                    <p className="text-sm text-gray-600 line-clamp-2 mb-3 hidden sm:block">
+                      {campaign.description}
+                    </p>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                      <div className="flex gap-1.5">
+                        {getActivePlatforms(campaign).slice(0, 3).map((platform) => (
+                          <span key={platform} className="text-gray-500">
                             {getPlatformIcon(platform)}
                           </span>
                         ))}
                       </div>
-                      <div className="flex items-center text-xs text-gray-500">
-                        <Users className="w-3 h-3 mr-0.5" />
-                        {campaign.max_participants || 10}
+                      <div className="flex items-center text-sm text-gray-600 font-medium">
+                        <Users className="w-4 h-4 mr-1" />
+                        {campaign.max_participants || 10}{language === 'ko' ? '명' : '名'}
                       </div>
                     </div>
                   </div>
@@ -469,15 +483,15 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Partner Brands Section */}
-      <section className="py-6 bg-white/50 border-y border-gray-100">
+      {/* Partner Brands Section - Mobile Optimized */}
+      <section className="py-8 bg-white/50 border-y border-gray-100">
         <div className="container mx-auto px-4">
-          <p className="text-center text-xs text-gray-500 mb-4">
+          <p className="text-center text-sm text-gray-500 mb-5 font-medium">
             {language === 'ko' ? '톱 K-BEAUTY 브랜드들의 신뢰' : 'トップK-BEAUTYブランドに信頼されています'}
           </p>
-          <div className="flex flex-wrap justify-center items-center gap-6 md:gap-10">
+          <div className="flex overflow-x-auto md:flex-wrap md:justify-center items-center gap-6 md:gap-8 pb-2 md:pb-0 -mx-4 px-4 md:mx-0">
             {partnerBrands.map((brand) => (
-              <span key={brand} className="text-lg font-semibold text-gray-400 hover:text-gray-600 transition-colors">
+              <span key={brand} className="text-base md:text-lg font-bold text-gray-400 hover:text-purple-600 transition-colors whitespace-nowrap flex-shrink-0">
                 {brand}
               </span>
             ))}
@@ -485,32 +499,37 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Stats Section - Compact */}
-      <section className="py-10 bg-white/50">
+      {/* Stats Section - Mobile Optimized */}
+      <section className="py-12 bg-white/50">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-4 gap-2 md:gap-4">
-            <Card className="text-center border-0 shadow-md bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-              <CardContent className="py-4 px-2">
-                <div className="text-xl md:text-2xl font-bold mb-0.5">{stats.totalCampaigns || '50'}+</div>
-                <div className="text-purple-100 text-xs">{language === 'ko' ? '캠페인' : 'キャンペーン'}</div>
+          <div className="text-center mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
+              {language === 'ko' ? '실적' : '実績'}
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            <Card className="text-center border-0 shadow-lg bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+              <CardContent className="py-6 px-4">
+                <div className="text-2xl md:text-3xl font-bold mb-1">{stats.totalCampaigns || '50'}+</div>
+                <div className="text-purple-100 text-sm font-medium">{language === 'ko' ? '캠페인' : 'キャンペーン'}</div>
               </CardContent>
             </Card>
-            <Card className="text-center border-0 shadow-md bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-              <CardContent className="py-4 px-2">
-                <div className="text-xl md:text-2xl font-bold mb-0.5">{stats.totalUsers || '2.5'}K</div>
-                <div className="text-blue-100 text-xs">{language === 'ko' ? '크리에이터' : 'クリエイター'}</div>
+            <Card className="text-center border-0 shadow-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+              <CardContent className="py-6 px-4">
+                <div className="text-2xl md:text-3xl font-bold mb-1">{stats.totalUsers || '2.5'}K</div>
+                <div className="text-blue-100 text-sm font-medium">{language === 'ko' ? '크리에이터' : 'クリエイター'}</div>
               </CardContent>
             </Card>
-            <Card className="text-center border-0 shadow-md bg-gradient-to-br from-green-500 to-green-600 text-white">
-              <CardContent className="py-4 px-2">
-                <div className="text-xl md:text-2xl font-bold mb-0.5">{stats.totalApplications || '10'}K</div>
-                <div className="text-green-100 text-xs">{language === 'ko' ? '콜라보' : 'コラボ'}</div>
+            <Card className="text-center border-0 shadow-lg bg-gradient-to-br from-green-500 to-green-600 text-white">
+              <CardContent className="py-6 px-4">
+                <div className="text-2xl md:text-3xl font-bold mb-1">{stats.totalApplications || '10'}K</div>
+                <div className="text-green-100 text-sm font-medium">{language === 'ko' ? '콜라보' : 'コラボ'}</div>
               </CardContent>
             </Card>
-            <Card className="text-center border-0 shadow-md bg-gradient-to-br from-orange-500 to-orange-600 text-white">
-              <CardContent className="py-4 px-2">
-                <div className="text-xl md:text-2xl font-bold mb-0.5">¥50M</div>
-                <div className="text-orange-100 text-xs">{language === 'ko' ? '지급 완료' : '支払済み'}</div>
+            <Card className="text-center border-0 shadow-lg bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+              <CardContent className="py-6 px-4">
+                <div className="text-2xl md:text-3xl font-bold mb-1">¥50M</div>
+                <div className="text-orange-100 text-sm font-medium">{language === 'ko' ? '지급 완료' : '支払済み'}</div>
               </CardContent>
             </Card>
           </div>
@@ -553,60 +572,69 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section id="testimonials" className="py-16">
+      {/* Testimonials Section - Mobile Optimized */}
+      <section id="testimonials" className="py-12 md:py-16">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-3">
               {language === 'ko' ? '크리에이터들의 사랑' : 'クリエイターに愛されています'}
             </h2>
-            <p className="text-gray-600">
+            <p className="text-gray-600 text-sm md:text-base">
               {language === 'ko' ? '커뮤니티의 목소리를 들어보세요' : 'コミュニティの声をご覧ください'}
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          {/* Mobile: Horizontal scroll, Desktop: Grid */}
+          <div className="flex md:grid md:grid-cols-3 gap-4 md:gap-6 overflow-x-auto pb-4 md:pb-0 -mx-4 px-4 md:mx-0 snap-x snap-mandatory">
             {testimonials.map((testimonial, index) => (
-              <Card key={index} className="border-0 shadow-lg">
-                <CardContent className="pt-6">
+              <Card key={index} className="border-0 shadow-lg flex-shrink-0 w-[85vw] sm:w-[70vw] md:w-auto snap-center">
+                <CardContent className="p-5 md:pt-6">
                   <div className="flex items-center mb-4">
                     <img
                       src={testimonial.image}
                       alt={testimonial.name}
-                      className="w-12 h-12 rounded-full object-cover mr-4"
+                      className="w-14 h-14 rounded-full object-cover mr-4 border-2 border-purple-100"
                     />
                     <div>
-                      <div className="font-semibold">{testimonial.name}</div>
-                      <div className="text-sm text-gray-500">{testimonial.role} • {testimonial.followers} followers</div>
+                      <div className="font-bold text-gray-800">{testimonial.name}</div>
+                      <div className="text-sm text-gray-500">{testimonial.role}</div>
+                      <div className="text-xs text-purple-600 font-medium">{testimonial.followers} followers</div>
                     </div>
                   </div>
                   <div className="flex mb-3">
                     {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                      <Star key={i} className="h-5 w-5 text-yellow-400 fill-yellow-400" />
                     ))}
                   </div>
-                  <p className="text-gray-600 italic">"{testimonial.text}"</p>
+                  <p className="text-gray-700 text-sm md:text-base leading-relaxed">"{testimonial.text}"</p>
                 </CardContent>
               </Card>
+            ))}
+          </div>
+
+          {/* Mobile scroll indicator */}
+          <div className="flex justify-center gap-2 mt-4 md:hidden">
+            {testimonials.map((_, index) => (
+              <div key={index} className="w-2 h-2 rounded-full bg-purple-200" />
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+      {/* CTA Section - Mobile Optimized */}
+      <section className="py-12 md:py-16 bg-gradient-to-r from-purple-600 to-pink-600 text-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 leading-tight">
             {language === 'ko' ? '수익을 시작할 준비가 되셨나요?' : '収益をスタートする準備はできましたか？'}
           </h2>
-          <p className="text-xl text-purple-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-purple-100 mb-8 max-w-2xl mx-auto leading-relaxed">
             {language === 'ko'
               ? '이미 수천 명의 크리에이터들이 K-Beauty 브랜드와 협업하고 있습니다'
               : '既に数千人のクリエイターがK-Beautyブランドとコラボしています'
             }
           </p>
-          <Link to="/signup">
-            <Button size="lg" className="bg-white text-purple-600 hover:bg-gray-100 text-lg px-8">
+          <Link to="/signup" className="block sm:inline-block">
+            <Button size="lg" className="w-full sm:w-auto bg-white text-purple-600 hover:bg-gray-100 text-base sm:text-lg px-8 py-6">
               {language === 'ko' ? '무료 계정 만들기' : '無料アカウント作成'}
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
