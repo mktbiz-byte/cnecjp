@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import { database, supabase } from '../lib/supabase'
-import { 
-  User, Mail, Phone, MapPin, Calendar, Award, 
-  CreditCard, Download, Settings, LogOut, 
-  AlertTriangle, Trash2, Shield, Eye, EyeOff, X
+import {
+  User, Mail, Phone, MapPin, Calendar, Award,
+  CreditCard, Download, Settings, LogOut,
+  AlertTriangle, Trash2, Shield, Eye, EyeOff, X,
+  Camera, Upload, Film, BookOpen
 } from 'lucide-react'
+import ShootingGuideModal from './ShootingGuideModal'
+import VideoUploadModal from './VideoUploadModal'
 
 // PayPal 정보 추출 헬퍼 함수
 const extractPayPalFromDescription = (description) => {
@@ -75,6 +78,11 @@ const MyPageWithWithdrawal = () => {
     sns_upload_url: '',
     notes: ''
   })
+
+  // 촬영 가이드 및 영상 업로드 관련 상태
+  const [showGuideModal, setShowGuideModal] = useState(false)
+  const [showVideoUploadModal, setShowVideoUploadModal] = useState(false)
+  const [selectedGuideApplication, setSelectedGuideApplication] = useState(null)
 
   // 프로필 편집 관련 상태
   const [isEditing, setIsEditing] = useState(false)
@@ -1403,6 +1411,9 @@ const MyPageWithWithdrawal = () => {
                         {language === 'ko' ? '신청일' : '応募日'}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {language === 'ko' ? '가이드' : '撮影ガイド'}
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         {language === 'ko' ? '자료' : '資料'}
                       </th>
                     </tr>
@@ -1410,7 +1421,7 @@ const MyPageWithWithdrawal = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {applications.length === 0 ? (
                       <tr>
-                        <td colSpan="4" className="px-6 py-12 text-center text-gray-500">
+                        <td colSpan="5" className="px-6 py-12 text-center text-gray-500">
                           {t.noData}
                         </td>
                       </tr>
@@ -1429,12 +1440,67 @@ const MyPageWithWithdrawal = () => {
                               'bg-yellow-100 text-yellow-800'
                             }`}>
                               {application.status === 'approved' ? (language === 'ko' ? '승인됨' : '承認済み') :
-                               application.status === 'rejected' ? (language === 'ko' ? '거절됨' : '拒否済み') : 
+                               application.status === 'rejected' ? (language === 'ko' ? '거절됨' : '拒否済み') :
                                (language === 'ko' ? '대기중' : '待機中')}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {new Date(application.created_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'ja-JP')}
+                          </td>
+                          {/* 가이드 열 */}
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {application.status === 'approved' && application.personalized_guide ? (
+                              <div className="space-y-2">
+                                {/* 가이드 보기 버튼 */}
+                                <button
+                                  onClick={() => {
+                                    setSelectedGuideApplication(application)
+                                    setShowGuideModal(true)
+                                  }}
+                                  className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors"
+                                >
+                                  <BookOpen className="w-3.5 h-3.5 mr-1.5" />
+                                  {language === 'ko' ? '가이드 보기' : 'ガイド表示'}
+                                </button>
+
+                                {/* 영상 업로드 버튼 */}
+                                {application.submission_status !== 'submitted' ? (
+                                  <button
+                                    onClick={() => {
+                                      setSelectedGuideApplication(application)
+                                      setShowVideoUploadModal(true)
+                                    }}
+                                    className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors ml-2"
+                                  >
+                                    <Upload className="w-3.5 h-3.5 mr-1.5" />
+                                    {language === 'ko' ? '영상 업로드' : '動画提出'}
+                                  </button>
+                                ) : (
+                                  <span className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-green-100 text-green-800 ml-2">
+                                    <Film className="w-3.5 h-3.5 mr-1.5" />
+                                    {language === 'ko' ? '제출완료' : '提出済み'}
+                                  </span>
+                                )}
+
+                                {/* 가이드 발송 상태 표시 */}
+                                {application.guide_sent && (
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    {language === 'ko' ? '이메일 발송됨' : 'メール送信済み'}
+                                    {application.guide_sent_at && (
+                                      <span className="ml-1">
+                                        ({new Date(application.guide_sent_at).toLocaleDateString('ja-JP')})
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            ) : application.status === 'approved' ? (
+                              <span className="text-xs text-gray-400">
+                                {language === 'ko' ? '가이드 준비중' : 'ガイド準備中'}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-gray-400">-</span>
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             {application.status === 'approved' ? (
@@ -2044,6 +2110,28 @@ const MyPageWithWithdrawal = () => {
             </div>
           </div>
         )}
+
+        {/* 촬영 가이드 모달 */}
+        <ShootingGuideModal
+          isOpen={showGuideModal}
+          onClose={() => {
+            setShowGuideModal(false)
+            setSelectedGuideApplication(null)
+          }}
+          guide={selectedGuideApplication?.personalized_guide}
+          campaignTitle={selectedGuideApplication?.campaign_title}
+        />
+
+        {/* 영상 업로드 모달 */}
+        <VideoUploadModal
+          isOpen={showVideoUploadModal}
+          onClose={() => {
+            setShowVideoUploadModal(false)
+            setSelectedGuideApplication(null)
+          }}
+          application={selectedGuideApplication}
+          onSuccess={loadUserData}
+        />
       </div>
     </div>
   )
