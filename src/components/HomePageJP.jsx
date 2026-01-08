@@ -650,7 +650,8 @@ const HomePageJP = () => {
               <ul className="space-y-2 text-sm text-gray-400">
                 <li><a href="#" className="hover:text-white">よくある質問</a></li>
                 <li><a href="#" className="hover:text-white">お問い合わせ</a></li>
-                <li><a href="#" className="hover:text-white">利用規約</a></li>
+                <li><Link to="/terms" className="hover:text-white">利用規約</Link></li>
+                <li><Link to="/privacy" className="hover:text-white">プライバシーポリシー</Link></li>
               </ul>
             </div>
             <div>
