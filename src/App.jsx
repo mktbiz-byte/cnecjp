@@ -43,6 +43,7 @@ import AdminWithdrawals from './components/admin/AdminWithdrawals';
 import SystemSettings from './components/admin/SystemSettings';
 import EmailSettings from './components/admin/EmailSettings';
 import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsOfService from './components/TermsOfService';
 
 // 테스트용 관리자 로그인 컴포넌트
 import SecretAdminLogin from './components/SecretAdminLogin';
@@ -107,6 +108,9 @@ const AppContent = () => {
         
         {/* 개인정보처리방침 */}
         <Route path="/privacy" element={<PrivacyPolicy />} />
+
+        {/* 이용약관 */}
+        <Route path="/terms" element={<TermsOfService />} />
       </Routes>
     </div>
   );
