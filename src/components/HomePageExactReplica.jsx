@@ -6,13 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { 
+import {
   Loader2, Play, Users, Target, Shield,
   Instagram, Youtube, Hash, Twitter, ExternalLink,
   Star, Award, Calendar, DollarSign, Eye, ArrowRight,
   CheckCircle, Clock, MapPin, Phone, Mail, User, Zap,
   Menu, X
 } from 'lucide-react'
+import LineRegistrationBanner from './LineRegistrationBanner'
 
 const HomePageExactReplica = () => {
   const { user, signOut } = useAuth()
@@ -685,14 +686,14 @@ const HomePageExactReplica = () => {
               {selectedCampaign?.brand}
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedCampaign && (
             <div className="space-y-6">
               <div>
                 <h4 className="font-semibold text-gray-800 mb-2">キャンペーン詳細</h4>
                 <p className="text-gray-600">{selectedCampaign.description}</p>
               </div>
-              
+
               <div>
                 <h4 className="font-semibold text-gray-800 mb-2">対象プラットフォーム</h4>
                 <div className="flex flex-wrap gap-2">
@@ -708,8 +709,8 @@ const HomePageExactReplica = () => {
                     // 배열인 경우 또는 기본값
                     return selectedCampaign.target_platforms || ['Instagram', 'TikTok']
                   })().map((platform) => (
-                    <Badge 
-                      key={platform} 
+                    <Badge
+                      key={platform}
                       className={`${getPlatformColor(platform)} flex items-center space-x-1`}
                     >
                       {getPlatformIcon(platform)}
@@ -718,23 +719,23 @@ const HomePageExactReplica = () => {
                   ))}
                 </div>
               </div>
-              
+
               <div>
                 <h4 className="font-semibold text-gray-800 mb-2">報酬</h4>
                 <p className="text-3xl font-bold text-purple-600">
                   {formatCurrency(selectedCampaign.reward_amount)}
                 </p>
               </div>
-              
+
               <div className="flex space-x-3">
-                <Button 
+                <Button
                   onClick={handleApplyToCampaign}
                   className="flex-1"
                 >
                   このキャンペーンに応募する
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => setDetailModal(false)}
                 >
                   閉じる
@@ -744,6 +745,9 @@ const HomePageExactReplica = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* LINE Registration Floating Banner */}
+      <LineRegistrationBanner />
     </div>
   )
 }
