@@ -6,13 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { 
+import {
   Loader2, Play, Users, Target, Shield,
   Instagram, Youtube, Hash, Twitter, ExternalLink,
   Star, Award, Calendar, DollarSign, Eye, ArrowRight,
   CheckCircle, Clock, MapPin, Phone, Mail, User, Zap,
   Menu, X, TrendingUp, Wallet, FileText
 } from 'lucide-react'
+import LineRegistrationBanner from './LineRegistrationBanner'
 
 const HomePageJP = () => {
   const { user, signOut } = useAuth()
@@ -671,6 +672,9 @@ const HomePageJP = () => {
           </div>
         </div>
       </footer>
+
+      {/* LINE Registration Floating Banner */}
+      <LineRegistrationBanner />
     </div>
   )
 }
