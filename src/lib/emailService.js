@@ -42,19 +42,40 @@ const EMAIL_TEMPLATES = {
                 <p><strong>登録日時:</strong> ${new Date().toLocaleDateString('ja-JP')}</p>
             </div>
             
+            <div style="background: #06C755; color: white; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center;">
+                <h3 style="margin: 0 0 10px 0; color: white;">📱 重要：LINE友だち追加のお願い</h3>
+                <p style="margin: 0 0 15px 0; color: white; font-size: 14px;">
+                    キャンペーン承認や重要なお知らせをLINEでお届けします。<br>
+                    <strong>必ずLINE友だち追加をお願いします！</strong>
+                </p>
+                <a href="https://line.me/R/ti/p/@cnec" style="display: inline-block; background: white; color: #06C755; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: bold;">
+                    LINE友だち追加 →
+                </a>
+                <p style="margin: 10px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.9);">
+                    LINE ID: @cnec
+                </p>
+            </div>
+
             <h3>🚀 次のステップ</h3>
             <ol>
+                <li><strong>LINE友だち追加:</strong> キャンペーン承認通知を受け取るために必須です</li>
                 <li><strong>プロフィール完成:</strong> SNSアカウントや詳細情報を登録</li>
                 <li><strong>キャンペーン参加:</strong> 興味のあるK-Beautyキャンペーンに応募</li>
                 <li><strong>コンテンツ制作:</strong> 承認後、魅力的な動画を制作</li>
                 <li><strong>報酬獲得:</strong> ポイントを獲得して日本の銀行口座へ送金</li>
             </ol>
-            
+
             <div style="text-align: center;">
                 <a href="https://cnec.jp/" class="button">マイページを見る</a>
             </div>
-            
+
             <p>ご質問やサポートが必要な場合は、いつでもお気軽にお問い合わせください。</p>
+
+            <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                <p style="margin: 0; font-size: 13px; color: #666;">
+                    💡 <strong>ヒント:</strong> LINEで友だち追加すると、キャンペーンの承認・リマインダー・新着情報をリアルタイムで受け取れます。
+                </p>
+            </div>
         </div>
         <div class="footer">
             <p>© 2025 CNEC Japan. All rights reserved.</p>
