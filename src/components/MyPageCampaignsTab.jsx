@@ -1170,16 +1170,26 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
     loadData()
   }, [applications])
 
+  // 상태별 분류
   const approvedApplications = applications.filter(a => a.status === 'approved')
+  const pendingApplications = applications.filter(a => a.status === 'pending' || a.status === 'virtual_selected')
+  const rejectedApplications = applications.filter(a => a.status === 'rejected')
 
-  const filteredApplications = approvedApplications.filter(app => {
-    if (filter === 'all') return true
-    const campaign = campaigns[app.campaign_id]
-    return campaign?.campaign_type === filter
-  })
+  // 필터 적용
+  const filterByType = (apps) => {
+    if (filter === 'all') return apps
+    return apps.filter(app => {
+      const campaign = campaigns[app.campaign_id]
+      return campaign?.campaign_type === filter
+    })
+  }
+
+  const filteredApproved = filterByType(approvedApplications)
+  const filteredPending = filterByType(pendingApplications)
 
   const stats = {
     total: applications.length,
+    pending: pendingApplications.length,
     approved: approvedApplications.length,
     completed: approvedApplications.filter(app => {
       const subs = submissions[app.id] || []
@@ -1200,7 +1210,7 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
   return (
     <div className="p-6">
       {/* 통계 */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-4 gap-4 mb-6">
         <div className="bg-blue-50 rounded-lg p-4">
           <div className="flex items-center">
             <Award className="h-8 w-8 text-blue-600" />
@@ -1213,12 +1223,24 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
           </div>
         </div>
 
+        <div className="bg-yellow-50 rounded-lg p-4">
+          <div className="flex items-center">
+            <Clock className="h-8 w-8 text-yellow-600" />
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">
+                {language === 'ja' ? '審査中' : '심사중'}
+              </p>
+              <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
+            </div>
+          </div>
+        </div>
+
         <div className="bg-green-50 rounded-lg p-4">
           <div className="flex items-center">
             <Shield className="h-8 w-8 text-green-600" />
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">
-                {language === 'ja' ? '承認済み' : '승인됨'}
+                {language === 'ja' ? '選定済み' : '선정됨'}
               </p>
               <p className="text-2xl font-bold text-gray-900">{stats.approved}</p>
             </div>
@@ -1265,29 +1287,102 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
         ))}
       </div>
 
-      {/* 캠페인 목록 */}
-      {filteredApplications.length === 0 ? (
+      {/* 선정된 캠페인 - 워크플로우 진행 */}
+      {filteredApproved.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+            <CheckCircle className="w-5 h-5 mr-2 text-green-600" />
+            {language === 'ja' ? '選定されたキャンペーン' : '선정된 캠페인'}
+            <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-800 text-sm rounded-full">
+              {filteredApproved.length}
+            </span>
+          </h3>
+          <div className="space-y-6">
+            {filteredApproved.map(application => (
+              <CampaignCard
+                key={application.id}
+                application={application}
+                campaign={campaigns[application.campaign_id]}
+                submissions={submissions[application.id] || []}
+                onUpdate={loadData}
+                language={language}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 지원한 캠페인 - 대기중 */}
+      {filteredPending.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+            <Clock className="w-5 h-5 mr-2 text-yellow-600" />
+            {language === 'ja' ? '審査中のキャンペーン' : '심사중인 캠페인'}
+            <span className="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-sm rounded-full">
+              {filteredPending.length}
+            </span>
+          </h3>
+          <div className="space-y-3">
+            {filteredPending.map(application => {
+              const campaign = campaigns[application.campaign_id]
+              const typeInfo = CAMPAIGN_TYPES[campaign?.campaign_type || 'regular'] || CAMPAIGN_TYPES.regular
+
+              return (
+                <div
+                  key={application.id}
+                  className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-2xl">{typeInfo.icon}</span>
+                      <div>
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${typeInfo.badgeClass}`}>
+                            {language === 'ja' ? typeInfo.labelJa : typeInfo.labelKo}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            {application.status === 'virtual_selected'
+                              ? (language === 'ja' ? '仮選定' : '가선정')
+                              : (language === 'ja' ? '審査中' : '심사중')
+                            }
+                          </span>
+                        </div>
+                        <h4 className="font-medium text-gray-900">
+                          {campaign?.title || application.campaign_title || (language === 'ja' ? 'キャンペーン' : '캠페인')}
+                        </h4>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {language === 'ja' ? '応募日: ' : '신청일: '}
+                          {new Date(application.created_at).toLocaleDateString(language === 'ja' ? 'ja-JP' : 'ko-KR')}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <div className="flex items-center text-yellow-600">
+                        <Clock className="w-4 h-4 mr-1" />
+                        <span className="text-sm font-medium">
+                          {language === 'ja' ? '結果待ち' : '결과 대기'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 빈 상태 */}
+      {filteredApproved.length === 0 && filteredPending.length === 0 && (
         <div className="text-center py-12">
           <Award className="w-16 h-16 mx-auto text-gray-300 mb-4" />
           <p className="text-gray-500">
-            {approvedApplications.length === 0
-              ? (language === 'ja' ? '承認済みのキャンペーンがありません' : '승인된 캠페인이 없습니다')
+            {applications.length === 0
+              ? (language === 'ja' ? '応募したキャンペーンがありません' : '신청한 캠페인이 없습니다')
               : (language === 'ja' ? '該当するキャンペーンがありません' : '해당하는 캠페인이 없습니다')
             }
           </p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {filteredApplications.map(application => (
-            <CampaignCard
-              key={application.id}
-              application={application}
-              campaign={campaigns[application.campaign_id]}
-              submissions={submissions[application.id] || []}
-              onUpdate={loadData}
-              language={language}
-            />
-          ))}
         </div>
       )}
     </div>
