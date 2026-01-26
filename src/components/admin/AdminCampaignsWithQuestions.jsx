@@ -217,20 +217,32 @@ const AdminCampaignsWithQuestions = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <div className="ml-4">
-                        <div className="flex items-center">
+                        <div className="flex items-center flex-wrap gap-2">
                           <p className="text-sm font-medium text-blue-600 truncate">
                             {campaign.title || '제목 없음'}
                           </p>
-                          <div className="ml-2">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              campaign.status === 'active' ? 'bg-green-100 text-green-800' :
-                              campaign.status === 'completed' ? 'bg-gray-100 text-gray-800' :
-                              'bg-red-100 text-red-800'
-                            }`}>
-                              {campaign.status === 'active' ? '활성' :
-                               campaign.status === 'completed' ? '완료' : '비활성'}
-                            </span>
-                          </div>
+                          {/* 캠페인 유형 배지 */}
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                            campaign.campaign_type === '4week_challenge' ? 'bg-blue-100 text-blue-800' :
+                            campaign.campaign_type === 'megawari' ? 'bg-orange-100 text-orange-800' :
+                            campaign.campaign_type === 'oliveyoung' ? 'bg-green-100 text-green-800' :
+                            'bg-purple-100 text-purple-800'
+                          }`}>
+                            {campaign.campaign_type === '4week_challenge' ? '🗓️ 4주 챌린지' :
+                             campaign.campaign_type === 'megawari' ? '🎯 메가와리' :
+                             campaign.campaign_type === 'oliveyoung' ? '🛍️ 올영세일' :
+                             '📹 기획형'}
+                            {campaign.total_steps > 1 && ` (${campaign.total_steps}스텝)`}
+                          </span>
+                          {/* 상태 배지 */}
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            campaign.status === 'active' ? 'bg-green-100 text-green-800' :
+                            campaign.status === 'completed' ? 'bg-gray-100 text-gray-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {campaign.status === 'active' ? '활성' :
+                             campaign.status === 'completed' ? '완료' : '비활성'}
+                          </span>
                         </div>
                         <div className="mt-2 flex">
                           <div className="flex items-center text-sm text-gray-500">
