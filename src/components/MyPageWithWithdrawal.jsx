@@ -6,10 +6,11 @@ import {
   User, Mail, Phone, MapPin, Calendar, Award,
   CreditCard, Download, Settings, LogOut,
   AlertTriangle, Trash2, Shield, Eye, EyeOff, X,
-  Camera, Upload, Film, BookOpen
+  Camera, Upload, Film, BookOpen, Layers
 } from 'lucide-react'
 import ShootingGuideModal from './ShootingGuideModal'
 import VideoUploadModal from './VideoUploadModal'
+import MyPageCampaignsTab from './MyPageCampaignsTab'
 
 // PayPal 정보 추출 헬퍼 함수
 const extractPayPalFromDescription = (description) => {
@@ -1356,9 +1357,14 @@ const MyPageWithWithdrawal = () => {
           )}
 
           {activeTab === 'applications' && (
+            <MyPageCampaignsTab applications={applications} user={user} />
+          )}
+
+          {/* 기존 신청 내역 탭 (숨김) - 백업용 */}
+          {activeTab === 'applications_old' && (
             <div className="p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">{t.campaignApplications}</h2>
-              
+
               {/* 신청 통계 */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className="bg-blue-50 rounded-lg p-4">
