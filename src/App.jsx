@@ -47,7 +47,6 @@ import TermsOfService from './components/TermsOfService';
 
 // 테스트용 관리자 로그인 컴포넌트
 import SecretAdminLogin from './components/SecretAdminLogin';
-import TestAdminLogin from './components/TestAdminLogin';
 import CampaignApplicationUpdated from './components/CampaignApplicationUpdated';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -88,7 +87,6 @@ const AppContent = () => {
         
         {/* 관리자 페이지 - 보안을 위해 /admin/ 경로 제거 */}
         <Route path="/secret-admin-login" element={<SecretAdminLogin />} />
-        <Route path="/test-admin-login" element={<TestAdminLogin />} />
         <Route path="/dashboard" element={<ProtectedRoute requireAdmin={true}><AdminDashboardSimple /></ProtectedRoute>} />
         <Route path="/campaigns-manage" element={<ProtectedRoute requireAdmin={true}><AdminCampaignsWithQuestions /></ProtectedRoute>} />
         <Route path="/campaign-create" element={<ProtectedRoute requireAdmin={true}><CampaignCreationWithTranslator /></ProtectedRoute>} />
