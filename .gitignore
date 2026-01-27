@@ -105,3 +105,14 @@ temp/
 *.njsproj
 *.sln
 *.sw?
+
+# 민감 정보 스크립트 (절대 커밋 금지)
+create_admin*.js
+create_admin*.mjs
+check_*.js
+check_*.cjs
+debug_*.js
+debug_*.cjs
+migrate_*.js
+*_backup*.js
+test-*.cjs
