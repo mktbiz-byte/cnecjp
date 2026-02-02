@@ -15,6 +15,9 @@ const CampaignApplicationUpdated = () => {
   // URL에서 campaign_id 파라미터 가져오기 (두 가지 방법 모두 지원)
   const campaignId = id || searchParams.get('campaign_id')
 
+  // localStorage 키 (캠페인별로 저장)
+  const STORAGE_KEY = `campaign_application_draft_${campaignId}`
+
   const [campaign, setCampaign] = useState(null)
   const [userProfile, setUserProfile] = useState(null)
   const [existingApplication, setExistingApplication] = useState(null)
@@ -188,6 +191,26 @@ const CampaignApplicationUpdated = () => {
     loadData()
   }, [user, campaignId])
 
+  // applicationData 변경 시 localStorage에 자동 저장 (드래프트 저장)
+  useEffect(() => {
+    if (campaignId && !loading && !success) {
+      // 빈 데이터가 아닌 경우에만 저장
+      const hasData = Object.values(applicationData).some(val =>
+        val !== '' && val !== false && val !== null
+      )
+      if (hasData) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            data: applicationData,
+            savedAt: new Date().toISOString()
+          }))
+        } catch (e) {
+          console.error('localStorage 저장 실패:', e)
+        }
+      }
+    }
+  }, [applicationData, campaignId, loading, success, STORAGE_KEY])
+
   const loadData = async () => {
     try {
       setLoading(true)
@@ -256,6 +279,31 @@ const CampaignApplicationUpdated = () => {
           offline_visit_available: existingApp.offline_visit_available || false,
           offline_visit_notes: existingApp.offline_visit_notes || ''
         }))
+      }
+
+      // 4. localStorage에서 저장된 드래프트 데이터 복원 (작성 중이던 데이터 우선)
+      try {
+        const savedDraft = localStorage.getItem(STORAGE_KEY)
+        if (savedDraft) {
+          const { data: draftData, savedAt } = JSON.parse(savedDraft)
+          // 24시간 이내의 드래프트만 복원
+          const savedTime = new Date(savedAt).getTime()
+          const now = new Date().getTime()
+          const hoursDiff = (now - savedTime) / (1000 * 60 * 60)
+
+          if (hoursDiff < 24 && draftData) {
+            console.log('저장된 드래프트 복원:', draftData)
+            setApplicationData(prev => ({
+              ...prev,
+              ...draftData
+            }))
+          } else {
+            // 24시간 지난 드래프트는 삭제
+            localStorage.removeItem(STORAGE_KEY)
+          }
+        }
+      } catch (e) {
+        console.error('localStorage 복원 실패:', e)
       }
 
     } catch (error) {
@@ -359,7 +407,14 @@ const CampaignApplicationUpdated = () => {
       }
 
       setSuccess(t.applicationSuccess)
-      
+
+      // 신청 성공 시 localStorage 드래프트 삭제
+      try {
+        localStorage.removeItem(STORAGE_KEY)
+      } catch (e) {
+        console.error('localStorage 삭제 실패:', e)
+      }
+
       // 3초 후 메인 페이지로 이동
       setTimeout(() => {
         navigate('/')
