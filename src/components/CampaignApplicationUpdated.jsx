@@ -211,9 +211,13 @@ const CampaignApplicationUpdated = () => {
 
       // 프로필에서 기존 정보 가져와서 폼에 미리 채우기
       if (profileData) {
+        // 이름이 이메일 형식인지 확인 (이메일 형식이면 빈 문자열로 설정하여 사용자가 직접 입력하도록 함)
+        const name = profileData.name || ''
+        const isEmailFormat = name && name.includes('@') && name.includes('.')
+
         setApplicationData(prev => ({
           ...prev,
-          applicant_name: profileData.name || '',
+          applicant_name: isEmailFormat ? '' : name,
           age: profileData.age || '',
           skin_type: profileData.skin_type || '',
           instagram_url: profileData.instagram_url || '',
@@ -229,9 +233,13 @@ const CampaignApplicationUpdated = () => {
 
       // 기존 신청서가 있으면 데이터 로드
       if (existingApp) {
+        // 기존 신청서의 이름 또는 프로필 이름이 이메일 형식인지 확인
+        const existingName = existingApp.applicant_name || profileData?.name || ''
+        const isExistingNameEmail = existingName && existingName.includes('@') && existingName.includes('.')
+
         setApplicationData(prev => ({
           ...prev,
-          applicant_name: existingApp.applicant_name || profileData?.name || '',
+          applicant_name: isExistingNameEmail ? '' : existingName,
           answer_1: existingApp.answer_1 || '',
           answer_2: existingApp.answer_2 || '',
           answer_3: existingApp.answer_3 || '',
@@ -625,7 +633,10 @@ const CampaignApplicationUpdated = () => {
                     </label>
                     <input
                       type="text"
-                      value={applicationData.applicant_name || userProfile?.name || ''}
+                      value={applicationData.applicant_name || (() => {
+                        const name = userProfile?.name || ''
+                        return (name.includes('@') && name.includes('.')) ? '' : name
+                      })()}
                       onChange={(e) => setApplicationData(prev => ({ ...prev, applicant_name: e.target.value }))}
                       placeholder="名前を入力してください"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
