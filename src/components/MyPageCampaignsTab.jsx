@@ -145,11 +145,38 @@ const DeadlineDisplay = ({ videoDeadline, snsDeadline, language }) => {
 }
 
 // 가이드 모달 컴포넌트 - 상세 촬영 가이드 표시
-const GuideModal = ({ isOpen, onClose, campaign, application, language }) => {
+const GuideModal = ({ isOpen, onClose, campaign, application, language, stepNumber = 1, campaignType = 'regular' }) => {
   if (!isOpen) return null
 
-  const guideContent = application?.personalized_guide || campaign?.shooting_guide_content
+  // 4주 챌린지: 주차별 가이드 내용
+  const getWeeklyGuideContent = () => {
+    if (campaignType !== '4week_challenge') return null
+
+    const weekGuides = {
+      1: campaign?.week1_guide_ja || campaign?.week1_guide,
+      2: campaign?.week2_guide_ja || campaign?.week2_guide,
+      3: campaign?.week3_guide_ja || campaign?.week3_guide,
+      4: campaign?.week4_guide_ja || campaign?.week4_guide
+    }
+    return weekGuides[stepNumber]
+  }
+
+  const weeklyGuide = getWeeklyGuideContent()
+  const guideContent = weeklyGuide || application?.personalized_guide || campaign?.shooting_guide_content
   const guideUrl = campaign?.shooting_guide_url
+
+  // 주차별 라벨
+  const getStepLabel = () => {
+    if (campaignType === '4week_challenge') {
+      return language === 'ja' ? `Week ${stepNumber}` : `${stepNumber}주차`
+    }
+    if (campaignType === 'megawari') {
+      return language === 'ja' ? `ステップ ${stepNumber}` : `${stepNumber}스텝`
+    }
+    return null
+  }
+
+  const stepLabel = getStepLabel()
 
   // 촬영 장면 체크리스트
   const shootingScenes = []
@@ -171,6 +198,11 @@ const GuideModal = ({ isOpen, onClose, campaign, application, language }) => {
           <h3 className="text-lg font-bold text-gray-900 flex items-center">
             <BookOpen className="w-5 h-5 mr-2 text-purple-600" />
             {language === 'ja' ? '撮影ガイド' : '촬영 가이드'}
+            {stepLabel && (
+              <span className="ml-2 px-2 py-0.5 bg-purple-100 text-purple-700 text-sm rounded-full">
+                {stepLabel}
+              </span>
+            )}
           </h3>
           <button
             onClick={onClose}
@@ -567,7 +599,31 @@ const StepCard = ({
       }
     }
 
-    // campaign의 step_deadlines에서 확인
+    // 4주 챌린지: 주차별 마감일 필드 사용
+    if (campaignType === '4week_challenge') {
+      const weekDeadlines = {
+        1: { video: campaign?.week1_deadline, sns: campaign?.week1_sns_deadline },
+        2: { video: campaign?.week2_deadline, sns: campaign?.week2_sns_deadline },
+        3: { video: campaign?.week3_deadline, sns: campaign?.week3_sns_deadline },
+        4: { video: campaign?.week4_deadline, sns: campaign?.week4_sns_deadline }
+      }
+      if (weekDeadlines[stepNumber]) {
+        return {
+          videoDeadline: weekDeadlines[stepNumber].video,
+          snsDeadline: weekDeadlines[stepNumber].sns
+        }
+      }
+    }
+
+    // 기획형/메가와리: 기본 마감일 사용
+    if (campaign?.video_deadline || campaign?.sns_deadline) {
+      return {
+        videoDeadline: campaign.video_deadline,
+        snsDeadline: campaign.sns_deadline
+      }
+    }
+
+    // campaign의 step_deadlines 배열에서 확인
     if (campaign?.step_deadlines) {
       const stepDeadline = campaign.step_deadlines.find(d => d.step === stepNumber)
       if (stepDeadline) {
@@ -1376,6 +1432,8 @@ const StepCard = ({
         campaign={campaign}
         application={application}
         language={language}
+        stepNumber={stepNumber}
+        campaignType={campaignType}
       />
     </>
   )
