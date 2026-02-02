@@ -8,7 +8,7 @@ import {
   Loader2, ExternalLink, X, Play, Calendar, AlertTriangle
 } from 'lucide-react'
 
-// 캠페인 유형 정보
+// 캠페인 유형 정보 (일본 마이페이지용 - 올리브영 제외)
 const CAMPAIGN_TYPES = {
   regular: {
     icon: '📹',
@@ -45,18 +45,6 @@ const CAMPAIGN_TYPES = {
     bgClass: 'bg-blue-50 border-blue-200',
     textClass: 'text-blue-700',
     badgeClass: 'bg-blue-100 text-blue-800'
-  },
-  oliveyoung: {
-    icon: '🛍️',
-    labelKo: '올영세일',
-    labelJa: 'オリーブヤング',
-    descKo: '올리브영 세일 캠페인',
-    descJa: 'オリーブヤングセールキャンペーン',
-    steps: 1,
-    color: 'green',
-    bgClass: 'bg-green-50 border-green-200',
-    textClass: 'text-green-700',
-    badgeClass: 'bg-green-100 text-green-800'
   }
 }
 
