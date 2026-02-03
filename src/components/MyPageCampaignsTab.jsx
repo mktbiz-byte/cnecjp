@@ -5,7 +5,7 @@ import {
   Award, Shield, Download, Filter,
   ChevronDown, ChevronUp, BookOpen, Upload, Link as LinkIcon,
   CheckCircle, Clock, AlertCircle, Film, FileVideo, Share2,
-  Loader2, ExternalLink, X, Play, Calendar, AlertTriangle
+  Loader2, ExternalLink, X, XCircle, Play, Calendar, AlertTriangle
 } from 'lucide-react'
 
 // 캠페인 유형 정보 (일본 마이페이지용 - 올리브영 제외)
@@ -1646,6 +1646,7 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
 
   const filteredApproved = filterByType(approvedApplications)
   const filteredPending = filterByType(pendingApplications)
+  const filteredRejected = filterByType(rejectedApplications)
 
   const stats = {
     total: applications.length,
@@ -1833,8 +1834,66 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
         </div>
       )}
 
+      {/* 불합격 캠페인 */}
+      {filteredRejected.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+            <XCircle className="w-5 h-5 mr-2 text-red-500" />
+            {language === 'ja' ? '不合格のキャンペーン' : '불합격 캠페인'}
+            <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-800 text-sm rounded-full">
+              {filteredRejected.length}
+            </span>
+          </h3>
+          <div className="space-y-3">
+            {filteredRejected.map(application => {
+              const campaign = campaigns[application.campaign_id]
+              const typeInfo = CAMPAIGN_TYPES[campaign?.campaign_type || 'regular'] || CAMPAIGN_TYPES.regular
+
+              return (
+                <div
+                  key={application.id}
+                  className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow opacity-75"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-2xl">{typeInfo.icon}</span>
+                      <div>
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${typeInfo.badgeClass}`}>
+                            {language === 'ja' ? typeInfo.labelJa : typeInfo.labelKo}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            {language === 'ja' ? '不合格' : '불합격'}
+                          </span>
+                        </div>
+                        <h4 className="font-medium text-gray-900">
+                          {campaign?.title || application.campaign_title || (language === 'ja' ? 'キャンペーン' : '캠페인')}
+                        </h4>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {language === 'ja' ? '応募日: ' : '신청일: '}
+                          {new Date(application.created_at).toLocaleDateString(language === 'ja' ? 'ja-JP' : 'ko-KR')}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <div className="flex items-center text-red-500">
+                        <XCircle className="w-4 h-4 mr-1" />
+                        <span className="text-sm font-medium">
+                          {language === 'ja' ? '不合格' : '불합격'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* 빈 상태 */}
-      {filteredApproved.length === 0 && filteredPending.length === 0 && (
+      {filteredApproved.length === 0 && filteredPending.length === 0 && filteredRejected.length === 0 && (
         <div className="text-center py-12">
           <Award className="w-16 h-16 mx-auto text-gray-300 mb-4" />
           <p className="text-gray-500">
