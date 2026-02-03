@@ -177,7 +177,7 @@ const CampaignApplicationUpdated = () => {
       setLoading(true)
       setError('')
 
-      console.log('데이터 로딩 시작:', { campaignId, userId: user?.id })
+      console.log('데이터 로딩 시작')
 
       // 1. 캠페인 정보 로드
       const campaignData = await database.campaigns.getById(campaignId)

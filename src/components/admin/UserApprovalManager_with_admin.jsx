@@ -177,7 +177,7 @@ const UserApprovalManager = () => {
       setError('')
       setSuccess('')
       
-      console.log('사용자 상태 업데이트:', userId, newStatus)
+      console.log('사용자 상태 업데이트:', newStatus)
 
       const updateData = {
         status: newStatus,
@@ -185,15 +185,15 @@ const UserApprovalManager = () => {
       }
 
       await database.userProfiles.update(userId, updateData)
-      
+
       console.log('상태 업데이트 완료')
       setSuccess(t.success)
-      
+
       // 데이터 다시 로드
       setTimeout(() => {
         loadUsers()
       }, 1000)
-      
+
     } catch (error) {
       console.error('상태 업데이트 오류:', error)
       setError(`상태 업데이트에 실패했습니다: ${error.message}`)
@@ -207,8 +207,8 @@ const UserApprovalManager = () => {
       setProcessing(true)
       setError('')
       setSuccess('')
-      
-      console.log('사용자 역할 업데이트:', userId, newRole)
+
+      console.log('사용자 역할 업데이트:', newRole)
 
       const updateData = {
         role: newRole,

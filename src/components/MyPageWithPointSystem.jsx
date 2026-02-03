@@ -53,7 +53,7 @@ const MyPageWithPointSystem = () => {
       setLoading(true)
       setError('')
       
-      console.log('Loading user data for user:', user.id)
+      console.log('Loading user data')
       
       // 사용자 프로필 로드
       try {

@@ -340,7 +340,7 @@ const MyPageWithWithdrawal = () => {
       
       // 출금 내역 로딩 (point_transactions 테이블에서 직접 가져오기)
       try {
-        console.log('출금 내역 로딩 시작 - 사용자 ID:', user.id)
+        console.log('출금 내역 로딩 시작')
         
         const { data: pointWithdrawals, error: pointError } = await supabase
           .from('point_transactions')
@@ -546,7 +546,7 @@ const MyPageWithWithdrawal = () => {
       // 업데이트 시간 추가
       updateData.updated_at = new Date().toISOString()
 
-      console.log('프로필 업데이트 데이터:', updateData)
+      console.log('프로필 업데이트 시작')
       
       // Supabase 직접 업데이트 사용
       const { data, error: updateError } = await supabase
@@ -560,7 +560,7 @@ const MyPageWithWithdrawal = () => {
         throw new Error(updateError.message)
       }
 
-      console.log('프로필 업데이트 성공:', data)
+      console.log('프로필 업데이트 성공')
       
       // 로컬 상태 업데이트
       setProfile(prev => ({ ...prev, ...updateData }))
@@ -621,7 +621,7 @@ const MyPageWithWithdrawal = () => {
         throw new Error(withdrawalError.message)
       }
 
-      console.log('출금 신청 성공:', withdrawalData)
+      console.log('출금 신청 성공')
 
       // 실제 사용자 프로필의 포인트 차감
       const newPoints = currentPoints - requestAmount

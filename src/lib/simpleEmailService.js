@@ -52,7 +52,7 @@ class SimpleEmailService {
       // 실제 환경에서는 외부 이메일 서비스 API 사용
       // 예: SendGrid, Mailgun, AWS SES 등
       
-      console.log('📧 이메일 발송 요청:', emailData)
+      console.log('📧 이메일 발송 요청')
       
       // 성공 시뮬레이션 (실제로는 외부 API 호출)
       await new Promise(resolve => setTimeout(resolve, 1000)) // 1초 대기
