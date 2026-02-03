@@ -17,6 +17,7 @@ const CAMPAIGN_TYPES = {
     descKo: '1개 영상 제작',
     descJa: '1本の動画制作',
     steps: 1,
+    snsSteps: 1,
     color: 'purple',
     bgClass: 'bg-purple-50 border-purple-200',
     textClass: 'text-purple-700',
@@ -26,9 +27,10 @@ const CAMPAIGN_TYPES = {
     icon: '🎯',
     labelKo: '메가와리',
     labelJa: 'メガ割',
-    descKo: '2개 영상 (스텝 1/2)',
-    descJa: '2本の動画（ステップ1/2）',
+    descKo: '영상 2개 + SNS 3개',
+    descJa: '動画2本＋SNS3回',
     steps: 2,
+    snsSteps: 3,
     color: 'orange',
     bgClass: 'bg-orange-50 border-orange-200',
     textClass: 'text-orange-700',
@@ -41,6 +43,7 @@ const CAMPAIGN_TYPES = {
     descKo: '매주 1개씩 총 4개',
     descJa: '毎週1本ずつ計4本',
     steps: 4,
+    snsSteps: 4,
     color: 'blue',
     bgClass: 'bg-blue-50 border-blue-200',
     textClass: 'text-blue-700',
@@ -128,6 +131,113 @@ const DeadlineDisplay = ({ videoDeadline, snsDeadline, language }) => {
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+// 전체 마감일 스케줄 표시 컴포넌트
+const AllDeadlinesOverview = ({ campaign, campaignType, language }) => {
+  const typeInfo = CAMPAIGN_TYPES[campaignType] || CAMPAIGN_TYPES.regular
+  const totalVideoSteps = campaign?.total_steps || typeInfo.steps
+  const totalSnsSteps = typeInfo.snsSteps || totalVideoSteps
+  const now = new Date()
+
+  const formatDate = (date) => {
+    if (!date) return language === 'ja' ? '未定' : '미정'
+    return new Date(date).toLocaleDateString(language === 'ja' ? 'ja-JP' : 'ko-KR', {
+      month: 'short',
+      day: 'numeric'
+    })
+  }
+
+  const getStatusClass = (date) => {
+    if (!date) return 'bg-gray-50 text-gray-400'
+    const d = new Date(date)
+    const days = Math.ceil((d - now) / (1000 * 60 * 60 * 24))
+    if (days < 0) return 'bg-red-50 text-red-600'
+    if (days <= 3) return 'bg-orange-50 text-orange-600'
+    if (days <= 7) return 'bg-yellow-50 text-yellow-600'
+    return 'bg-gray-50 text-gray-700'
+  }
+
+  // 마감일 데이터 수집
+  const getVideoDeadline = (step) => {
+    if (campaign?.step_deadlines) {
+      const sd = campaign.step_deadlines.find(d => d.step === step)
+      if (sd?.video_deadline) return sd.video_deadline
+    }
+    if (campaignType === '4week_challenge') {
+      const weekField = `week${step}_deadline`
+      if (campaign?.[weekField]) return campaign[weekField]
+    }
+    if (step === 1 && campaign?.video_deadline) return campaign.video_deadline
+    return null
+  }
+
+  const getSnsDeadline = (step) => {
+    if (campaign?.step_deadlines) {
+      const sd = campaign.step_deadlines.find(d => d.step === step)
+      if (sd?.sns_deadline) return sd.sns_deadline
+    }
+    if (campaignType === '4week_challenge') {
+      const weekField = `week${step}_sns_deadline`
+      if (campaign?.[weekField]) return campaign[weekField]
+    }
+    if (step === 1 && campaign?.sns_deadline) return campaign.sns_deadline
+    return null
+  }
+
+  const videoDeadlines = Array.from({ length: totalVideoSteps }, (_, i) => ({
+    step: i + 1,
+    deadline: getVideoDeadline(i + 1)
+  }))
+
+  const snsDeadlines = Array.from({ length: totalSnsSteps }, (_, i) => ({
+    step: i + 1,
+    deadline: getSnsDeadline(i + 1)
+  }))
+
+  const getStepLabel = (step) => {
+    if (campaignType === '4week_challenge') return `Week ${step}`
+    if (totalVideoSteps > 1 || totalSnsSteps > 1) return `${step}`
+    return ''
+  }
+
+  return (
+    <div className="mt-3 p-3 bg-white bg-opacity-60 rounded-lg">
+      <p className="text-xs font-medium text-gray-500 mb-2">
+        {language === 'ja' ? '📅 スケジュール' : '📅 스케줄'}
+      </p>
+      <div className="grid grid-cols-2 gap-2">
+        {/* 영상 마감일 */}
+        <div>
+          <p className="text-xs text-gray-400 mb-1">
+            🎬 {language === 'ja' ? '動画締切' : '영상 마감일'}
+          </p>
+          <div className="space-y-1">
+            {videoDeadlines.map(({ step, deadline }) => (
+              <div key={`v-${step}`} className={`text-xs px-2 py-1 rounded ${getStatusClass(deadline)}`}>
+                {getStepLabel(step) && <span className="font-medium">{getStepLabel(step)}: </span>}
+                {formatDate(deadline)}
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* SNS 마감일 */}
+        <div>
+          <p className="text-xs text-gray-400 mb-1">
+            📤 {language === 'ja' ? 'SNS締切' : 'SNS 마감일'}
+          </p>
+          <div className="space-y-1">
+            {snsDeadlines.map(({ step, deadline }) => (
+              <div key={`s-${step}`} className={`text-xs px-2 py-1 rounded ${getStatusClass(deadline)}`}>
+                {getStepLabel(step) && <span className="font-medium">{getStepLabel(step)}: </span>}
+                {formatDate(deadline)}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -1511,6 +1621,11 @@ const CampaignCard = ({ application, campaign, submissions, onUpdate, language }
                   </span>
                 </div>
               )}
+
+              {/* 캠페인 설명 */}
+              <p className="text-xs text-gray-500 mt-1">
+                {language === 'ja' ? typeInfo.descJa : typeInfo.descKo}
+              </p>
             </div>
           </div>
 
@@ -1541,6 +1656,13 @@ const CampaignCard = ({ application, campaign, submissions, onUpdate, language }
             style={{ width: `${progress}%` }}
           />
         </div>
+
+        {/* 전체 마감일 스케줄 */}
+        <AllDeadlinesOverview
+          campaign={campaign}
+          campaignType={campaignType}
+          language={language}
+        />
       </div>
 
       {/* 스텝 목록 */}
