@@ -60,9 +60,13 @@ const CampaignApplicationPage = () => {
   useEffect(() => {
     // 사용자 정보로 폼 초기화
     if (user && userProfile) {
+      // 이름이 이메일 형식인지 확인 (이메일 형식이면 빈 문자열로 설정하여 사용자가 직접 입력하도록 함)
+      const name = userProfile.name || user.user_metadata?.name || ''
+      const isEmailFormat = name && name.includes('@') && name.includes('.')
+
       setFormData(prev => ({
         ...prev,
-        user_name: userProfile.name || user.user_metadata?.name || '',
+        user_name: isEmailFormat ? '' : name,
         user_email: user.email || '',
         skin_type: userProfile.skin_type || '',
         age: userProfile.age || '',
