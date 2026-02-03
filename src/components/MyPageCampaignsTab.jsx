@@ -1631,9 +1631,11 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
   }, [applications])
 
   // 상태별 분류
+  const knownStatuses = ['approved', 'pending', 'virtual_selected', 'rejected']
   const approvedApplications = applications.filter(a => a.status === 'approved')
   const pendingApplications = applications.filter(a => a.status === 'pending' || a.status === 'virtual_selected')
   const rejectedApplications = applications.filter(a => a.status === 'rejected')
+  const otherApplications = applications.filter(a => !knownStatuses.includes(a.status))
 
   // 필터 적용
   const filterByType = (apps) => {
@@ -1647,6 +1649,7 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
   const filteredApproved = filterByType(approvedApplications)
   const filteredPending = filterByType(pendingApplications)
   const filteredRejected = filterByType(rejectedApplications)
+  const filteredOther = filterByType(otherApplications)
 
   const stats = {
     total: applications.length,
@@ -1892,8 +1895,66 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
         </div>
       )}
 
+      {/* 기타 상태 캠페인 (알 수 없는 상태) */}
+      {filteredOther.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+            <AlertCircle className="w-5 h-5 mr-2 text-gray-500" />
+            {language === 'ja' ? '応募したキャンペーン' : '응모한 캠페인'}
+            <span className="ml-2 px-2 py-0.5 bg-gray-100 text-gray-800 text-sm rounded-full">
+              {filteredOther.length}
+            </span>
+          </h3>
+          <div className="space-y-3">
+            {filteredOther.map(application => {
+              const campaign = campaigns[application.campaign_id]
+              const typeInfo = CAMPAIGN_TYPES[campaign?.campaign_type || 'regular'] || CAMPAIGN_TYPES.regular
+
+              return (
+                <div
+                  key={application.id}
+                  className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-2xl">{typeInfo.icon}</span>
+                      <div>
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${typeInfo.badgeClass}`}>
+                            {language === 'ja' ? typeInfo.labelJa : typeInfo.labelKo}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            {language === 'ja' ? '確認中' : '확인중'}
+                          </span>
+                        </div>
+                        <h4 className="font-medium text-gray-900">
+                          {campaign?.title || application.campaign_title || (language === 'ja' ? 'キャンペーン' : '캠페인')}
+                        </h4>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {language === 'ja' ? '応募日: ' : '신청일: '}
+                          {new Date(application.created_at).toLocaleDateString(language === 'ja' ? 'ja-JP' : 'ko-KR')}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <div className="flex items-center text-gray-500">
+                        <AlertCircle className="w-4 h-4 mr-1" />
+                        <span className="text-sm font-medium">
+                          {language === 'ja' ? '確認中' : '확인중'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* 빈 상태 */}
-      {filteredApproved.length === 0 && filteredPending.length === 0 && filteredRejected.length === 0 && (
+      {filteredApproved.length === 0 && filteredPending.length === 0 && filteredRejected.length === 0 && filteredOther.length === 0 && (
         <div className="text-center py-12">
           <Award className="w-16 h-16 mx-auto text-gray-300 mb-4" />
           <p className="text-gray-500">
