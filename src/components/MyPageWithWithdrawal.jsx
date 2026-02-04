@@ -1384,7 +1384,7 @@ const MyPageWithWithdrawal = () => {
                     <div className="ml-4">
                       <p className="text-sm font-medium text-gray-500">{t.approvedApplications}</p>
                       <p className="text-2xl font-bold text-gray-900">
-                        {applications.filter(a => a.status === 'approved').length}
+                        {applications.filter(a => ['approved', 'video_submitted', 'sns_submitted', 'completed'].includes(a.status)).length}
                       </p>
                     </div>
                   </div>
@@ -1442,11 +1442,14 @@ const MyPageWithWithdrawal = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              application.status === 'approved' ? 'bg-green-100 text-green-800' :
+                              ['approved', 'video_submitted', 'sns_submitted', 'completed'].includes(application.status) ? 'bg-green-100 text-green-800' :
                               application.status === 'rejected' ? 'bg-red-100 text-red-800' :
                               'bg-yellow-100 text-yellow-800'
                             }`}>
-                              {application.status === 'approved' ? (language === 'ko' ? '승인됨' : '承認済み') :
+                              {application.status === 'video_submitted' ? (language === 'ko' ? '영상 제출' : '動画提出済み') :
+                               application.status === 'sns_submitted' ? (language === 'ko' ? 'SNS 제출' : 'SNS提出済み') :
+                               application.status === 'completed' ? (language === 'ko' ? '완료' : '完了') :
+                               application.status === 'approved' ? (language === 'ko' ? '승인됨' : '承認済み') :
                                application.status === 'rejected' ? (language === 'ko' ? '거절됨' : '拒否済み') :
                                (language === 'ko' ? '대기중' : '待機中')}
                             </span>
@@ -1456,7 +1459,7 @@ const MyPageWithWithdrawal = () => {
                           </td>
                           {/* 가이드 열 */}
                           <td className="px-6 py-4 whitespace-nowrap">
-                            {application.status === 'approved' && application.campaign_guide_type === 'pdf' && application.campaign_guide_pdf_url ? (
+                            {['approved', 'video_submitted', 'sns_submitted', 'completed'].includes(application.status) && application.campaign_guide_type === 'pdf' && application.campaign_guide_pdf_url ? (
                               <div className="space-y-2">
                                 {/* 외부 가이드 (PDF/Google Slides) */}
                                 <ExternalGuideViewer
@@ -1484,7 +1487,7 @@ const MyPageWithWithdrawal = () => {
                                   </span>
                                 )}
                               </div>
-                            ) : application.status === 'approved' && application.personalized_guide ? (
+                            ) : ['approved', 'video_submitted', 'sns_submitted', 'completed'].includes(application.status) && application.personalized_guide ? (
                               <div className="space-y-2">
                                 {/* AI 가이드 보기 버튼 */}
                                 <button
@@ -1529,7 +1532,7 @@ const MyPageWithWithdrawal = () => {
                                   </div>
                                 )}
                               </div>
-                            ) : application.status === 'approved' ? (
+                            ) : ['approved', 'video_submitted', 'sns_submitted', 'completed'].includes(application.status) ? (
                               <span className="text-xs text-gray-400">
                                 {language === 'ko' ? '가이드 준비중' : 'ガイド準備中'}
                               </span>
@@ -1538,7 +1541,7 @@ const MyPageWithWithdrawal = () => {
                             )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            {application.status === 'approved' ? (
+                            {['approved', 'video_submitted', 'sns_submitted', 'completed'].includes(application.status) ? (
                               <div className="space-y-2">
                                 {/* 송장번호 및 가이드 URL */}
                                 {(application.tracking_number || application.guide_url) && (

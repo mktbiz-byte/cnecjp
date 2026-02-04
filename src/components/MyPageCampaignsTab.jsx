@@ -687,10 +687,10 @@ const StepCard = ({
   // 영상 업로드 모드: 'file' 또는 'url'
   const [uploadMode, setUploadMode] = useState('url')
 
-  // URL 입력 상태
-  const [videoUrl, setVideoUrl] = useState(submission?.video_url || submission?.video_file_url || '')
-  const [cleanVideoUrl, setCleanVideoUrl] = useState(submission?.clean_video_url || submission?.clean_video_file_url || '')
-  const [partnershipCode, setPartnershipCode] = useState(submission?.partnership_code || submission?.ad_code || '')
+  // URL 입력 상태 (DB 스키마: video_file_url, clean_video_file_url, ad_code)
+  const [videoUrl, setVideoUrl] = useState(submission?.video_file_url || '')
+  const [cleanVideoUrl, setCleanVideoUrl] = useState(submission?.clean_video_file_url || '')
+  const [partnershipCode, setPartnershipCode] = useState(submission?.ad_code || '')
 
   const videoInputRef = useRef(null)
   const cleanVideoInputRef = useRef(null)
@@ -924,14 +924,13 @@ const StepCard = ({
 
     setSubmitting(true)
     try {
+      // DB 스키마에 맞는 필드만 사용 (video_file_url, clean_video_file_url, ad_code)
       const updateData = {
         workflow_status: 'video_uploaded',
-        video_url: videoUrl,
         video_file_url: videoUrl,
         video_uploaded_at: new Date().toISOString(),
-        clean_video_url: cleanVideoUrl || null,
         clean_video_file_url: cleanVideoUrl || null,
-        partnership_code: partnershipCode || null,
+        ad_code: partnershipCode || null,
         updated_at: new Date().toISOString()
       }
 
@@ -944,8 +943,6 @@ const StepCard = ({
             campaign_id: application.campaign_id,
             step_number: stepNumber,
             step_label: getStepLabel(),
-            video_deadline: videoDeadline,
-            sns_deadline: snsDeadline,
             ...updateData
           })
         if (error) throw error
@@ -957,15 +954,12 @@ const StepCard = ({
         if (error) throw error
       }
 
-      // applications 테이블에도 업데이트
+      // applications 테이블에도 영상 URL 기록 (status는 변경하지 않음 - approved 유지)
       if (application?.id) {
         await supabase
           .from('applications')
           .update({
-            video_url: videoUrl,
-            clean_video_url: cleanVideoUrl || null,
-            partnership_code: partnershipCode || null,
-            status: 'video_submitted',
+            submission_status: 'video_submitted',
             updated_at: new Date().toISOString()
           })
           .eq('id', application.id)
@@ -1760,13 +1754,18 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
       const applicationIds = applications.map(a => a.id)
 
       if (applicationIds.length > 0) {
-        const { data: submissionsData } = await supabase
+        const { data: submissionsData, error: submissionsError } = await supabase
           .from('campaign_submissions')
           .select('*')
           .in('application_id', applicationIds)
           .order('step_number', { ascending: true })
 
-        if (submissionsData) {
+        if (submissionsError) {
+          console.error('Submissions query error:', submissionsError)
+          // campaign_submissions 테이블이 없거나 RLS 오류인 경우에도 계속 진행
+        }
+
+        if (submissionsData && submissionsData.length > 0) {
           const submissionsMap = {}
           submissionsData.forEach(s => {
             if (!submissionsMap[s.application_id]) {
@@ -1789,8 +1788,10 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
   }, [applications])
 
   // 상태별 분류
-  const knownStatuses = ['approved', 'pending', 'virtual_selected', 'rejected']
-  const approvedApplications = applications.filter(a => a.status === 'approved')
+  // approved 상태 + 워크플로우 진행 중인 상태도 포함 (기존 데이터 호환)
+  const approvedStatuses = ['approved', 'video_submitted', 'sns_submitted', 'completed']
+  const knownStatuses = [...approvedStatuses, 'pending', 'virtual_selected', 'rejected']
+  const approvedApplications = applications.filter(a => approvedStatuses.includes(a.status))
   const pendingApplications = applications.filter(a => a.status === 'pending' || a.status === 'virtual_selected')
   const rejectedApplications = applications.filter(a => a.status === 'rejected')
   const otherApplications = applications.filter(a => !knownStatuses.includes(a.status))
