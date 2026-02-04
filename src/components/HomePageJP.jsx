@@ -455,7 +455,7 @@ const HomePageJP = () => {
               <p className="text-gray-600 text-lg">現在募集中のキャンペーンはありません</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-7xl mx-auto">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 md:gap-6 max-w-7xl mx-auto">
               {campaigns.filter((campaign) => {
                 // Filter out campaigns past their application deadline
                 const deadline = campaign.application_deadline
@@ -467,43 +467,43 @@ const HomePageJP = () => {
               }).map((campaign) => (
                 <Card key={campaign.id} className="hover:shadow-lg transition-shadow cursor-pointer border-2 overflow-hidden" onClick={() => handleCampaignClick(campaign)}>
                   {campaign.image_url && (
-                    <div className="w-full h-48 overflow-hidden bg-gray-100">
-                      <img 
-                        src={campaign.image_url} 
+                    <div className="w-full h-32 sm:h-48 overflow-hidden bg-gray-100">
+                      <img
+                        src={campaign.image_url}
                         alt={campaign.title}
                         className="w-full h-full object-cover"
                       />
                     </div>
                   )}
-                  <CardHeader>
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex gap-1.5 flex-wrap">
+                  <CardHeader className="p-3 sm:p-6">
+                    <div className="flex items-start justify-between mb-1 sm:mb-2">
+                      <div className="flex gap-1 sm:gap-1.5 flex-wrap">
                         {getActivePlatforms(campaign.target_platforms).map((platform) => (
-                          <Badge key={platform} className={`${getPlatformColor(platform)} flex items-center gap-1 px-2 py-0.5 text-xs`}>
+                          <Badge key={platform} className={`${getPlatformColor(platform)} flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 py-0.5 text-[10px] sm:text-xs`}>
                             <span className="flex items-center">{getPlatformIcon(platform)}</span>
-                            <span className="font-medium capitalize">{platform}</span>
+                            <span className="font-medium capitalize hidden sm:inline">{platform}</span>
                           </Badge>
                         ))}
                       </div>
-                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                        <DollarSign className="h-3 w-3 mr-1" />
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px] sm:text-xs px-1 sm:px-2.5">
+                        <DollarSign className="h-3 w-3 mr-0.5 sm:mr-1" />
                         {formatCurrency(campaign.reward_amount)}
                       </Badge>
                     </div>
-                    <CardTitle className="text-xl">{campaign.title}</CardTitle>
-                    <CardDescription className="line-clamp-2">{campaign.description}</CardDescription>
+                    <CardTitle className="text-sm sm:text-xl leading-tight line-clamp-2">{campaign.title}</CardTitle>
+                    <CardDescription className="line-clamp-2 text-xs sm:text-sm hidden sm:block">{campaign.description}</CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        応募締切: {formatDate(campaign.application_deadline)}
+                  <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                    <div className="space-y-1.5 sm:space-y-3">
+                      <div className="flex items-center text-xs sm:text-sm text-gray-600">
+                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+                        <span className="truncate">締切: {formatDate(campaign.application_deadline)}</span>
                       </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Users className="h-4 w-4 mr-2" />
+                      <div className="flex items-center text-xs sm:text-sm text-gray-600">
+                        <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
                         {campaign.max_participants || campaign.total_slots} 名募集
                       </div>
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={(e) => {
+                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm py-1.5 sm:py-2" onClick={(e) => {
                         e.stopPropagation()
                         handleApply(campaign.id)
                       }}>
