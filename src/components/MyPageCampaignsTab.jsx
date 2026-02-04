@@ -858,8 +858,8 @@ const StepCard = ({
   const handleFileSelect = (e, isClean = false) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 500 * 1024 * 1024) {
-      alert(language === 'ja' ? 'ファイルサイズは500MB以下にしてください' : '파일 크기는 500MB 이하여야 합니다')
+    if (file.size > 2 * 1024 * 1024 * 1024) {
+      alert(language === 'ja' ? 'ファイルサイズは2GB以下にしてください' : '파일 크기는 2GB 이하여야 합니다')
       return
     }
     if (isClean) {
@@ -1486,7 +1486,7 @@ const StepCard = ({
                       ) : (
                         <div className="text-gray-400 text-sm">
                           <Upload className="w-6 h-6 mx-auto mb-1 text-gray-300" />
-                          {language === 'ja' ? 'クリックして動画を選択 (最大500MB)' : '클릭하여 영상 선택 (최대 500MB)'}
+                          {language === 'ja' ? 'クリックして動画を選択 (最大2GB)' : '클릭하여 영상 선택 (최대 2GB)'}
                         </div>
                       )}
                     </div>
