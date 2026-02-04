@@ -114,7 +114,7 @@ class EmailScheduler {
       const hasSubmittedVideo = await this.checkVideoSubmission(application)
       
       if (hasSubmittedVideo) {
-        console.log(`사용자 ${application.user_id}는 이미 영상을 제출했으므로 알림을 보내지 않음`)
+        console.log('사용자가 이미 영상을 제출했으므로 알림을 보내지 않음')
         return
       }
       
@@ -122,7 +122,7 @@ class EmailScheduler {
       const alreadySent = await this.checkIfAlreadySent(application.user_id, campaign.id, templateId)
       
       if (alreadySent) {
-        console.log(`사용자 ${application.user_id}에게 이미 ${templateId} 알림을 보냄`)
+        console.log(`이미 ${templateId} 알림을 보냄`)
         return
       }
       
@@ -226,7 +226,7 @@ class EmailScheduler {
         content: emailContent
       })
       
-      console.log(`${templateId} 알림을 ${user.email}에게 발송함`)
+      console.log(`${templateId} 알림 발송 완료`)
       
     } catch (error) {
       console.error('알림 이메일 발송 중 오류:', error)
@@ -290,7 +290,7 @@ class EmailScheduler {
    */
   async sendEmail({ to, subject, content }) {
     // 실제 이메일 서비스 (SendGrid, AWS SES 등) 연동 필요
-    console.log('이메일 발송:', { to, subject })
+    console.log('이메일 발송:', { subject })
     console.log('내용:', content)
     
     // 개발 환경에서는 콘솔에만 출력

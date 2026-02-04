@@ -41,7 +41,7 @@ const AuthCallbackSafe = () => {
           }
 
           if (sessionData?.session) {
-            console.log('Session found:', sessionData.session.user.email)
+            console.log('Session found')
             setStatus('success')
             setMessage('ログインが完了しました。ホームページに移動します。')
             

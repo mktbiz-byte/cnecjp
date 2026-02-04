@@ -33,8 +33,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
 
       // 관리자 권한 확인 시작
       console.log('=== 관리자 권한 확인 시작 ===')
-      console.log('User ID:', user.id)
-      console.log('User Email:', user.email)
+      console.log('User authenticated')
       
       try {
         // 방법 1: AuthContext의 userProfile 사용 (가장 빠름)
@@ -72,7 +71,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
 
         // 2-2: email로 조회 (백업)
         if (!profile) {
-          console.log('email로 재시도:', user.email)
+          console.log('email로 재시도')
           const { data: profileByEmail, error: emailError } = await supabase
             .from('user_profiles')
             .select('*')
