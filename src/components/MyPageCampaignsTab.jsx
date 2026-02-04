@@ -10,6 +10,43 @@ import {
 } from 'lucide-react'
 import ExternalGuideViewer from './ExternalGuideViewer'
 
+// personalized_guide 파싱 헬퍼
+// cnecbiz.com에서 PDF 가이드를 JSON으로 저장하는 경우가 있음
+// 예: {"type":"external_pdf","url":null,"fileUrl":"https://...pdf","fileName":"...","title":"..."}
+const parsePersonalizedGuide = (guide) => {
+  if (!guide) return { isPdf: false, text: null, pdfUrl: null, title: null }
+
+  // 이미 객체인 경우
+  if (typeof guide === 'object') {
+    if (guide.type === 'external_pdf' && guide.fileUrl) {
+      return { isPdf: true, text: null, pdfUrl: guide.fileUrl, title: guide.title || null }
+    }
+    return { isPdf: false, text: JSON.stringify(guide), pdfUrl: null, title: null }
+  }
+
+  // 문자열인 경우 JSON 파싱 시도
+  if (typeof guide === 'string') {
+    const trimmed = guide.trim()
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed)
+        if (parsed.type === 'external_pdf' && parsed.fileUrl) {
+          return { isPdf: true, text: null, pdfUrl: parsed.fileUrl, title: parsed.title || null }
+        }
+        // JSON이지만 PDF가 아닌 경우 - URL이 있으면 PDF로 처리
+        if (parsed.fileUrl && parsed.fileUrl.endsWith('.pdf')) {
+          return { isPdf: true, text: null, pdfUrl: parsed.fileUrl, title: parsed.title || null }
+        }
+      } catch (e) {
+        // JSON 파싱 실패 → 일반 텍스트
+      }
+    }
+    return { isPdf: false, text: guide, pdfUrl: null, title: null }
+  }
+
+  return { isPdf: false, text: null, pdfUrl: null, title: null }
+}
+
 // 캠페인 유형 정보 (일본 마이페이지용 - 올리브영 제외)
 const CAMPAIGN_TYPES = {
   regular: {
@@ -262,11 +299,17 @@ const GuideModal = ({ isOpen, onClose, campaign, application, language, stepNumb
   }
 
   const weeklyGuide = getWeeklyGuideContent()
-  const guideContent = weeklyGuide || application?.personalized_guide || campaign?.shooting_guide_content
   const guideUrl = campaign?.shooting_guide_url
 
-  // 외부 가이드 (PDF/Google Slides) 확인
-  const hasExternalGuide = campaign?.guide_type === 'pdf' && campaign?.guide_pdf_url
+  // personalized_guide 파싱 (JSON PDF 가이드 vs 텍스트 가이드)
+  const parsedGuide = parsePersonalizedGuide(application?.personalized_guide)
+
+  // 외부 가이드 (PDF/Google Slides) 확인 - campaign 레벨 또는 personalized_guide JSON
+  const hasExternalGuide = (campaign?.guide_type === 'pdf' && campaign?.guide_pdf_url) || parsedGuide.isPdf
+  const externalGuideUrl = parsedGuide.isPdf ? parsedGuide.pdfUrl : campaign?.guide_pdf_url
+
+  // 텍스트 가이드 콘텐츠
+  const guideContent = weeklyGuide || parsedGuide.text || campaign?.shooting_guide_content
 
   // 주차별 라벨
   const getStepLabel = () => {
@@ -484,9 +527,9 @@ const GuideModal = ({ isOpen, onClose, campaign, application, language, stepNumb
           )}
 
           {/* 외부 가이드 (PDF/Google Slides) - 최우선 표시 */}
-          {hasExternalGuide && (
+          {hasExternalGuide && externalGuideUrl && (
             <ExternalGuideViewer
-              url={campaign.guide_pdf_url}
+              url={externalGuideUrl}
               language={language}
             />
           )}
@@ -676,7 +719,7 @@ const StepCard = ({
   onUpdate,
   language
 }) => {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [snsUrl, setSnsUrl] = useState(submission?.sns_url || '')
@@ -1160,38 +1203,42 @@ const StepCard = ({
                   {language === 'ja' ? '撮影ガイドを確認してください' : '촬영 가이드를 확인해주세요'}
                 </h4>
 
-                {/* 외부 가이드 (PDF/Google Slides) 미리보기 */}
-                {campaign?.guide_type === 'pdf' && campaign?.guide_pdf_url && (
-                  <div className="mb-3">
-                    <ExternalGuideViewer
-                      url={campaign.guide_pdf_url}
-                      language={language}
-                      compact
-                    />
-                  </div>
-                )}
+                {/* 가이드 표시 - PDF/텍스트 자동 감지 */}
+                {(() => {
+                  const pg = parsePersonalizedGuide(application?.personalized_guide)
+                  const hasPdfGuide = (campaign?.guide_type === 'pdf' && campaign?.guide_pdf_url) || pg.isPdf
+                  const pdfUrl = pg.isPdf ? pg.pdfUrl : campaign?.guide_pdf_url
+                  const textGuide = pg.text || campaign?.shooting_guide_content
 
-                {/* 텍스트 가이드 미리보기 - 외부 가이드가 없는 경우 */}
-                {!(campaign?.guide_type === 'pdf' && campaign?.guide_pdf_url) &&
-                  (application?.personalized_guide || campaign?.shooting_guide_content) && (
-                  <div className="bg-white rounded-lg p-3 mb-3 border border-purple-200 max-h-32 overflow-hidden relative">
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-3">
-                      {application?.personalized_guide || campaign?.shooting_guide_content}
-                    </p>
-                    <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent" />
-                  </div>
-                )}
-
-                {/* 가이드가 전혀 없는 경우 */}
-                {!(campaign?.guide_type === 'pdf' && campaign?.guide_pdf_url) &&
-                  !application?.personalized_guide &&
-                  !campaign?.shooting_guide_content && (
-                  <div className="bg-white rounded-lg p-3 mb-3 border border-gray-200 text-center">
-                    <p className="text-sm text-gray-500">
-                      {language === 'ja' ? 'ガイドがまだ作成されていません' : '가이드가 아직 생성되지 않았습니다'}
-                    </p>
-                  </div>
-                )}
+                  if (hasPdfGuide && pdfUrl) {
+                    return (
+                      <div className="mb-3">
+                        <ExternalGuideViewer
+                          url={pdfUrl}
+                          language={language}
+                          compact
+                        />
+                      </div>
+                    )
+                  }
+                  if (textGuide) {
+                    return (
+                      <div className="bg-white rounded-lg p-3 mb-3 border border-purple-200 max-h-32 overflow-hidden relative">
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-3">
+                          {textGuide}
+                        </p>
+                        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent" />
+                      </div>
+                    )
+                  }
+                  return (
+                    <div className="bg-white rounded-lg p-3 mb-3 border border-gray-200 text-center">
+                      <p className="text-sm text-gray-500">
+                        {language === 'ja' ? 'ガイドがまだ作成されていません' : '가이드가 아직 생성되지 않았습니다'}
+                      </p>
+                    </div>
+                  )
+                })()}
 
                 <div className="flex flex-wrap gap-2">
                   <button
