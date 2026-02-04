@@ -125,10 +125,7 @@ const ProfileSettings = () => {
   const loadProfile = async () => {
     try {
       setLoading(true)
-      console.log('프로필 로드 시작, 사용자 ID:', user?.id)
-      
       const profileData = await database.userProfiles.get(user.id)
-      console.log('로드된 프로필 데이터:', profileData)
       
       if (profileData) {
         setProfile({
@@ -149,7 +146,7 @@ const ProfileSettings = () => {
         }))
       }
     } catch (error) {
-      console.error('프로필 로드 오류:', error)
+      console.error('프로필 로드 오류')
       setError('프로필을 불러오는데 실패했습니다.')
     } finally {
       setLoading(false)
@@ -167,8 +164,6 @@ const ProfileSettings = () => {
         return
       }
 
-      console.log('프로필 저장 시작:', profile)
-
       // 실제 데이터베이스 스키마에 맞춘 데이터만 전송
       const profileData = {
         user_id: user.id,
@@ -182,10 +177,7 @@ const ProfileSettings = () => {
         bio: profile.bio.trim() || null
       }
 
-      console.log('저장할 프로필 데이터:', profileData)
-
       const result = await database.userProfiles.upsert(profileData)
-      console.log('프로필 저장 결과:', result)
 
       setSuccess('프로필이 성공적으로 저장되었습니다.')
       
@@ -195,7 +187,7 @@ const ProfileSettings = () => {
       }, 3000)
 
     } catch (error) {
-      console.error('프로필 저장 오류:', error)
+      console.error('프로필 저장 오류')
       setError(`프로필 저장에 실패했습니다: ${error.message}`)
     } finally {
       setSaving(false)

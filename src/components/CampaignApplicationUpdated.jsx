@@ -216,11 +216,8 @@ const CampaignApplicationUpdated = () => {
       setLoading(true)
       setError('')
 
-      console.log('데이터 로딩 시작')
-
       // 1. 캠페인 정보 로드
       const campaignData = await database.campaigns.getById(campaignId)
-      console.log('캠페인 데이터:', campaignData)
       
       if (!campaignData) {
         throw new Error(t.campaignNotFound)
@@ -229,7 +226,6 @@ const CampaignApplicationUpdated = () => {
 
       // 2. 사용자 프로필 로드
       const profileData = await database.userProfiles.get(user.id)
-      console.log('프로필 데이터:', profileData)
       setUserProfile(profileData)
 
       // 프로필에서 기존 정보 가져와서 폼에 미리 채우기
@@ -251,7 +247,6 @@ const CampaignApplicationUpdated = () => {
 
       // 3. 기존 신청서 확인
       const existingApp = await database.applications.getByUserAndCampaign(user.id, campaignId)
-      console.log('기존 신청서:', existingApp)
       setExistingApplication(existingApp)
 
       // 기존 신청서가 있으면 데이터 로드
@@ -292,7 +287,7 @@ const CampaignApplicationUpdated = () => {
           const hoursDiff = (now - savedTime) / (1000 * 60 * 60)
 
           if (hoursDiff < 24 && draftData) {
-            console.log('저장된 드래프트 복원:', draftData)
+            // 드래프트 복원
             setApplicationData(prev => ({
               ...prev,
               ...draftData
@@ -394,15 +389,9 @@ const CampaignApplicationUpdated = () => {
         updated_at: new Date().toISOString()
       }
 
-      console.log('申請書提出データ:', submissionData)
-
       if (existingApplication) {
-        // 既存申請書の更新
-        console.log('既存申請書を更新:', existingApplication.id)
         await database.applications.update(existingApplication.id, submissionData)
       } else {
-        // 新規申請書作成
-        console.log('新規申請書を作成')
         await database.applications.create(submissionData)
       }
 

@@ -341,8 +341,6 @@ const MyPageWithWithdrawal = () => {
       
       // 출금 내역 로딩 (point_transactions 테이블에서 직접 가져오기)
       try {
-        console.log('출금 내역 로딩 시작')
-        
         const { data: pointWithdrawals, error: pointError } = await supabase
           .from('point_transactions')
           .select('*')
@@ -393,7 +391,7 @@ const MyPageWithWithdrawal = () => {
           }
           
           setWithdrawals(uniqueWithdrawals)
-          console.log('출금 내역 로딩 성공:', uniqueWithdrawals.length, '(중복 제거 후)')
+          // 출금 내역 로딩 완료
         }
       } catch (withdrawErr) {
         console.warn('출금 내역 로딩 실패:', withdrawErr)
@@ -425,7 +423,7 @@ const MyPageWithWithdrawal = () => {
           }
           
           setPointTransactions(uniquePointTransactions)
-          console.log('포인트 거래 내역 로딩 성공:', uniquePointTransactions.length, '(중복 제거 후)')
+          // 포인트 거래 내역 로딩 완료
         }
       } catch (pointErr) {
         console.warn('포인트 거래 내역 로딩 실패:', pointErr)
@@ -436,7 +434,7 @@ const MyPageWithWithdrawal = () => {
       // 별도의 포인트 계산 없이 데이터베이스의 points 값을 신뢰
       
     } catch (error) {
-      console.error('사용자 데이터 로드 오류:', error)
+      console.error('사용자 데이터 로드 오류')
       // 프로필 데이터가 없어도 페이지는 표시되도록 함
       if (!profile) {
         setProfile({
@@ -547,7 +545,7 @@ const MyPageWithWithdrawal = () => {
       // 업데이트 시간 추가
       updateData.updated_at = new Date().toISOString()
 
-      console.log('프로필 업데이트 시작')
+      // 프로필 업데이트
       
       // Supabase 직접 업데이트 사용
       const { data, error: updateError } = await supabase
@@ -557,11 +555,11 @@ const MyPageWithWithdrawal = () => {
         .select()
       
       if (updateError) {
-        console.error('프로필 업데이트 오류:', updateError)
+        console.error('프로필 업데이트 오류')
         throw new Error(updateError.message)
       }
 
-      console.log('프로필 업데이트 성공')
+      // 성공
       
       // 로컬 상태 업데이트
       setProfile(prev => ({ ...prev, ...updateData }))
@@ -622,7 +620,7 @@ const MyPageWithWithdrawal = () => {
         throw new Error(withdrawalError.message)
       }
 
-      console.log('출금 신청 성공')
+      // 출금 신청 완료
 
       // 실제 사용자 프로필의 포인트 차감
       const newPoints = currentPoints - requestAmount
@@ -776,7 +774,7 @@ const MyPageWithWithdrawal = () => {
       })
       setShowSnsUploadModal(true)
       
-      console.log('SNS 업로드 모달 열림:', application.id, application.campaign_title)
+      // SNS 업로드 모달 열림
     } catch (error) {
       console.error('SNS 업로드 모달 열기 오류:', error)
       setError(language === 'ja' ? 'モーダルを開けませんでした。' : '모달을 열 수 없습니다.')
