@@ -878,7 +878,12 @@ const StepCard = ({
     try {
       const timestamp = Date.now()
       const userId = application.user_id
-      const videoPath = `${userId}/${application.campaign_id}/${submission?.id || 'new'}/${timestamp}_main_${videoFile.name}`
+      // Supabase Storage는 non-ASCII 문자를 허용하지 않음 → 확장자만 유지
+      const getExt = (name) => {
+        const dot = name.lastIndexOf('.')
+        return dot >= 0 ? name.substring(dot) : ''
+      }
+      const videoPath = `${userId}/${application.campaign_id}/${submission?.id || 'new'}/${timestamp}_main${getExt(videoFile.name)}`
 
       const { error: uploadError } = await supabase.storage
         .from('campaign-videos')
@@ -895,7 +900,7 @@ const StepCard = ({
       let cleanVideoPath = null
 
       if (cleanVideoFile) {
-        cleanVideoPath = `${userId}/${application.campaign_id}/${submission?.id || 'new'}/${timestamp}_clean_${cleanVideoFile.name}`
+        cleanVideoPath = `${userId}/${application.campaign_id}/${submission?.id || 'new'}/${timestamp}_clean${getExt(cleanVideoFile.name)}`
         const { error: cleanError } = await supabase.storage
           .from('campaign-videos')
           .upload(cleanVideoPath, cleanVideoFile, { cacheControl: '3600', upsert: false })
