@@ -90,11 +90,11 @@ const CAMPAIGN_TYPES = {
   }
 }
 
-// 워크플로우 스텝
+// 워크플로우 스텝: 영상업로드 → 수정확인 → SNS/클린본/광고코드 → 포인트
 const WORKFLOW_STEPS = [
-  { id: 'guide', labelKo: '가이드 확인', labelJa: 'ガイド確認', icon: BookOpen },
   { id: 'video', labelKo: '영상 업로드', labelJa: '動画提出', icon: Upload },
-  { id: 'sns', labelKo: 'SNS 공유', labelJa: 'SNS投稿', icon: Share2 },
+  { id: 'revision', labelKo: '수정 확인', labelJa: '修正確認', icon: AlertCircle },
+  { id: 'sns', labelKo: 'SNS/クリーン', labelJa: 'SNS/クリーン', icon: Share2 },
   { id: 'complete', labelKo: '포인트 지급', labelJa: 'ポイント支給', icon: Award }
 ]
 
@@ -805,13 +805,21 @@ const StepCard = ({
   }
 
   // 현재 워크플로우 단계
+  // 새 워크플로우: 영상업로드 → 수정확인 → SNS/클린본/광고코드 → 포인트
   const getCurrentStep = () => {
     if (status === 'points_paid' || status === 'completed') return 4
     if (status === 'sns_submitted' || status === 'review_pending') return 4
-    if (status === 'revision_required' || status === 'revision_requested') return 4 // 수정 요청도 Step 4
-    if (status === 'video_uploaded' || status === 'sns_pending') return 3
-    if (status === 'guide_confirmed' || status === 'video_uploading') return 2
-    return 1
+    if (status === 'sns_pending') return 3 // SNS/클린본/광고코드 단계
+    if (status === 'video_uploaded') return 2 // 수정 확인 단계 (관리자 검토 대기)
+    if (status === 'revision_required' || status === 'revision_requested') return 2 // 수정 필요 → 재업로드
+    return 1 // 영상 업로드 (guide_pending, guide_confirmed 포함)
+  }
+
+  // 영상 버전 계산 (v1, v2, v3...)
+  const getVideoVersion = () => {
+    const path = submission?.video_file_path || ''
+    const match = path.match(/_v(\d+)_/)
+    return match ? parseInt(match[1]) : (submission?.video_file_url ? 1 : 0)
   }
 
   // 수정 요청 확인
@@ -878,12 +886,13 @@ const StepCard = ({
     try {
       const timestamp = Date.now()
       const userId = application.user_id
-      // Supabase Storage는 non-ASCII 문자를 허용하지 않음 → 확장자만 유지
       const getExt = (name) => {
         const dot = name.lastIndexOf('.')
         return dot >= 0 ? name.substring(dot) : ''
       }
-      const videoPath = `${userId}/${application.campaign_id}/${submission?.id || 'new'}/${timestamp}_main${getExt(videoFile.name)}`
+      // 버전 자동 증가 (v1, v2, v3...)
+      const nextVersion = getVideoVersion() + 1
+      const videoPath = `${userId}/${application.campaign_id}/${submission?.id || 'new'}/${timestamp}_v${nextVersion}_main${getExt(videoFile.name)}`
 
       const { error: uploadError } = await supabase.storage
         .from('campaign-videos')
@@ -963,10 +972,10 @@ const StepCard = ({
     }
   }
 
-  // 영상 URL 제출 (파일 업로드 대신 URL 입력)
+  // Step 3: SNS + 클린본 + 광고코드 제출
   const handleVideoUrlSubmit = async () => {
-    if (!videoUrl.trim()) {
-      alert(language === 'ja' ? '動画URLを入力してください' : '영상 URL을 입력해주세요')
+    if (!snsUrl.trim()) {
+      alert(language === 'ja' ? 'SNS投稿URLを入力してください' : 'SNS 게시물 URL을 입력해주세요')
       return
     }
 
@@ -999,11 +1008,11 @@ const StepCard = ({
         uploadedCleanUrl = publicUrl
       }
 
-      // DB 스키마에 맞는 필드만 사용 (video_file_url, clean_video_file_url, ad_code)
+      // SNS + 클린본 + 광고코드 제출 → sns_submitted
       const updateData = {
-        workflow_status: 'video_uploaded',
-        video_file_url: videoUrl,
-        video_uploaded_at: new Date().toISOString(),
+        workflow_status: 'sns_submitted',
+        sns_url: snsUrl,
+        sns_submitted_at: new Date().toISOString(),
         clean_video_file_url: uploadedCleanUrl,
         clean_video_file_name: cleanVideoFile?.name || null,
         clean_video_uploaded_at: cleanVideoFile ? new Date().toISOString() : null,
@@ -1031,19 +1040,19 @@ const StepCard = ({
         if (error) throw error
       }
 
-      // applications 테이블에도 영상 URL 기록 (status는 변경하지 않음 - approved 유지)
+      // applications 테이블에도 상태 기록 (status는 변경하지 않음 - approved/selected 유지)
       if (application?.id) {
         await supabase
           .from('applications')
           .update({
-            submission_status: 'video_submitted',
+            submission_status: 'sns_submitted',
             updated_at: new Date().toISOString()
           })
           .eq('id', application.id)
       }
 
       onUpdate?.()
-      alert(language === 'ja' ? '動画を提出しました！' : '영상을 제출했습니다!')
+      alert(language === 'ja' ? 'SNS・クリーン動画・広告コードを提出しました！' : 'SNS/클린본/광고코드를 제출했습니다!')
     } catch (error) {
       console.error('Video URL submit error:', error)
       alert(language === 'ja' ? '提出に失敗しました' : '제출에 실패했습니다')
@@ -1154,9 +1163,9 @@ const StepCard = ({
                      status === 'completed' ? (language === 'ja' ? '完了' : '완료') :
                      (status === 'revision_required' || status === 'revision_requested') ? (language === 'ja' ? '修正必要' : '수정 필요') :
                      status === 'sns_submitted' ? (language === 'ja' ? 'SNS提出済み' : 'SNS 제출완료') :
-                     status === 'video_uploaded' ? (language === 'ja' ? '動画提出済み' : '영상 제출완료') :
-                     status === 'guide_confirmed' ? (language === 'ja' ? 'ガイド確認済み' : '가이드 확인완료') :
-                     (language === 'ja' ? 'ガイド確認待ち' : '가이드 확인 대기')}
+                     status === 'sns_pending' ? (language === 'ja' ? 'SNS提出待ち' : 'SNS 제출 대기') :
+                     status === 'video_uploaded' ? (language === 'ja' ? '修正確認中' : '수정 확인중') :
+                     (language === 'ja' ? '動画提出待ち' : '영상 제출 대기')}
                   </span>
                   {/* 수정 요청 알림 배지 */}
                   {hasRevisionRequests && (
@@ -1229,85 +1238,25 @@ const StepCard = ({
               })}
             </div>
 
-            {/* Step 1: 가이드 확인 */}
+            {/* Step 1: 영상 업로드 */}
             {currentStep === 1 && (
-              <div className="bg-purple-50 rounded-lg p-4">
-                <h4 className="font-medium text-purple-800 mb-3 flex items-center">
-                  <BookOpen className="w-4 h-4 mr-2" />
-                  {language === 'ja' ? '撮影ガイドを確認してください' : '촬영 가이드를 확인해주세요'}
-                </h4>
-
-                {/* 가이드 표시 - PDF/텍스트 자동 감지 */}
-                {(() => {
-                  const pg = parsePersonalizedGuide(application?.personalized_guide)
-                  const hasPdfGuide = (campaign?.guide_type === 'pdf' && campaign?.guide_pdf_url) || pg.isPdf
-                  const pdfUrl = pg.isPdf ? pg.pdfUrl : campaign?.guide_pdf_url
-                  const textGuide = pg.text || campaign?.shooting_guide_content
-
-                  if (hasPdfGuide && pdfUrl) {
-                    return (
-                      <div className="mb-3">
-                        <ExternalGuideViewer
-                          url={pdfUrl}
-                          language={language}
-                          compact
-                        />
-                      </div>
-                    )
-                  }
-                  if (textGuide) {
-                    return (
-                      <div className="bg-white rounded-lg p-3 mb-3 border border-purple-200 max-h-32 overflow-hidden relative">
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-3">
-                          {textGuide}
-                        </p>
-                        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent" />
-                      </div>
-                    )
-                  }
-                  return (
-                    <div className="bg-white rounded-lg p-3 mb-3 border border-gray-200 text-center">
-                      <p className="text-sm text-gray-500">
-                        {language === 'ja' ? 'ガイドがまだ作成されていません' : '가이드가 아직 생성되지 않았습니다'}
-                      </p>
-                    </div>
-                  )
-                })()}
-
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setShowGuideModal(true)}
-                    className="px-4 py-2 bg-white border border-purple-300 text-purple-700 rounded-md text-sm hover:bg-purple-50 flex items-center"
-                  >
-                    <BookOpen className="w-4 h-4 mr-2" />
-                    {language === 'ja' ? '全体ガイドを見る' : '전체 가이드 보기'}
-                  </button>
-
-                  <button
-                    onClick={handleGuideConfirm}
-                    disabled={submitting}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-700 disabled:opacity-50 flex items-center"
-                  >
-                    {submitting ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                    )}
-                    {language === 'ja' ? 'ガイド確認完了' : '가이드 확인 완료'}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Step 2: 영상 업로드 */}
-            {currentStep === 2 && (
               <div className="bg-blue-50 rounded-lg p-4">
+                {/* 경고: SNS 미리 업로드 금지 */}
+                <div className="mb-4 p-3 bg-red-50 rounded-lg border-2 border-red-300">
+                  <p className="text-sm font-bold text-red-700 flex items-center">
+                    <AlertTriangle className="w-5 h-5 mr-2 flex-shrink-0" />
+                    {language === 'ja'
+                      ? '⛔ SNSへの事前アップロード絶対禁止！修正確認後にアップロードしてください'
+                      : '⛔ SNS 미리 업로드 절대 금지! 수정사항 체크 후 업로드하세요'}
+                  </p>
+                </div>
+
                 <h4 className="font-medium text-blue-800 mb-3 flex items-center">
                   <Upload className="w-4 h-4 mr-2" />
-                  {language === 'ja' ? '動画を提出してください' : '영상을 제출해주세요'}
+                  {language === 'ja' ? '編集済み動画をアップロードしてください' : '편집본 영상을 업로드해주세요'}
                 </h4>
 
-                {/* ガイド確認ボタン - 目立つように */}
+                {/* ガイド確認ボタン */}
                 <button
                   onClick={() => setShowGuideModal(true)}
                   className="w-full mb-4 px-4 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 flex items-center justify-center shadow-sm"
@@ -1316,44 +1265,225 @@ const StepCard = ({
                   {language === 'ja' ? '📖 撮影ガイドを確認する' : '📖 촬영 가이드 확인하기'}
                 </button>
 
-                {/* 특별 요청 알림 */}
-                {(campaign?.meta_ad_code_requested || campaign?.requires_clean_video) && (
-                  <div className="mb-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                    <p className="text-xs font-medium text-yellow-800 mb-1">
-                      {language === 'ja' ? '⚠️ この캠페인の特別要件:' : '⚠️ 이 캠페인의 특별 요청:'}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {campaign?.meta_ad_code_requested && (
-                        <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
-                          📱 {language === 'ja' ? 'Metaパートナーシップコード必要' : '메타 광고코드 필요'}
-                        </span>
-                      )}
-                      {campaign?.requires_clean_video && (
-                        <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
-                          🎞️ {language === 'ja' ? 'クリーン動画必要' : '클린본 필요'}
-                        </span>
-                      )}
+                {/* 파일 업로드 (메인) */}
+                <div className="space-y-3">
+                  <input
+                    ref={videoInputRef}
+                    type="file"
+                    accept="video/*"
+                    onChange={(e) => handleFileSelect(e, false)}
+                    className="hidden"
+                  />
+                  <div
+                    onClick={() => !uploading && videoInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                      videoFile ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-blue-400'
+                    }`}
+                  >
+                    {videoFile ? (
+                      <div className="flex items-center justify-center space-x-3">
+                        <Film className="w-6 h-6 text-blue-500" />
+                        <span className="text-sm text-gray-700">{videoFile.name}</span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setVideoFile(null) }}
+                          className="p-1 hover:bg-gray-200 rounded"
+                        >
+                          <X className="w-4 h-4 text-gray-500" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="text-gray-400">
+                        <Upload className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                        <p className="text-sm font-medium">{language === 'ja' ? 'クリックして編集済み動画を選択' : '클릭하여 편집본 영상 선택'}</p>
+                        <p className="text-xs mt-1">{language === 'ja' ? '最大2GB' : '최대 2GB'}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {uploading && (
+                    <div className="space-y-2">
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-blue-500 h-2 rounded-full transition-all"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                      <p className="text-center text-xs text-gray-500">{uploadProgress}%</p>
+                    </div>
+                  )}
+
+                  {videoFile && !uploading && (
+                    <button
+                      onClick={handleVideoUpload}
+                      className="w-full px-4 py-3 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 flex items-center justify-center"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      {language === 'ja'
+                        ? `v${getVideoVersion() + 1} 動画をアップロード`
+                        : `v${getVideoVersion() + 1} 영상 업로드`}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: 수정 확인 */}
+            {currentStep === 2 && (
+              <div className="bg-orange-50 rounded-lg p-4">
+                {/* 경고: SNS 미리 업로드 금지 */}
+                <div className="mb-4 p-3 bg-red-50 rounded-lg border-2 border-red-300">
+                  <p className="text-sm font-bold text-red-700 flex items-center">
+                    <AlertTriangle className="w-5 h-5 mr-2 flex-shrink-0" />
+                    {language === 'ja'
+                      ? '⛔ SNSへの事前アップロード絶対禁止！修正確認後にアップロードしてください'
+                      : '⛔ SNS 미리 업로드 절대 금지! 수정사항 체크 후 업로드하세요'}
+                  </p>
+                </div>
+
+                <h4 className="font-medium text-orange-800 mb-3 flex items-center">
+                  <AlertCircle className="w-4 h-4 mr-2" />
+                  {(status === 'revision_required' || status === 'revision_requested')
+                    ? (language === 'ja' ? '修正リクエストがあります → 再アップロードしてください' : '수정 요청이 있습니다 → 재업로드 해주세요')
+                    : (language === 'ja' ? '修正確認中です（担当者がレビュー中）' : '수정 확인 중입니다 (담당자 검토 중)')
+                  }
+                </h4>
+
+                {/* 현재 제출 버전 표시 */}
+                {submission?.video_file_url && (
+                  <div className="mb-4 p-3 bg-white rounded-lg border border-orange-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-gray-500">{language === 'ja' ? '提出済み動画:' : '제출된 영상:'}</p>
+                        <p className="text-sm font-medium text-gray-700">
+                          v{getVideoVersion()} - {submission.video_file_name || (language === 'ja' ? 'アップロード済み' : '업로드됨')}
+                        </p>
+                      </div>
+                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                        v{getVideoVersion()}
+                      </span>
                     </div>
                   </div>
                 )}
 
+                {/* 수정 요청사항 표시 */}
+                {(submission?.revision_requests?.length > 0 || application?.revision_requests?.length > 0) && (
+                  <RevisionRequestsSection
+                    revisionRequests={submission?.revision_requests || application?.revision_requests}
+                    language={language}
+                  />
+                )}
+
+                {status === 'revision_required' && submission?.revision_notes && !submission?.revision_requests?.length && (
+                  <div className="mb-4 bg-red-100 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+                    <p className="font-medium mb-1">{language === 'ja' ? '修正内容:' : '수정 내용:'}</p>
+                    {submission.revision_notes}
+                  </div>
+                )}
+
+                {/* 수정 요청시 재업로드 */}
+                {(status === 'revision_required' || status === 'revision_requested') && (
+                  <div className="mt-4 space-y-3">
+                    <p className="text-sm font-medium text-orange-700">
+                      {language === 'ja' ? '修正した動画を再アップロード:' : '수정한 영상을 재업로드:'}
+                    </p>
+                    <input
+                      ref={videoInputRef}
+                      type="file"
+                      accept="video/*"
+                      onChange={(e) => handleFileSelect(e, false)}
+                      className="hidden"
+                    />
+                    <div
+                      onClick={() => !uploading && videoInputRef.current?.click()}
+                      className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+                        videoFile ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-blue-400'
+                      }`}
+                    >
+                      {videoFile ? (
+                        <div className="flex items-center justify-center space-x-3">
+                          <Film className="w-6 h-6 text-blue-500" />
+                          <span className="text-sm text-gray-700">{videoFile.name}</span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setVideoFile(null) }}
+                            className="p-1 hover:bg-gray-200 rounded"
+                          >
+                            <X className="w-4 h-4 text-gray-500" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-gray-400 text-sm">
+                          <Upload className="w-6 h-6 mx-auto mb-1 text-gray-300" />
+                          {language === 'ja' ? 'クリックして修正動画を選択 (最大2GB)' : '클릭하여 수정 영상 선택 (최대 2GB)'}
+                        </div>
+                      )}
+                    </div>
+
+                    {uploading && (
+                      <div className="space-y-2">
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="bg-blue-500 h-2 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
+                        </div>
+                        <p className="text-center text-xs text-gray-500">{uploadProgress}%</p>
+                      </div>
+                    )}
+
+                    {videoFile && !uploading && (
+                      <button
+                        onClick={handleVideoUpload}
+                        className="w-full px-4 py-3 bg-orange-600 text-white rounded-md font-medium hover:bg-orange-700 flex items-center justify-center"
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        {language === 'ja'
+                          ? `v${getVideoVersion() + 1} 修正動画をアップロード`
+                          : `v${getVideoVersion() + 1} 수정 영상 업로드`}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* ガイド確認ボタン */}
+                <button
+                  onClick={() => setShowGuideModal(true)}
+                  className="w-full mt-4 px-4 py-2.5 bg-purple-100 text-purple-700 border border-purple-300 rounded-lg font-medium hover:bg-purple-200 flex items-center justify-center"
+                >
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  {language === 'ja' ? '📖 撮影ガイドを確認する' : '📖 촬영 가이드 확인하기'}
+                </button>
+              </div>
+            )}
+
+            {/* Step 3: SNS + 클린본 + 광고코드 */}
+            {currentStep === 3 && (
+              <div className="bg-indigo-50 rounded-lg p-4">
+                <h4 className="font-medium text-indigo-800 mb-3 flex items-center">
+                  <Share2 className="w-4 h-4 mr-2" />
+                  {language === 'ja' ? 'SNS投稿 / クリーン動画 / 広告コードを提出' : 'SNS 게시 / 클린본 / 광고코드 제출'}
+                </h4>
+
+                <p className="text-sm text-green-700 mb-4 bg-green-50 p-3 rounded-lg border border-green-200 flex items-center">
+                  <CheckCircle className="w-4 h-4 mr-2 flex-shrink-0" />
+                  {language === 'ja'
+                    ? '動画の修正確認が完了しました。SNSにアップロードしてください。'
+                    : '영상 수정 확인이 완료되었습니다. SNS에 업로드해주세요.'}
+                </p>
+
                 <div className="space-y-4">
-                  {/* 편집본 영상 URL */}
+                  {/* SNS URL */}
                   <div>
                     <label className="block text-sm text-gray-700 mb-2 font-medium">
-                      {language === 'ja' ? '編集済み動画URL' : '편집본 영상 URL'} *
+                      {language === 'ja' ? 'SNS投稿URL' : 'SNS 게시물 URL'} *
                     </label>
                     <input
                       type="url"
-                      value={videoUrl}
-                      onChange={(e) => setVideoUrl(e.target.value)}
+                      value={snsUrl}
+                      onChange={(e) => setSnsUrl(e.target.value)}
                       placeholder="https://www.instagram.com/reel/... or https://www.tiktok.com/..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       {language === 'ja'
-                        ? 'Instagram、TikTok、YouTubeなどのSNS投稿URLを入力'
-                        : 'Instagram, TikTok, YouTube 등 SNS 게시물 URL 입력'}
+                        ? 'Instagram、TikTok、YouTube等のSNS投稿リンク'
+                        : 'Instagram, TikTok, YouTube 등 SNS 게시물 링크'}
                     </p>
                   </div>
 
@@ -1407,13 +1537,11 @@ const StepCard = ({
                       )}
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
-                      {language === 'ja'
-                        ? 'BGMや字幕なしのオリジナル動画ファイル'
-                        : 'BGM, 자막이 없는 원본 영상 파일'}
+                      {language === 'ja' ? 'BGMや字幕なしのオリジナル動画ファイル' : 'BGM, 자막이 없는 원본 영상 파일'}
                     </p>
                   </div>
 
-                  {/* 광고코드 (Meta/Spark Ads/YouTube 등) */}
+                  {/* 광고코드 */}
                   <div>
                     <label className="block text-sm text-gray-700 mb-2 font-medium">
                       {language === 'ja' ? '広告コード' : '광고 코드'}
@@ -1429,7 +1557,7 @@ const StepCard = ({
                       value={partnershipCode}
                       onChange={(e) => setPartnershipCode(e.target.value)}
                       placeholder="adcode-Q9jTBBAen2L45CCA8KP_..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm"
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       {language === 'ja'
@@ -1441,151 +1569,15 @@ const StepCard = ({
                   {/* 제출 버튼 */}
                   <button
                     onClick={handleVideoUrlSubmit}
-                    disabled={submitting || !videoUrl.trim()}
-                    className="w-full px-4 py-3 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                  >
-                    {submitting ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Upload className="w-4 h-4 mr-2" />
-                    )}
-                    {language === 'ja' ? '動画を提出する' : '영상 제출하기'}
-                  </button>
-                </div>
-
-                {/* 파일 직접 업로드 */}
-                <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
-                  <h5 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
-                    📁 {language === 'ja' ? 'ファイルを直接アップロード' : '파일 직접 업로드'}
-                  </h5>
-                  <div className="space-y-3">
-                    <input
-                      ref={videoInputRef}
-                      type="file"
-                      accept="video/*"
-                      onChange={(e) => handleFileSelect(e, false)}
-                      className="hidden"
-                    />
-                    <div
-                      onClick={() => !uploading && videoInputRef.current?.click()}
-                      className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
-                        videoFile ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-blue-400'
-                      }`}
-                    >
-                      {videoFile ? (
-                        <div className="flex items-center justify-center space-x-3">
-                          <Film className="w-6 h-6 text-blue-500" />
-                          <span className="text-sm text-gray-700">{videoFile.name}</span>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setVideoFile(null) }}
-                            className="p-1 hover:bg-gray-200 rounded"
-                          >
-                            <X className="w-4 h-4 text-gray-500" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="text-gray-400 text-sm">
-                          <Upload className="w-6 h-6 mx-auto mb-1 text-gray-300" />
-                          {language === 'ja' ? 'クリックして動画を選択 (最大2GB)' : '클릭하여 영상 선택 (최대 2GB)'}
-                        </div>
-                      )}
-                    </div>
-
-                    {uploading && (
-                      <div className="space-y-2">
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-blue-500 h-2 rounded-full transition-all"
-                            style={{ width: `${uploadProgress}%` }}
-                          />
-                        </div>
-                        <p className="text-center text-xs text-gray-500">
-                          {uploadProgress}%
-                        </p>
-                      </div>
-                    )}
-
-                    {videoFile && !uploading && (
-                      <button
-                        onClick={handleVideoUpload}
-                        className="w-full px-3 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 flex items-center justify-center"
-                      >
-                        <Upload className="w-4 h-4 mr-2" />
-                        {language === 'ja' ? 'ファイルをアップロード' : '파일 업로드'}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Step 3: SNS 공유 */}
-            {currentStep === 3 && (
-              <div className="bg-indigo-50 rounded-lg p-4">
-                <h4 className="font-medium text-indigo-800 mb-3 flex items-center">
-                  <Share2 className="w-4 h-4 mr-2" />
-                  {language === 'ja' ? 'SNS投稿情報を入力してください' : 'SNS 공유 정보를 입력해주세요'}
-                </h4>
-
-                {/* ガイド確認ボタン */}
-                <button
-                  onClick={() => setShowGuideModal(true)}
-                  className="w-full mb-4 px-4 py-2.5 bg-purple-100 text-purple-700 border border-purple-300 rounded-lg font-medium hover:bg-purple-200 flex items-center justify-center"
-                >
-                  <BookOpen className="w-4 h-4 mr-2" />
-                  {language === 'ja' ? '📖 撮影ガイドを確認する' : '📖 촬영 가이드 확인하기'}
-                </button>
-
-                {submission?.video_file_url && (
-                  <div className="mb-4 p-3 bg-white rounded border border-indigo-200">
-                    <p className="text-xs text-gray-500 mb-1">
-                      {language === 'ja' ? '提出済み動画:' : '제출된 영상:'}
-                    </p>
-                    <p className="text-sm text-gray-700 truncate">{submission.video_file_name}</p>
-                  </div>
-                )}
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm text-gray-700 mb-2 font-medium">
-                      {language === 'ja' ? 'SNS投稿URL' : 'SNS 게시물 URL'} *
-                    </label>
-                    <input
-                      type="url"
-                      value={snsUrl}
-                      onChange={(e) => setSnsUrl(e.target.value)}
-                      placeholder="https://www.instagram.com/p/..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm text-gray-700 mb-2 font-medium">
-                      {language === 'ja' ? '広告コード' : '광고코드'}
-                      <span className="text-gray-400 ml-1">
-                        ({language === 'ja' ? '任意' : '선택'})
-                      </span>
-                    </label>
-                    <input
-                      type="text"
-                      value={adCode}
-                      onChange={(e) => setAdCode(e.target.value)}
-                      placeholder="#AD #PR #협찬"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  <button
-                    onClick={handleSnsSubmit}
                     disabled={submitting || !snsUrl.trim()}
-                    className="w-full px-4 py-3 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center"
+                    className="w-full px-4 py-3 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                   >
                     {submitting ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     ) : (
                       <Share2 className="w-4 h-4 mr-2" />
                     )}
-                    {language === 'ja' ? 'SNS情報を提出' : 'SNS 정보 제출'}
+                    {language === 'ja' ? 'SNS・クリーン動画・広告コードを提出' : 'SNS/클린본/광고코드 제출'}
                   </button>
                 </div>
               </div>
