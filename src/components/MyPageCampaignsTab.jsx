@@ -5,8 +5,10 @@ import {
   Award, Shield, Download, Filter,
   ChevronDown, ChevronUp, BookOpen, Upload, Link as LinkIcon,
   CheckCircle, Clock, AlertCircle, Film, FileVideo, Share2,
-  Loader2, ExternalLink, X, XCircle, Play, Calendar, AlertTriangle
+  Loader2, ExternalLink, X, XCircle, Play, Calendar, AlertTriangle,
+  FileText
 } from 'lucide-react'
+import ExternalGuideViewer from './ExternalGuideViewer'
 
 // 캠페인 유형 정보 (일본 마이페이지용 - 올리브영 제외)
 const CAMPAIGN_TYPES = {
@@ -263,6 +265,9 @@ const GuideModal = ({ isOpen, onClose, campaign, application, language, stepNumb
   const guideContent = weeklyGuide || application?.personalized_guide || campaign?.shooting_guide_content
   const guideUrl = campaign?.shooting_guide_url
 
+  // 외부 가이드 (PDF/Google Slides) 확인
+  const hasExternalGuide = campaign?.guide_type === 'pdf' && campaign?.guide_pdf_url
+
   // 주차별 라벨
   const getStepLabel = () => {
     if (campaignType === '4week_challenge') {
@@ -478,8 +483,16 @@ const GuideModal = ({ isOpen, onClose, campaign, application, language, stepNumb
             </div>
           )}
 
-          {/* 기존 가이드 내용 (텍스트) */}
-          {guideContent && (
+          {/* 외부 가이드 (PDF/Google Slides) - 최우선 표시 */}
+          {hasExternalGuide && (
+            <ExternalGuideViewer
+              url={campaign.guide_pdf_url}
+              language={language}
+            />
+          )}
+
+          {/* 기존 가이드 내용 (텍스트) - 외부 가이드가 없는 경우 */}
+          {!hasExternalGuide && guideContent && (
             <div className="bg-gray-50 rounded-lg p-4">
               <h5 className="font-semibold text-gray-800 mb-3">
                 {language === 'ja' ? '詳細ガイド' : '상세 가이드'}
@@ -491,7 +504,7 @@ const GuideModal = ({ isOpen, onClose, campaign, application, language, stepNumb
           )}
 
           {/* 외부 가이드 링크 */}
-          {guideUrl && (
+          {!hasExternalGuide && guideUrl && (
             <div className="p-4 bg-blue-50 rounded-lg">
               <p className="text-sm text-blue-800 mb-2">
                 {language === 'ja' ? '詳細ガイドリンク:' : '상세 가이드 링크:'}
@@ -1153,13 +1166,36 @@ const StepCard = ({
                   {language === 'ja' ? '撮影ガイドを確認してください' : '촬영 가이드를 확인해주세요'}
                 </h4>
 
-                {/* 가이드 미리보기 */}
-                {(application?.personalized_guide || campaign?.shooting_guide_content) && (
+                {/* 외부 가이드 (PDF/Google Slides) 미리보기 */}
+                {campaign?.guide_type === 'pdf' && campaign?.guide_pdf_url && (
+                  <div className="mb-3">
+                    <ExternalGuideViewer
+                      url={campaign.guide_pdf_url}
+                      language={language}
+                      compact
+                    />
+                  </div>
+                )}
+
+                {/* 텍스트 가이드 미리보기 - 외부 가이드가 없는 경우 */}
+                {!(campaign?.guide_type === 'pdf' && campaign?.guide_pdf_url) &&
+                  (application?.personalized_guide || campaign?.shooting_guide_content) && (
                   <div className="bg-white rounded-lg p-3 mb-3 border border-purple-200 max-h-32 overflow-hidden relative">
                     <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-3">
                       {application?.personalized_guide || campaign?.shooting_guide_content}
                     </p>
                     <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent" />
+                  </div>
+                )}
+
+                {/* 가이드가 전혀 없는 경우 */}
+                {!(campaign?.guide_type === 'pdf' && campaign?.guide_pdf_url) &&
+                  !application?.personalized_guide &&
+                  !campaign?.shooting_guide_content && (
+                  <div className="bg-white rounded-lg p-3 mb-3 border border-gray-200 text-center">
+                    <p className="text-sm text-gray-500">
+                      {language === 'ja' ? 'ガイドがまだ作成されていません' : '가이드가 아직 생성되지 않았습니다'}
+                    </p>
                   </div>
                 )}
 

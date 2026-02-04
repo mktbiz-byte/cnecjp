@@ -9,6 +9,7 @@ import {
   Camera, Upload, Film, BookOpen, Layers
 } from 'lucide-react'
 import ShootingGuideModal from './ShootingGuideModal'
+import ExternalGuideViewer from './ExternalGuideViewer'
 import VideoUploadModal from './VideoUploadModal'
 import MyPageCampaignsTab from './MyPageCampaignsTab'
 
@@ -1455,9 +1456,37 @@ const MyPageWithWithdrawal = () => {
                           </td>
                           {/* 가이드 열 */}
                           <td className="px-6 py-4 whitespace-nowrap">
-                            {application.status === 'approved' && application.personalized_guide ? (
+                            {application.status === 'approved' && application.campaign_guide_type === 'pdf' && application.campaign_guide_pdf_url ? (
                               <div className="space-y-2">
-                                {/* 가이드 보기 버튼 */}
+                                {/* 외부 가이드 (PDF/Google Slides) */}
+                                <ExternalGuideViewer
+                                  url={application.campaign_guide_pdf_url}
+                                  language={language}
+                                  compact
+                                />
+
+                                {/* 영상 업로드 버튼 */}
+                                {application.submission_status !== 'submitted' ? (
+                                  <button
+                                    onClick={() => {
+                                      setSelectedGuideApplication(application)
+                                      setShowVideoUploadModal(true)
+                                    }}
+                                    className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors"
+                                  >
+                                    <Upload className="w-3.5 h-3.5 mr-1.5" />
+                                    {language === 'ko' ? '영상 업로드' : '動画提出'}
+                                  </button>
+                                ) : (
+                                  <span className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-green-100 text-green-800">
+                                    <Film className="w-3.5 h-3.5 mr-1.5" />
+                                    {language === 'ko' ? '제출완료' : '提出済み'}
+                                  </span>
+                                )}
+                              </div>
+                            ) : application.status === 'approved' && application.personalized_guide ? (
+                              <div className="space-y-2">
+                                {/* AI 가이드 보기 버튼 */}
                                 <button
                                   onClick={() => {
                                     setSelectedGuideApplication(application)
