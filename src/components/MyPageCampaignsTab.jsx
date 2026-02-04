@@ -25,8 +25,14 @@ const parsePersonalizedGuide = (guide) => {
     parsed = guide
   } else if (typeof guide === 'string') {
     const trimmed = guide.trim()
-    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-      try { parsed = JSON.parse(trimmed) } catch (e) { /* not JSON */ }
+    if (trimmed.startsWith('{') || trimmed.startsWith('[') || trimmed.startsWith('"')) {
+      try {
+        parsed = JSON.parse(trimmed)
+        // 이중 인코딩 처리: JSON.parse 결과가 문자열이면 한번 더 파싱
+        if (typeof parsed === 'string') {
+          try { parsed = JSON.parse(parsed) } catch (e2) { /* single string value */ }
+        }
+      } catch (e) { /* not JSON */ }
     }
     if (!parsed) {
       return { isPdf: false, isAiGuide: false, text: guide, pdfUrl: null, title: null, aiData: null }
