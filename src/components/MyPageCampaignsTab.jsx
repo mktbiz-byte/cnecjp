@@ -1867,10 +1867,17 @@ const CampaignCard = ({ application, campaign, submissions, onUpdate, language }
                 </div>
               )}
 
-              {/* 캠페인 설명 */}
-              <p className="text-xs text-gray-500 mt-1">
-                {language === 'ja' ? typeInfo.descJa : typeInfo.descKo}
-              </p>
+              {/* 캠페인 설명 + 보수 */}
+              <div className="flex items-center gap-2 mt-1">
+                <p className="text-xs text-gray-500">
+                  {language === 'ja' ? typeInfo.descJa : typeInfo.descKo}
+                </p>
+                {campaign?.reward_amount > 0 && (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                    💰 ¥{campaign.reward_amount.toLocaleString()}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
