@@ -1268,19 +1268,19 @@ const StepCard = ({
             {/* Step 2: 영상 업로드 */}
             {currentStep === 2 && (
               <div className="bg-blue-50 rounded-lg p-4">
-                <h4 className="font-medium text-blue-800 mb-3 flex items-center justify-between">
-                  <span className="flex items-center">
-                    <Upload className="w-4 h-4 mr-2" />
-                    {language === 'ja' ? '動画を提出してください' : '영상을 제출해주세요'}
-                  </span>
-                  <button
-                    onClick={() => setShowGuideModal(true)}
-                    className="text-xs text-blue-600 hover:underline flex items-center"
-                  >
-                    <BookOpen className="w-3 h-3 mr-1" />
-                    {language === 'ja' ? 'ガイド確認' : '가이드 확인'}
-                  </button>
+                <h4 className="font-medium text-blue-800 mb-3 flex items-center">
+                  <Upload className="w-4 h-4 mr-2" />
+                  {language === 'ja' ? '動画を提出してください' : '영상을 제출해주세요'}
                 </h4>
+
+                {/* ガイド確認ボタン - 目立つように */}
+                <button
+                  onClick={() => setShowGuideModal(true)}
+                  className="w-full mb-4 px-4 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 flex items-center justify-center shadow-sm"
+                >
+                  <BookOpen className="w-5 h-5 mr-2" />
+                  {language === 'ja' ? '📖 撮影ガイドを確認する' : '📖 촬영 가이드 확인하기'}
+                </button>
 
                 {/* 특별 요청 알림 */}
                 {(campaign?.meta_ad_code_requested || campaign?.requires_clean_video) && (
@@ -1388,12 +1388,12 @@ const StepCard = ({
                   </button>
                 </div>
 
-                {/* 파일 직접 업로드 옵션 (접기) */}
-                <details className="mt-4">
-                  <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700">
-                    {language === 'ja' ? '📁 ファイルを直接アップロードする場合' : '📁 파일 직접 업로드하기'}
-                  </summary>
-                  <div className="mt-3 p-3 bg-white rounded-lg border border-gray-200 space-y-3">
+                {/* 파일 직접 업로드 */}
+                <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
+                  <h5 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                    📁 {language === 'ja' ? 'ファイルを直接アップロード' : '파일 직접 업로드'}
+                  </h5>
+                  <div className="space-y-3">
                     <input
                       ref={videoInputRef}
                       type="file"
@@ -1420,6 +1420,7 @@ const StepCard = ({
                         </div>
                       ) : (
                         <div className="text-gray-400 text-sm">
+                          <Upload className="w-6 h-6 mx-auto mb-1 text-gray-300" />
                           {language === 'ja' ? 'クリックして動画を選択 (最大500MB)' : '클릭하여 영상 선택 (최대 500MB)'}
                         </div>
                       )}
@@ -1442,32 +1443,33 @@ const StepCard = ({
                     {videoFile && !uploading && (
                       <button
                         onClick={handleVideoUpload}
-                        className="w-full px-3 py-2 bg-gray-600 text-white rounded-md text-sm hover:bg-gray-700"
+                        className="w-full px-3 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 flex items-center justify-center"
                       >
+                        <Upload className="w-4 h-4 mr-2" />
                         {language === 'ja' ? 'ファイルをアップロード' : '파일 업로드'}
                       </button>
                     )}
                   </div>
-                </details>
+                </div>
               </div>
             )}
 
             {/* Step 3: SNS 공유 */}
             {currentStep === 3 && (
               <div className="bg-indigo-50 rounded-lg p-4">
-                <h4 className="font-medium text-indigo-800 mb-3 flex items-center justify-between">
-                  <span className="flex items-center">
-                    <Share2 className="w-4 h-4 mr-2" />
-                    {language === 'ja' ? 'SNS投稿情報を入力してください' : 'SNS 공유 정보를 입력해주세요'}
-                  </span>
-                  <button
-                    onClick={() => setShowGuideModal(true)}
-                    className="text-xs text-indigo-600 hover:underline flex items-center"
-                  >
-                    <BookOpen className="w-3 h-3 mr-1" />
-                    {language === 'ja' ? 'ガイド確認' : '가이드 확인'}
-                  </button>
+                <h4 className="font-medium text-indigo-800 mb-3 flex items-center">
+                  <Share2 className="w-4 h-4 mr-2" />
+                  {language === 'ja' ? 'SNS投稿情報を入力してください' : 'SNS 공유 정보를 입력해주세요'}
                 </h4>
+
+                {/* ガイド確認ボタン */}
+                <button
+                  onClick={() => setShowGuideModal(true)}
+                  className="w-full mb-4 px-4 py-2.5 bg-purple-100 text-purple-700 border border-purple-300 rounded-lg font-medium hover:bg-purple-200 flex items-center justify-center"
+                >
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  {language === 'ja' ? '📖 撮影ガイドを確認する' : '📖 촬영 가이드 확인하기'}
+                </button>
 
                 {submission?.video_file_url && (
                   <div className="mb-4 p-3 bg-white rounded border border-indigo-200">
