@@ -11,40 +11,111 @@ import {
 import ExternalGuideViewer from './ExternalGuideViewer'
 
 // personalized_guide 파싱 헬퍼
-// cnecbiz.com에서 PDF 가이드를 JSON으로 저장하는 경우가 있음
-// 예: {"type":"external_pdf","url":null,"fileUrl":"https://...pdf","fileName":"...","title":"..."}
+// 3가지 형태:
+// 1. PDF: {"type":"external_pdf","fileUrl":"https://...pdf","title":"..."}
+// 2. AI 가이드: {"mood":"bright","scenes":[{"order":1,"dialogue":"...","shooting_tip":"..."},...]}
+// 3. 텍스트: 일반 문자열
 const parsePersonalizedGuide = (guide) => {
-  if (!guide) return { isPdf: false, text: null, pdfUrl: null, title: null }
+  if (!guide) return { isPdf: false, isAiGuide: false, text: null, pdfUrl: null, title: null, aiData: null }
 
-  // 이미 객체인 경우
+  let parsed = null
+
   if (typeof guide === 'object') {
-    if (guide.type === 'external_pdf' && guide.fileUrl) {
-      return { isPdf: true, text: null, pdfUrl: guide.fileUrl, title: guide.title || null }
-    }
-    return { isPdf: false, text: JSON.stringify(guide), pdfUrl: null, title: null }
-  }
-
-  // 문자열인 경우 JSON 파싱 시도
-  if (typeof guide === 'string') {
+    parsed = guide
+  } else if (typeof guide === 'string') {
     const trimmed = guide.trim()
     if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-      try {
-        const parsed = JSON.parse(trimmed)
-        if (parsed.type === 'external_pdf' && parsed.fileUrl) {
-          return { isPdf: true, text: null, pdfUrl: parsed.fileUrl, title: parsed.title || null }
-        }
-        // JSON이지만 PDF가 아닌 경우 - URL이 있으면 PDF로 처리
-        if (parsed.fileUrl && parsed.fileUrl.endsWith('.pdf')) {
-          return { isPdf: true, text: null, pdfUrl: parsed.fileUrl, title: parsed.title || null }
-        }
-      } catch (e) {
-        // JSON 파싱 실패 → 일반 텍스트
-      }
+      try { parsed = JSON.parse(trimmed) } catch (e) { /* not JSON */ }
     }
-    return { isPdf: false, text: guide, pdfUrl: null, title: null }
+    if (!parsed) {
+      return { isPdf: false, isAiGuide: false, text: guide, pdfUrl: null, title: null, aiData: null }
+    }
+  } else {
+    return { isPdf: false, isAiGuide: false, text: null, pdfUrl: null, title: null, aiData: null }
   }
 
-  return { isPdf: false, text: null, pdfUrl: null, title: null }
+  // PDF 가이드
+  if (parsed.type === 'external_pdf' && parsed.fileUrl) {
+    return { isPdf: true, isAiGuide: false, text: null, pdfUrl: parsed.fileUrl, title: parsed.title || null, aiData: null }
+  }
+  if (parsed.fileUrl && parsed.fileUrl.endsWith('.pdf')) {
+    return { isPdf: true, isAiGuide: false, text: null, pdfUrl: parsed.fileUrl, title: parsed.title || null, aiData: null }
+  }
+
+  // AI 가이드 (scenes 배열이 있는 경우)
+  if (parsed.scenes && Array.isArray(parsed.scenes)) {
+    return { isPdf: false, isAiGuide: true, text: null, pdfUrl: null, title: null, aiData: parsed }
+  }
+
+  // 기타 JSON → 텍스트로 표시
+  return { isPdf: false, isAiGuide: false, text: JSON.stringify(parsed, null, 2), pdfUrl: null, title: null, aiData: null }
+}
+
+// AI 가이드 렌더링 컴포넌트
+const AiGuideRenderer = ({ data, language }) => {
+  if (!data?.scenes) return null
+  const isJa = language === 'ja'
+
+  return (
+    <div className="space-y-4">
+      {/* 무드/템포 */}
+      {(data.mood || data.tempo) && (
+        <div className="flex flex-wrap gap-2">
+          {data.mood && (
+            <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+              🎨 {isJa ? 'ムード' : '무드'}: {data.mood}
+            </span>
+          )}
+          {data.tempo && (
+            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+              🎵 {isJa ? 'テンポ' : '템포'}: {data.tempo}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* 씬 목록 */}
+      {data.scenes.map((scene, idx) => (
+        <div key={idx} className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h5 className="text-sm font-bold text-gray-800">
+              {isJa ? `シーン ${scene.order || idx + 1}` : `씬 ${scene.order || idx + 1}`}
+            </h5>
+          </div>
+
+          {/* 대사 */}
+          {(scene.dialogue_translated || scene.dialogue) && (
+            <div className="mb-3">
+              <p className="text-xs font-medium text-gray-500 mb-1">💬 {isJa ? 'セリフ' : '대사'}</p>
+              <p className="text-sm text-gray-800 bg-yellow-50 rounded p-2 border-l-3 border-yellow-400">
+                {isJa ? (scene.dialogue_translated || scene.dialogue) : scene.dialogue}
+              </p>
+            </div>
+          )}
+
+          {/* 촬영 팁 */}
+          {(scene.shooting_tip_translated || scene.shooting_tip) && (
+            <div className="mb-3">
+              <p className="text-xs font-medium text-gray-500 mb-1">📸 {isJa ? '撮影ポイント' : '촬영 팁'}</p>
+              <p className="text-sm text-gray-700 bg-blue-50 rounded p-2">
+                {isJa ? (scene.shooting_tip_translated || scene.shooting_tip) : scene.shooting_tip}
+              </p>
+            </div>
+          )}
+
+          {/* 장면 설명 */}
+          {(scene.scene_description_translated || scene.scene_description) && (
+            <div>
+              <p className="text-xs font-medium text-gray-500 mb-1">🎬 {isJa ? 'シーン説明' : '장면 설명'}</p>
+              <p className="text-sm text-gray-600">
+                {isJa ? (scene.scene_description_translated || scene.scene_description) : scene.scene_description}
+              </p>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
 }
 
 // 캠페인 유형 정보 (일본 마이페이지용 - 올리브영 제외)
@@ -534,8 +605,18 @@ const GuideModal = ({ isOpen, onClose, campaign, application, language, stepNumb
             />
           )}
 
-          {/* 기존 가이드 내용 (텍스트) - 외부 가이드가 없는 경우 */}
-          {!hasExternalGuide && guideContent && (
+          {/* AI 가이드 (scenes 배열) */}
+          {!hasExternalGuide && parsedGuide.isAiGuide && parsedGuide.aiData && (
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h5 className="font-semibold text-gray-800 mb-3">
+                {language === 'ja' ? '詳細ガイド' : '상세 가이드'}
+              </h5>
+              <AiGuideRenderer data={parsedGuide.aiData} language={language} />
+            </div>
+          )}
+
+          {/* 텍스트 가이드 - PDF/AI 가이드가 없는 경우 */}
+          {!hasExternalGuide && !parsedGuide.isAiGuide && guideContent && (
             <div className="bg-gray-50 rounded-lg p-4">
               <h5 className="font-semibold text-gray-800 mb-3">
                 {language === 'ja' ? '詳細ガイド' : '상세 가이드'}
