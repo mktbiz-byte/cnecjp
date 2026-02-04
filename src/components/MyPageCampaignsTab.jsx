@@ -1737,6 +1737,7 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
     setLoading(true)
     try {
       const campaignIds = [...new Set(applications.map(a => a.campaign_id).filter(Boolean))]
+      let campaignsMap = {}
 
       if (campaignIds.length > 0) {
         const { data: campaignsData } = await supabase
@@ -1745,7 +1746,6 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
           .in('id', campaignIds)
 
         if (campaignsData) {
-          const campaignsMap = {}
           campaignsData.forEach(c => { campaignsMap[c.id] = c })
           setCampaigns(campaignsMap)
         }
@@ -1754,26 +1754,87 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
       const applicationIds = applications.map(a => a.id)
 
       if (applicationIds.length > 0) {
-        const { data: submissionsData, error: submissionsError } = await supabase
-          .from('campaign_submissions')
-          .select('*')
-          .in('application_id', applicationIds)
-          .order('step_number', { ascending: true })
+        let submissionsLoaded = false
 
-        if (submissionsError) {
-          console.error('Submissions query error:', submissionsError)
-          // campaign_submissions 테이블이 없거나 RLS 오류인 경우에도 계속 진행
-        }
+        try {
+          const { data: submissionsData, error: submissionsError } = await supabase
+            .from('campaign_submissions')
+            .select('*')
+            .in('application_id', applicationIds)
+            .order('step_number', { ascending: true })
 
-        if (submissionsData && submissionsData.length > 0) {
-          const submissionsMap = {}
-          submissionsData.forEach(s => {
-            if (!submissionsMap[s.application_id]) {
-              submissionsMap[s.application_id] = []
+          if (submissionsError) {
+            console.error('Submissions query error:', submissionsError)
+            // campaign_submissions 테이블이 없거나 RLS 오류
+          } else if (submissionsData && submissionsData.length > 0) {
+            const submissionsMap = {}
+            submissionsData.forEach(s => {
+              if (!submissionsMap[s.application_id]) {
+                submissionsMap[s.application_id] = []
+              }
+              submissionsMap[s.application_id].push(s)
+            })
+            setSubmissions(submissionsMap)
+            submissionsLoaded = true
+          }
+
+          // submissions가 없는 approved applications에 대해 자동 생성 시도
+          if (!submissionsError) {
+            const approvedApps = applications.filter(a =>
+              ['approved', 'video_submitted', 'sns_submitted', 'completed'].includes(a.status)
+            )
+            for (const app of approvedApps) {
+              if (!submissionsLoaded || !submissionsData?.some(s => s.application_id === app.id)) {
+                const campaign = campaignsMap?.[app.campaign_id]
+                const campaignType = campaign?.campaign_type || 'regular'
+                const totalSteps = campaign?.total_steps ||
+                  (campaignType === '4week_challenge' ? 4 : campaignType === 'megawari' ? 2 : 1)
+
+                for (let step = 1; step <= totalSteps; step++) {
+                  const stepLabel = campaignType === '4week_challenge' ? `Week ${step}` :
+                    campaignType === 'megawari' ? `Step ${step}` : null
+
+                  try {
+                    await supabase
+                      .from('campaign_submissions')
+                      .upsert({
+                        application_id: app.id,
+                        user_id: app.user_id,
+                        campaign_id: app.campaign_id,
+                        step_number: step,
+                        step_label: stepLabel,
+                        workflow_status: 'guide_pending'
+                      }, { onConflict: 'application_id,step_number', ignoreDuplicates: true })
+                  } catch (e) {
+                    console.warn('Auto-create submission failed:', e)
+                  }
+                }
+              }
             }
-            submissionsMap[s.application_id].push(s)
-          })
-          setSubmissions(submissionsMap)
+
+            // 자동 생성 후 다시 로드
+            if (!submissionsLoaded && approvedApps.length > 0) {
+              const { data: retryData } = await supabase
+                .from('campaign_submissions')
+                .select('*')
+                .in('application_id', applicationIds)
+                .order('step_number', { ascending: true })
+
+              if (retryData && retryData.length > 0) {
+                const submissionsMap = {}
+                retryData.forEach(s => {
+                  if (!submissionsMap[s.application_id]) {
+                    submissionsMap[s.application_id] = []
+                  }
+                  submissionsMap[s.application_id].push(s)
+                })
+                setSubmissions(submissionsMap)
+              }
+            }
+          }
+        } catch (submissionsQueryError) {
+          console.error('Submissions query/create error:', submissionsQueryError)
+          // 테이블이 없어도 UI는 계속 표시 (guide_pending fallback)
         }
       }
     } catch (error) {
