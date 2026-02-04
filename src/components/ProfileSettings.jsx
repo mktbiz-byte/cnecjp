@@ -261,11 +261,11 @@ const ProfileSettings = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center space-x-4 mb-4">
+        <div className="mb-4 sm:mb-8">
+          <div className="flex items-center space-x-2 sm:space-x-4 mb-4">
             <Link 
               to="/" 
               className="flex items-center text-purple-600 hover:text-purple-700 transition-colors"
@@ -274,7 +274,7 @@ const ProfileSettings = () => {
               {t.backToHome}
             </Link>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">{t.title}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.title}</h1>
           <p className="text-gray-600 mt-2">{t.subtitle}</p>
         </div>
 
@@ -297,7 +297,7 @@ const ProfileSettings = () => {
           </Alert>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
           {/* 개인정보 섹션 */}
           <Card>
             <CardHeader>
@@ -309,7 +309,7 @@ const ProfileSettings = () => {
                 기본 개인정보를 관리하세요
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4 sm:space-y-6">
               {/* 이름 */}
               <div className="space-y-2">
                 <Label htmlFor="name">{t.name}</Label>
@@ -499,7 +499,7 @@ const ProfileSettings = () => {
                 계정 보안 설정을 관리하세요
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4 sm:space-y-6">
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">{t.changePassword}</h3>
 

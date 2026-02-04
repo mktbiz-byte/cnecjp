@@ -325,7 +325,7 @@ const AllDeadlinesOverview = ({ campaign, campaignType, language }) => {
       <p className="text-xs font-medium text-gray-500 mb-2">
         {language === 'ja' ? '📅 スケジュール' : '📅 스케줄'}
       </p>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {/* 영상 마감일 */}
         <div>
           <p className="text-xs text-gray-400 mb-1">
@@ -417,9 +417,9 @@ const GuideModal = ({ isOpen, onClose, campaign, application, language, stepNumb
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50">
-          <h3 className="text-lg font-bold text-gray-900 flex items-center">
+      <div className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
+        <div className="p-3 sm:p-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50">
+          <h3 className="text-base sm:text-lg font-bold text-gray-900 flex items-center">
             <BookOpen className="w-5 h-5 mr-2 text-purple-600" />
             {language === 'ja' ? '撮影ガイド' : '촬영 가이드'}
             {stepLabel && (
@@ -436,7 +436,7 @@ const GuideModal = ({ isOpen, onClose, campaign, application, language, stepNumb
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[70vh] space-y-6">
+        <div className="p-4 sm:p-6 overflow-y-auto max-h-[70vh] space-y-4 sm:space-y-6">
           {/* 캠페인 기본 정보 */}
           <div className="pb-4 border-b border-gray-100">
             <h4 className="font-bold text-lg text-gray-900">{campaign?.title}</h4>
@@ -553,10 +553,10 @@ const GuideModal = ({ isOpen, onClose, campaign, application, language, stepNumb
               <h5 className="font-semibold text-indigo-800 mb-3 flex items-center">
                 📷 {language === 'ja' ? '必須撮影シーン' : '필수 촬영 장면'}
               </h5>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {shootingScenes.map((scene, idx) => (
                   <div key={idx} className="flex items-center text-sm text-gray-700">
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
                     {language === 'ja' ? scene.ja : scene.ko}
                   </div>
                 ))}
@@ -2107,53 +2107,53 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       {/* 통계 */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="bg-blue-50 rounded-lg p-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <div className="bg-blue-50 rounded-lg p-3 sm:p-4">
           <div className="flex items-center">
-            <Award className="h-8 w-8 text-blue-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">
+            <Award className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 flex-shrink-0" />
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-500">
                 {language === 'ja' ? '総応募数' : '총 신청'}
               </p>
-              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.total}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-yellow-50 rounded-lg p-4">
+        <div className="bg-yellow-50 rounded-lg p-3 sm:p-4">
           <div className="flex items-center">
-            <Clock className="h-8 w-8 text-yellow-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">
+            <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-600 flex-shrink-0" />
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-500">
                 {language === 'ja' ? '審査中' : '심사중'}
               </p>
-              <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.pending}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-green-50 rounded-lg p-4">
+        <div className="bg-green-50 rounded-lg p-3 sm:p-4">
           <div className="flex items-center">
-            <Shield className="h-8 w-8 text-green-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">
+            <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-green-600 flex-shrink-0" />
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-500">
                 {language === 'ja' ? '選定済み' : '선정됨'}
               </p>
-              <p className="text-2xl font-bold text-gray-900">{stats.approved}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.approved}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-purple-50 rounded-lg p-4">
+        <div className="bg-purple-50 rounded-lg p-3 sm:p-4">
           <div className="flex items-center">
-            <Download className="h-8 w-8 text-purple-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">
+            <Download className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600 flex-shrink-0" />
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-500">
                 {language === 'ja' ? '完了' : '완료'}
               </p>
-              <p className="text-2xl font-bold text-gray-900">{stats.completed}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.completed}</p>
             </div>
           </div>
         </div>
@@ -2196,7 +2196,7 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
               {filteredApproved.length}
             </span>
           </h3>
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {filteredApproved.map(application => (
               <CampaignCard
                 key={application.id}

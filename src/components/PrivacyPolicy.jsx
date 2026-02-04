@@ -5,9 +5,9 @@ import { ArrowLeft } from 'lucide-react';
 export default function PrivacyPolicy() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-      <div className="max-w-4xl mx-auto px-4 py-12">
+      <div className="max-w-4xl mx-auto px-4 py-6 sm:py-12">
         {/* ヘッダー */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <Link 
             to="/" 
             className="inline-flex items-center text-purple-600 hover:text-purple-700 mb-6"
@@ -15,7 +15,7 @@ export default function PrivacyPolicy() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             ホームに戻る
           </Link>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-4">
             プライバシーポリシー
           </h1>
           <p className="text-gray-600">
@@ -24,10 +24,10 @@ export default function PrivacyPolicy() {
         </div>
 
         {/* コンテンツ */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 space-y-8">
+        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-8 space-y-6 sm:space-y-8">
           {/* 1. 基本方針 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               1. 基本方針
             </h2>
             <p className="text-gray-700 leading-relaxed">
@@ -37,7 +37,7 @@ export default function PrivacyPolicy() {
 
           {/* 2. 収集する情報 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               2. 収集する情報
             </h2>
             <div className="space-y-4">
@@ -45,7 +45,7 @@ export default function PrivacyPolicy() {
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">
                   2.1 ユーザーが提供する情報
                 </h3>
-                <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
+                <ul className="list-disc list-inside text-gray-700 space-y-2 ml-2 sm:ml-4">
                   <li>氏名、メールアドレス</li>
                   <li>SNSアカウント情報（Instagram、YouTube、TikTokなど）</li>
                   <li>プロフィール情報（年齢、性別、地域など）</li>
@@ -57,7 +57,7 @@ export default function PrivacyPolicy() {
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">
                   2.2 自動的に収集される情報
                 </h3>
-                <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
+                <ul className="list-disc list-inside text-gray-700 space-y-2 ml-2 sm:ml-4">
                   <li>IPアドレス、ブラウザ情報</li>
                   <li>アクセスログ、Cookie情報</li>
                   <li>デバイス情報</li>
@@ -68,10 +68,10 @@ export default function PrivacyPolicy() {
 
           {/* 3. 情報の利用目的 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               3. 情報の利用目的
             </h2>
-            <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-gray-700 space-y-2 ml-2 sm:ml-4">
               <li>サービスの提供および運営</li>
               <li>ユーザー認証およびアカウント管理</li>
               <li>キャンペーンのマッチングおよび管理</li>
@@ -84,13 +84,13 @@ export default function PrivacyPolicy() {
 
           {/* 4. 情報の共有 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               4. 情報の共有
             </h2>
             <p className="text-gray-700 leading-relaxed mb-4">
               当社は、以下の場合を除き、ユーザーの個人情報を第三者に提供しません：
             </p>
-            <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-gray-700 space-y-2 ml-2 sm:ml-4">
               <li>ユーザーの同意がある場合</li>
               <li>法令に基づく場合</li>
               <li>サービス提供に必要な業務委託先（決済代行会社など）</li>
@@ -100,7 +100,7 @@ export default function PrivacyPolicy() {
 
           {/* 5. 情報の保護 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               5. 情報の保護
             </h2>
             <p className="text-gray-700 leading-relaxed">
@@ -110,7 +110,7 @@ export default function PrivacyPolicy() {
 
           {/* 6. Cookie */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               6. Cookieの使用
             </h2>
             <p className="text-gray-700 leading-relaxed">
@@ -120,13 +120,13 @@ export default function PrivacyPolicy() {
 
           {/* 7. ユーザーの権利 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               7. ユーザーの権利
             </h2>
             <p className="text-gray-700 leading-relaxed mb-4">
               ユーザーは、自身の個人情報について以下の権利を有します：
             </p>
-            <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-gray-700 space-y-2 ml-2 sm:ml-4">
               <li>開示請求</li>
               <li>訂正・追加・削除</li>
               <li>利用停止・消去</li>
@@ -139,13 +139,13 @@ export default function PrivacyPolicy() {
 
           {/* 8. 第三者サービス */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               8. 第三者サービスの利用
             </h2>
             <p className="text-gray-700 leading-relaxed mb-4">
               当社のサービスでは、以下の第三者サービスを利用しています：
             </p>
-            <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-gray-700 space-y-2 ml-2 sm:ml-4">
               <li>Google Analytics（アクセス解析）</li>
               <li>Google OAuth（ログイン認証）</li>
               <li>Supabase（データベース）</li>
@@ -158,7 +158,7 @@ export default function PrivacyPolicy() {
 
           {/* 9. 子供のプライバシー */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               9. 子供のプライバシー
             </h2>
             <p className="text-gray-700 leading-relaxed">
@@ -168,7 +168,7 @@ export default function PrivacyPolicy() {
 
           {/* 10. ポリシーの変更 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               10. プライバシーポリシーの変更
             </h2>
             <p className="text-gray-700 leading-relaxed">
@@ -178,10 +178,10 @@ export default function PrivacyPolicy() {
 
           {/* 11. お問い合わせ */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               11. お問い合わせ
             </h2>
-            <div className="bg-gray-50 rounded-lg p-6">
+            <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
               <p className="text-gray-700 leading-relaxed mb-4">
                 個人情報の取り扱いに関するお問い合わせは、以下までご連絡ください：
               </p>

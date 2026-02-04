@@ -224,7 +224,7 @@ const HomePageJP = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative py-20 bg-gradient-to-b from-blue-50 to-white">
+      <section className="relative py-12 md:py-20 bg-gradient-to-b from-blue-50 to-white">
         <div className="container mx-auto px-4 text-center">
           <div className="inline-block mb-4">
             <Badge className="bg-green-100 text-green-700 border-green-200 px-4 py-1">
@@ -233,7 +233,7 @@ const HomePageJP = () => {
             </Badge>
           </div>
           
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+          <h1 className="text-3xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
             K-Beautyコンテンツで
             <br />
             <span className="text-blue-600">毎週収入を得る</span>
@@ -247,7 +247,7 @@ const HomePageJP = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button 
               size="lg" 
-              className="bg-blue-600 hover:bg-blue-700 text-white text-lg px-8"
+              className="bg-blue-600 hover:bg-blue-700 text-white text-base sm:text-lg px-6 sm:px-8"
               asChild
             >
               <Link to="/signup">
@@ -258,7 +258,7 @@ const HomePageJP = () => {
             <Button 
               size="lg" 
               variant="outline"
-              className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 text-lg px-8"
+              className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 text-base sm:text-lg px-6 sm:px-8"
             >
               <a href="#how-it-works" className="flex items-center">
                 参加方法を見る
@@ -267,30 +267,30 @@ const HomePageJP = () => {
           </div>
 
           {/* Trust Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-            <div className="bg-white rounded-lg p-4 shadow-sm border">
-              <div className="text-3xl font-bold text-blue-600 mb-1">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 max-w-4xl mx-auto">
+            <div className="bg-white rounded-lg p-3 md:p-4 shadow-sm border">
+              <div className="text-2xl md:text-3xl font-bold text-blue-600 mb-1">
                 {stats.totalCreators}+
               </div>
-              <div className="text-sm text-gray-600">登録クリエイター</div>
+              <div className="text-xs sm:text-sm text-gray-600">登録クリエイター</div>
             </div>
-            <div className="bg-white rounded-lg p-4 shadow-sm border">
-              <div className="text-3xl font-bold text-green-600 mb-1">
+            <div className="bg-white rounded-lg p-3 md:p-4 shadow-sm border">
+              <div className="text-2xl md:text-3xl font-bold text-green-600 mb-1">
                 {formatCurrency(stats.totalRewards)}
               </div>
-              <div className="text-sm text-gray-600">総支払額</div>
+              <div className="text-xs sm:text-sm text-gray-600">総支払額</div>
             </div>
-            <div className="bg-white rounded-lg p-4 shadow-sm border">
-              <div className="text-3xl font-bold text-purple-600 mb-1">
+            <div className="bg-white rounded-lg p-3 md:p-4 shadow-sm border">
+              <div className="text-2xl md:text-3xl font-bold text-purple-600 mb-1">
                 {stats.totalCampaigns}+
               </div>
-              <div className="text-sm text-gray-600">実施キャンペーン</div>
+              <div className="text-xs sm:text-sm text-gray-600">実施キャンペーン</div>
             </div>
-            <div className="bg-white rounded-lg p-4 shadow-sm border">
-              <div className="text-3xl font-bold text-orange-600 mb-1">
+            <div className="bg-white rounded-lg p-3 md:p-4 shadow-sm border">
+              <div className="text-2xl md:text-3xl font-bold text-orange-600 mb-1">
                 4.8★
               </div>
-              <div className="text-sm text-gray-600">クリエイター評価</div>
+              <div className="text-xs sm:text-sm text-gray-600">クリエイター評価</div>
             </div>
           </div>
         </div>
@@ -308,7 +308,7 @@ const HomePageJP = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-4 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-6xl mx-auto">
             <div className="text-center">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Target className="h-8 w-8 text-blue-600" />
@@ -360,7 +360,7 @@ const HomePageJP = () => {
       <section className="py-16 bg-green-50">
         <div className="container mx-auto px-4">
           <div className="max-w-5xl mx-auto">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="grid md:grid-cols-2 gap-6 md:gap-12 items-center">
               <div>
                 <div className="inline-block mb-4">
                   <Badge className="bg-green-100 text-green-700 border-green-200">
@@ -402,9 +402,9 @@ const HomePageJP = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-8">
+              <div className="bg-white rounded-xl shadow-lg p-4 md:p-8">
                 <div className="text-center mb-6">
-                  <div className="text-3xl font-bold text-gray-900 mb-2">
+                  <div className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
                     ¥50,000-¥200,000
                   </div>
                   <div className="text-gray-600">月間平均収入</div>
@@ -455,7 +455,7 @@ const HomePageJP = () => {
               <p className="text-gray-600 text-lg">現在募集中のキャンペーンはありません</p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-7xl mx-auto">
               {campaigns.filter((campaign) => {
                 // Filter out campaigns past their application deadline
                 const deadline = campaign.application_deadline
@@ -519,9 +519,9 @@ const HomePageJP = () => {
       </section>
 
       {/* Final CTA */}
-      <section className="py-20 bg-blue-600">
+      <section className="py-12 md:py-20 bg-blue-600">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+          <h2 className="text-2xl md:text-4xl font-bold text-white mb-6">
             今すぐ収益化を開始しませんか？
           </h2>
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
@@ -564,7 +564,7 @@ const HomePageJP = () => {
                 <img 
                   src={selectedCampaign.image_url} 
                   alt={selectedCampaign.title}
-                  className="w-full h-64 object-cover rounded-lg"
+                  className="w-full h-48 md:h-64 object-cover rounded-lg"
                 />
               )}
 
@@ -574,9 +574,9 @@ const HomePageJP = () => {
                   <p className="text-gray-700">{selectedCampaign.description}</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="flex items-center">
-                    <DollarSign className="h-5 w-5 text-green-600 mr-2" />
+                    <DollarSign className="h-5 w-5 text-green-600 mr-2 flex-shrink-0" />
                     <div>
                       <div className="text-sm text-gray-600">報酬</div>
                       <div className="font-semibold">{formatCurrency(selectedCampaign.reward_amount)}</div>

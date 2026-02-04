@@ -113,7 +113,7 @@ const SecretAdminLogin = () => {
             <div className="w-16 h-16 bg-purple-600/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
               <Shield className="h-8 w-8 text-purple-300" />
             </div>
-            <CardTitle className="text-2xl font-bold text-white">
+            <CardTitle className="text-xl sm:text-2xl font-bold text-white">
               관리자 인증
             </CardTitle>
             <CardDescription className="text-purple-200">
@@ -121,7 +121,7 @@ const SecretAdminLogin = () => {
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4 sm:space-y-6">
             <form onSubmit={handleAdminLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-purple-200">

@@ -5,9 +5,9 @@ import { ArrowLeft } from 'lucide-react';
 export default function TermsOfService() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-      <div className="max-w-4xl mx-auto px-4 py-12">
+      <div className="max-w-4xl mx-auto px-4 py-6 sm:py-12">
         {/* ヘッダー */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <Link
             to="/"
             className="inline-flex items-center text-purple-600 hover:text-purple-700 mb-6"
@@ -15,7 +15,7 @@ export default function TermsOfService() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             ホームに戻る
           </Link>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-4">
             利用規約
           </h1>
           <p className="text-gray-600">
@@ -24,10 +24,10 @@ export default function TermsOfService() {
         </div>
 
         {/* コンテンツ */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 space-y-8">
+        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-8 space-y-6 sm:space-y-8">
           {/* 第1条 総則 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               第1条（総則）
             </h2>
             <div className="text-gray-700 leading-relaxed space-y-3">
@@ -42,12 +42,12 @@ export default function TermsOfService() {
 
           {/* 第2条 定義 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               第2条（定義）
             </h2>
             <div className="text-gray-700 leading-relaxed space-y-2">
               <p>本規約において使用する用語の定義は、以下のとおりとします。</p>
-              <ul className="list-disc list-inside ml-4 space-y-2">
+              <ul className="list-disc list-inside ml-2 sm:ml-4 space-y-2">
                 <li>「本サービス」とは、当社が運営するK-Beautyブランドとクリエイターをマッチングするプラットフォームをいいます。</li>
                 <li>「ユーザー」とは、本規約に同意し、本サービスを利用する個人または法人をいいます。</li>
                 <li>「クリエイター」とは、SNS等で情報発信を行い、本サービスを通じてキャンペーンに参加するユーザーをいいます。</li>
@@ -58,7 +58,7 @@ export default function TermsOfService() {
 
           {/* 第3条 利用登録 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               第3条（利用登録）
             </h2>
             <div className="text-gray-700 leading-relaxed space-y-3">
@@ -68,7 +68,7 @@ export default function TermsOfService() {
               <p>
                 当社は、以下の場合に利用登録を拒否することがあります：
               </p>
-              <ul className="list-disc list-inside ml-4 space-y-2">
+              <ul className="list-disc list-inside ml-2 sm:ml-4 space-y-2">
                 <li>申請内容に虚偽の事項がある場合</li>
                 <li>過去に本規約に違反したことがある場合</li>
                 <li>18歳未満の場合</li>
@@ -79,7 +79,7 @@ export default function TermsOfService() {
 
           {/* 第4条 アカウント管理 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               第4条（アカウント管理）
             </h2>
             <div className="text-gray-700 leading-relaxed space-y-3">
@@ -94,12 +94,12 @@ export default function TermsOfService() {
 
           {/* 第5条 サービス内容 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               第5条（サービス内容）
             </h2>
             <div className="text-gray-700 leading-relaxed space-y-3">
               <p>当社は、本サービスにおいて以下のサービスを提供します：</p>
-              <ul className="list-disc list-inside ml-4 space-y-2">
+              <ul className="list-disc list-inside ml-2 sm:ml-4 space-y-2">
                 <li>K-Beautyブランドとクリエイターのマッチング</li>
                 <li>キャンペーン情報の掲載および応募機能</li>
                 <li>SNS投稿の管理および報告機能</li>
@@ -111,7 +111,7 @@ export default function TermsOfService() {
 
           {/* 第6条 キャンペーン参加 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               第6条（キャンペーン参加）
             </h2>
             <div className="text-gray-700 leading-relaxed space-y-3">
@@ -121,7 +121,7 @@ export default function TermsOfService() {
               <p>
                 キャンペーンへの参加が確定した場合、クリエイターは以下の義務を負います：
               </p>
-              <ul className="list-disc list-inside ml-4 space-y-2">
+              <ul className="list-disc list-inside ml-2 sm:ml-4 space-y-2">
                 <li>キャンペーン条件に従った投稿を行うこと</li>
                 <li>期限内に投稿を完了し、報告すること</li>
                 <li>虚偽の報告をしないこと</li>
@@ -132,7 +132,7 @@ export default function TermsOfService() {
 
           {/* 第7条 報酬 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               第7条（報酬）
             </h2>
             <div className="text-gray-700 leading-relaxed space-y-3">
@@ -150,14 +150,14 @@ export default function TermsOfService() {
 
           {/* 第8条 通知・連絡 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               第8条（通知・連絡）
             </h2>
             <div className="text-gray-700 leading-relaxed space-y-3">
               <p>
                 当社からユーザーへの通知は、以下の方法により行うものとします：
               </p>
-              <ul className="list-disc list-inside ml-4 space-y-2">
+              <ul className="list-disc list-inside ml-2 sm:ml-4 space-y-2">
                 <li>登録されたメールアドレスへの電子メール</li>
                 <li>LINE公式アカウントからのメッセージ</li>
                 <li>本サービス上での掲示</li>
@@ -173,12 +173,12 @@ export default function TermsOfService() {
 
           {/* 第9条 禁止事項 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               第9条（禁止事項）
             </h2>
             <div className="text-gray-700 leading-relaxed space-y-3">
               <p>ユーザーは、本サービスの利用にあたり、以下の行為を行ってはなりません：</p>
-              <ul className="list-disc list-inside ml-4 space-y-2">
+              <ul className="list-disc list-inside ml-2 sm:ml-4 space-y-2">
                 <li>法令または公序良俗に違反する行為</li>
                 <li>虚偽の情報を登録または投稿する行為</li>
                 <li>当社または第三者の知的財産権を侵害する行為</li>
@@ -194,14 +194,14 @@ export default function TermsOfService() {
 
           {/* 第10条 サービスの中断・停止 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               第10条（サービスの中断・停止）
             </h2>
             <div className="text-gray-700 leading-relaxed space-y-3">
               <p>
                 当社は、以下の場合に本サービスの全部または一部を中断・停止することができます：
               </p>
-              <ul className="list-disc list-inside ml-4 space-y-2">
+              <ul className="list-disc list-inside ml-2 sm:ml-4 space-y-2">
                 <li>システムの保守・点検を行う場合</li>
                 <li>天災、停電、通信障害等の不可抗力による場合</li>
                 <li>その他、運営上必要と判断した場合</li>
@@ -214,7 +214,7 @@ export default function TermsOfService() {
 
           {/* 第11条 退会 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               第11条（退会）
             </h2>
             <div className="text-gray-700 leading-relaxed space-y-3">
@@ -229,7 +229,7 @@ export default function TermsOfService() {
 
           {/* 第12条 知的財産権 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               第12条（知的財産権）
             </h2>
             <div className="text-gray-700 leading-relaxed space-y-3">
@@ -244,7 +244,7 @@ export default function TermsOfService() {
 
           {/* 第13条 免責事項 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               第13条（免責事項）
             </h2>
             <div className="text-gray-700 leading-relaxed space-y-3">
@@ -262,7 +262,7 @@ export default function TermsOfService() {
 
           {/* 第14条 規約の変更 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               第14条（規約の変更）
             </h2>
             <div className="text-gray-700 leading-relaxed space-y-3">
@@ -280,7 +280,7 @@ export default function TermsOfService() {
 
           {/* 第15条 準拠法・管轄 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               第15条（準拠法・管轄）
             </h2>
             <div className="text-gray-700 leading-relaxed space-y-3">
@@ -295,10 +295,10 @@ export default function TermsOfService() {
 
           {/* 第16条 特定商取引法に基づく表示 */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               第16条（特定商取引法に基づく表示）
             </h2>
-            <div className="bg-gray-50 rounded-lg p-6">
+            <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
               <div className="space-y-3 text-gray-700">
                 <p><strong>事業者名:</strong> 株式会社CNEC Korea</p>
                 <p><strong>サービス名:</strong> CNEC Japan</p>
@@ -312,10 +312,10 @@ export default function TermsOfService() {
 
           {/* お問い合わせ */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               お問い合わせ
             </h2>
-            <div className="bg-gray-50 rounded-lg p-6">
+            <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
               <p className="text-gray-700 leading-relaxed mb-4">
                 本規約に関するお問い合わせは、以下までご連絡ください：
               </p>

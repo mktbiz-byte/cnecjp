@@ -881,30 +881,30 @@ const MyPageWithWithdrawal = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 헤더 */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{t.title}</h1>
-              <p className="mt-2 text-gray-600">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.title}</h1>
+              <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
 {language === 'ja' ? `${profile?.name || user?.email}さんのアカウント情報` : `${profile?.name || user?.email}님의 계정 정보`}
               </p>
             </div>
             <div className="flex space-x-3">
               <button
                 onClick={() => window.location.href = '/'}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                className="inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
               >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
-                {t.goHome}
+                <span className="hidden sm:inline">{t.goHome}</span>
               </button>
               <button
                 onClick={signOut}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+                className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
               >
-                <LogOut className="w-4 h-4 mr-2" />
-                {t.logout}
+                <LogOut className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">{t.logout}</span>
               </button>
             </div>
           </div>
@@ -936,7 +936,7 @@ const MyPageWithWithdrawal = () => {
         {/* 탭 네비게이션 */}
         <div className="bg-white rounded-lg shadow mb-6">
           <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8 px-6">
+            <nav className="-mb-px flex overflow-x-auto scrollbar-hide px-3 sm:px-6 gap-1 sm:gap-6">
               {[
                 { id: 'profile', label: t.profile, icon: User },
                 { id: 'applications', label: t.applications, icon: Award },
@@ -949,14 +949,15 @@ const MyPageWithWithdrawal = () => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    className={`py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0 flex items-center gap-1 sm:gap-2 ${
                       activeTab === tab.id
                         ? 'border-purple-500 text-purple-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    <Icon className="w-4 h-4 mr-2 inline" />
-                    {tab.label}
+                    <Icon className="w-4 h-4" />
+                    <span className="hidden sm:inline">{tab.label}</span>
+                    <span className="sm:hidden">{tab.label.length > 4 ? tab.label.substring(0, 4) : tab.label}</span>
                   </button>
                 )
               })}
@@ -967,9 +968,9 @@ const MyPageWithWithdrawal = () => {
         {/* 탭 콘텐츠 */}
         <div className="bg-white rounded-lg shadow">
           {activeTab === 'profile' && (
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">{t.personalInfo}</h2>
+            <div className="p-4 sm:p-6">
+              <div className="flex justify-between items-center mb-4 sm:mb-6">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">{t.personalInfo}</h2>
                 <button
                   onClick={() => {
                     if (isEditing) {
@@ -979,7 +980,7 @@ const MyPageWithWithdrawal = () => {
                     }
                   }}
                   disabled={processing}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  className="px-3 sm:px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-50 min-h-[44px]"
                 >
                   {processing ? t.processing : (isEditing ? t.save : t.edit)}
                 </button>
@@ -1149,13 +1150,13 @@ const MyPageWithWithdrawal = () => {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700">{t.currentPoints}</label>
-                    <div className="flex items-center justify-between mt-1">
+                    <div className="flex items-center justify-between mt-1 flex-wrap gap-2">
                       <p className="text-lg font-semibold text-purple-600">
                         {profile?.points?.toLocaleString() || 0}P
                       </p>
                       <button
                         onClick={() => setShowWithdrawModal(true)}
-                        className="ml-4 px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors"
+                        className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors min-h-[44px]"
                       >
                         {t.withdrawRequest}
                       </button>
@@ -1674,136 +1675,194 @@ const MyPageWithWithdrawal = () => {
           )}
 
           {activeTab === 'withdrawals' && (
-            <div className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">{t.withdrawalHistory}</h2>
-              
+            <div className="p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">{t.withdrawalHistory}</h2>
+
               {withdrawals.length === 0 ? (
                 <div className="text-center py-12 text-gray-500">
                   <CreditCard className="mx-auto h-12 w-12 text-gray-400" />
                   <p className="mt-4">{t.noData}</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {language === 'ko' ? '출금 방법' : '出金方法'}
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {language === 'ko' ? '금액' : '金額'}
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {language === 'ko' ? '상태' : 'ステータス'}
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {language === 'ko' ? '신청일' : '申請日'}
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {language === 'ko' ? '처리일' : '処理日'}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {withdrawals.map((withdrawal) => (
-                        <tr key={withdrawal.id}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {withdrawal.withdrawal_method === 'paypal' ? 'PayPal' : 
-                             withdrawal.withdrawal_method === 'bank' ? (language === 'ko' ? '은행 송금' : '銀行振込') : 
+                <>
+                  {/* Mobile card view */}
+                  <div className="sm:hidden space-y-3">
+                    {withdrawals.map((withdrawal) => (
+                      <div key={withdrawal.id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-900">
+                            {withdrawal.withdrawal_method === 'paypal' ? 'PayPal' :
+                             withdrawal.withdrawal_method === 'bank' ? (language === 'ko' ? '은행 송금' : '銀行振込') :
                              withdrawal.withdrawal_method || 'PayPal'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            ¥{withdrawal.amount?.toLocaleString() || '0'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              withdrawal.status === 'completed' ? 'bg-green-100 text-green-800' :
-                              withdrawal.status === 'approved' ? 'bg-blue-100 text-blue-800' :
-                              withdrawal.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                              'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {withdrawal.status === 'completed' ? (language === 'ko' ? '완료' : '完了') :
-                               withdrawal.status === 'approved' ? (language === 'ko' ? '승인됨' : '承認済み') :
-                               withdrawal.status === 'rejected' ? (language === 'ko' ? '거절됨' : '拒否済み') : 
-                               (language === 'ko' ? '대기중' : '待機中')}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {new Date(withdrawal.created_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'ja-JP')}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {withdrawal.processed_at ? 
-                              new Date(withdrawal.processed_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'ja-JP') : 
-                              '-'
-                            }
-                          </td>
+                          </span>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            withdrawal.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            withdrawal.status === 'approved' ? 'bg-blue-100 text-blue-800' :
+                            withdrawal.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {withdrawal.status === 'completed' ? (language === 'ko' ? '완료' : '完了') :
+                             withdrawal.status === 'approved' ? (language === 'ko' ? '승인됨' : '承認済み') :
+                             withdrawal.status === 'rejected' ? (language === 'ko' ? '거절됨' : '拒否済み') :
+                             (language === 'ko' ? '대기중' : '待機中')}
+                          </span>
+                        </div>
+                        <p className="text-lg font-bold text-gray-900 mb-2">¥{withdrawal.amount?.toLocaleString() || '0'}</p>
+                        <div className="flex justify-between text-xs text-gray-500">
+                          <span>{language === 'ko' ? '신청일' : '申請日'}: {new Date(withdrawal.created_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'ja-JP')}</span>
+                          <span>{withdrawal.processed_at ? `${language === 'ko' ? '처리일' : '処理日'}: ${new Date(withdrawal.processed_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'ja-JP')}` : ''}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Desktop table view */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {language === 'ko' ? '출금 방법' : '出金方法'}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {language === 'ko' ? '금액' : '金額'}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {language === 'ko' ? '상태' : 'ステータス'}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {language === 'ko' ? '신청일' : '申請日'}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {language === 'ko' ? '처리일' : '処理日'}
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {withdrawals.map((withdrawal) => (
+                          <tr key={withdrawal.id}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                              {withdrawal.withdrawal_method === 'paypal' ? 'PayPal' :
+                               withdrawal.withdrawal_method === 'bank' ? (language === 'ko' ? '은행 송금' : '銀行振込') :
+                               withdrawal.withdrawal_method || 'PayPal'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              ¥{withdrawal.amount?.toLocaleString() || '0'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                withdrawal.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                withdrawal.status === 'approved' ? 'bg-blue-100 text-blue-800' :
+                                withdrawal.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {withdrawal.status === 'completed' ? (language === 'ko' ? '완료' : '完了') :
+                                 withdrawal.status === 'approved' ? (language === 'ko' ? '승인됨' : '承認済み') :
+                                 withdrawal.status === 'rejected' ? (language === 'ko' ? '거절됨' : '拒否済み') :
+                                 (language === 'ko' ? '대기중' : '待機中')}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {new Date(withdrawal.created_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'ja-JP')}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {withdrawal.processed_at ?
+                                new Date(withdrawal.processed_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'ja-JP') :
+                                '-'
+                              }
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </div>
           )}
 
           {activeTab === 'points' && (
-            <div className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">{t.pointHistory}</h2>
-              
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {t.transactionType}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {t.amount}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {t.description}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {t.date}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {pointTransactions.length === 0 ? (
-                      <tr>
-                        <td colSpan="4" className="px-6 py-12 text-center text-gray-500">
-                          {t.noData}
-                        </td>
-                      </tr>
-                    ) : (
-                      pointTransactions.map((transaction) => (
-                        <tr key={transaction.id}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`text-sm font-medium ${getTransactionTypeColor(transaction.transaction_type)}`}>
-                              {getTransactionTypeText(transaction.transaction_type)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`text-sm font-medium ${
-                              transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
-                            }`}>
-                              {transaction.amount > 0 ? '+' : ''}{transaction.amount.toLocaleString()}P
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="text-sm text-gray-900 max-w-xs truncate">
-                              {transaction.description || '-'}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {new Date(transaction.created_at).toLocaleDateString('ko-KR')}
-                          </td>
+            <div className="p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">{t.pointHistory}</h2>
+
+              {pointTransactions.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <Download className="mx-auto h-12 w-12 text-gray-400" />
+                  <p className="mt-4">{t.noData}</p>
+                </div>
+              ) : (
+                <>
+                  {/* Mobile card view */}
+                  <div className="sm:hidden space-y-3">
+                    {pointTransactions.map((transaction) => (
+                      <div key={transaction.id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className={`text-sm font-medium ${getTransactionTypeColor(transaction.transaction_type)}`}>
+                            {getTransactionTypeText(transaction.transaction_type)}
+                          </span>
+                          <span className={`text-base font-bold ${
+                            transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {transaction.amount > 0 ? '+' : ''}{transaction.amount.toLocaleString()}P
+                          </span>
+                        </div>
+                        {transaction.description && (
+                          <p className="text-xs text-gray-600 mb-2 line-clamp-2">{transaction.description}</p>
+                        )}
+                        <p className="text-xs text-gray-400">
+                          {new Date(transaction.created_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'ja-JP')}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Desktop table view */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {t.transactionType}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {t.amount}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {t.description}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {t.date}
+                          </th>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {pointTransactions.map((transaction) => (
+                          <tr key={transaction.id}>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`text-sm font-medium ${getTransactionTypeColor(transaction.transaction_type)}`}>
+                                {getTransactionTypeText(transaction.transaction_type)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`text-sm font-medium ${
+                                transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
+                              }`}>
+                                {transaction.amount > 0 ? '+' : ''}{transaction.amount.toLocaleString()}P
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="text-sm text-gray-900 max-w-xs truncate">
+                                {transaction.description || '-'}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {new Date(transaction.created_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'ja-JP')}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
               
               {/* SNS 업로드 경고 메시지 */}
               {applications.some(app => ['approved', 'selected', 'filming'].includes(app.status)) && (
@@ -1828,8 +1887,8 @@ const MyPageWithWithdrawal = () => {
           )}
 
           {activeTab === 'settings' && (
-            <div className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">{t.accountSettings}</h2>
+            <div className="p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">{t.accountSettings}</h2>
               
               <div className="space-y-6">
                 {/* 계정 삭제 섹션 */}
@@ -1863,8 +1922,8 @@ const MyPageWithWithdrawal = () => {
 
         {/* 출금 신청 모달 */}
         {showWithdrawModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-[9999]">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-[9999] px-4">
+            <div className="relative top-10 sm:top-20 mx-auto p-4 sm:p-5 border w-full max-w-sm sm:max-w-md shadow-lg rounded-lg bg-white mb-10">
               <div className="mt-3">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium text-gray-900">{t.withdrawRequestTitle}</h3>
@@ -1983,8 +2042,8 @@ const MyPageWithWithdrawal = () => {
 
         {/* 회원 탈퇴 모달 */}
         {showWithdrawalModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 px-4">
+            <div className="relative top-10 sm:top-20 mx-auto p-4 sm:p-5 border w-full max-w-sm sm:max-w-md shadow-lg rounded-lg bg-white mb-10">
               <div className="mt-3">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium text-gray-900">{t.accountDeletion}</h3>
@@ -2064,8 +2123,8 @@ const MyPageWithWithdrawal = () => {
 
         {/* SNS 업로드 및 포인트 신청 모달 */}
         {showSnsUploadModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 px-4">
+            <div className="relative top-10 sm:top-20 mx-auto p-4 sm:p-5 border w-full max-w-sm sm:max-w-md shadow-lg rounded-lg bg-white mb-10">
               <div className="mt-3">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium text-gray-900">{t.pointRequestTitle}</h3>
