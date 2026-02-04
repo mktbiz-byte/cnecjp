@@ -314,8 +314,14 @@ const AllDeadlinesOverview = ({ campaign, campaignType, language }) => {
     deadline: getSnsDeadline(i + 1)
   }))
 
-  const getStepLabel = (step) => {
+  const getStepLabel = (step, type) => {
     if (campaignType === '4week_challenge') return `Week ${step}`
+    if (campaignType === 'megawari') {
+      if (type === 'sns' && step > totalVideoSteps) {
+        return language === 'ja' ? `SNS ${step}` : `SNS ${step}`
+      }
+      return `${step}`
+    }
     if (totalVideoSteps > 1 || totalSnsSteps > 1) return `${step}`
     return ''
   }
@@ -334,7 +340,7 @@ const AllDeadlinesOverview = ({ campaign, campaignType, language }) => {
           <div className="space-y-1">
             {videoDeadlines.map(({ step, deadline }) => (
               <div key={`v-${step}`} className={`text-xs px-2 py-1 rounded ${getStatusClass(deadline)}`}>
-                {getStepLabel(step) && <span className="font-medium">{getStepLabel(step)}: </span>}
+                {getStepLabel(step, 'video') && <span className="font-medium">{getStepLabel(step, 'video')}: </span>}
                 {formatDate(deadline)}
               </div>
             ))}
@@ -344,11 +350,14 @@ const AllDeadlinesOverview = ({ campaign, campaignType, language }) => {
         <div>
           <p className="text-xs text-gray-400 mb-1">
             📤 {language === 'ja' ? 'SNS締切' : 'SNS 마감일'}
+            {totalSnsSteps > totalVideoSteps && (
+              <span className="text-gray-300 ml-1">({totalSnsSteps}{language === 'ja' ? '回' : '회'})</span>
+            )}
           </p>
           <div className="space-y-1">
             {snsDeadlines.map(({ step, deadline }) => (
               <div key={`s-${step}`} className={`text-xs px-2 py-1 rounded ${getStatusClass(deadline)}`}>
-                {getStepLabel(step) && <span className="font-medium">{getStepLabel(step)}: </span>}
+                {getStepLabel(step, 'sns') && <span className="font-medium">{getStepLabel(step, 'sns')}: </span>}
                 {formatDate(deadline)}
               </div>
             ))}
@@ -805,7 +814,9 @@ const StepCard = ({
   campaign,
   application,
   onUpdate,
-  language
+  language,
+  hasVideoUpload = true,
+  hasSnsUpload = true
 }) => {
   const [expanded, setExpanded] = useState(true)
   const [uploading, setUploading] = useState(false)
@@ -887,20 +898,25 @@ const StepCard = ({
       return language === 'ja' ? `Week ${stepNumber}` : `${stepNumber}주차`
     }
     if (campaignType === 'megawari') {
+      if (!hasVideoUpload) {
+        return language === 'ja' ? `SNS ${stepNumber}` : `SNS ${stepNumber}`
+      }
       return language === 'ja' ? `ステップ ${stepNumber}` : `${stepNumber}스텝`
     }
     return null
   }
 
   // 현재 워크플로우 단계
-  // 새 워크플로우: 영상업로드 → 수정확인 → SNS/클린본/광고코드 → 포인트
+  // 영상 있는 스텝: 영상업로드(1) → 수정확인(2) → SNS/클린본/광고코드(3) → 포인트(4)
+  // SNS only 스텝 (메가와리 3번째): SNS제출(3) → 포인트(4) (영상/수정 스킵)
   const getCurrentStep = () => {
     if (status === 'points_paid' || status === 'completed') return 4
     if (status === 'sns_submitted' || status === 'review_pending') return 4
-    if (status === 'sns_pending') return 3 // SNS/클린본/광고코드 단계
-    if (status === 'video_uploaded') return 2 // 수정 확인 단계 (관리자 검토 대기)
-    if (status === 'revision_required' || status === 'revision_requested') return 2 // 수정 필요 → 재업로드
-    return 1 // 영상 업로드 (guide_pending, guide_confirmed 포함)
+    if (status === 'sns_pending') return 3
+    if (!hasVideoUpload) return 3 // SNS only 스텝은 바로 SNS 제출 단계
+    if (status === 'video_uploaded') return 2
+    if (status === 'revision_required' || status === 'revision_requested') return 2
+    return 1 // 영상 업로드
   }
 
   // 영상 버전 계산 (v1, v2, v3...)
@@ -1253,6 +1269,7 @@ const StepCard = ({
                      status === 'sns_submitted' ? (language === 'ja' ? 'SNS提出済み' : 'SNS 제출완료') :
                      status === 'sns_pending' ? (language === 'ja' ? 'SNS提出待ち' : 'SNS 제출 대기') :
                      status === 'video_uploaded' ? (language === 'ja' ? '修正確認中' : '수정 확인중') :
+                     !hasVideoUpload ? (language === 'ja' ? 'SNS提出待ち' : 'SNS 제출 대기') :
                      (language === 'ja' ? '動画提出待ち' : '영상 제출 대기')}
                   </span>
                   {/* 수정 요청 알림 배지 */}
@@ -1298,32 +1315,46 @@ const StepCard = ({
           <div className="px-4 pb-4 border-t border-gray-100 pt-4">
             {/* 워크플로우 타임라인 */}
             <div className="flex items-center justify-between mb-6 px-2">
-              {WORKFLOW_STEPS.map((step, idx) => {
-                const Icon = step.icon
-                const isActive = currentStep > idx
-                const isCurrent = currentStep === idx + 1
-                return (
-                  <React.Fragment key={step.id}>
-                    <div className={`flex flex-col items-center ${
-                      isActive ? 'text-green-600' : isCurrent ? 'text-blue-600' : 'text-gray-400'
-                    }`}>
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        isActive ? 'bg-green-100' : isCurrent ? 'bg-blue-100' : 'bg-gray-100'
+              {(() => {
+                // SNS only 스텝 (메가와리 3번째 등): 영상/수정 생략
+                const steps = hasVideoUpload
+                  ? WORKFLOW_STEPS
+                  : WORKFLOW_STEPS.filter(s => s.id === 'sns' || s.id === 'complete')
+                const getStepIdx = (stepId) => {
+                  if (!hasVideoUpload) {
+                    if (stepId === 'sns') return 3
+                    if (stepId === 'complete') return 4
+                  }
+                  return WORKFLOW_STEPS.findIndex(s => s.id === stepId) + 1
+                }
+                return steps.map((step, idx) => {
+                  const Icon = step.icon
+                  const stepIdx = getStepIdx(step.id)
+                  const isActive = currentStep > stepIdx - 1
+                  const isCurrent = currentStep === stepIdx
+                  return (
+                    <React.Fragment key={step.id}>
+                      <div className={`flex flex-col items-center ${
+                        isActive ? 'text-green-600' : isCurrent ? 'text-blue-600' : 'text-gray-400'
                       }`}>
-                        <Icon className="w-4 h-4" />
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          isActive ? 'bg-green-100' : isCurrent ? 'bg-blue-100' : 'bg-gray-100'
+                        }`}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <span className="text-xs mt-1 text-center">
+                          {language === 'ja' ? step.labelJa : step.labelKo}
+                        </span>
                       </div>
-                      <span className="text-xs mt-1 text-center">
-                        {language === 'ja' ? step.labelJa : step.labelKo}
-                      </span>
-                    </div>
-                    {idx < WORKFLOW_STEPS.length - 1 && (
-                      <div className={`flex-1 h-0.5 mx-2 ${
-                        currentStep > idx + 1 ? 'bg-green-500' : 'bg-gray-200'
-                      }`} />
-                    )}
-                  </React.Fragment>
-                )
-              })}
+                      {idx < steps.length - 1 && (
+                        <div className={`flex-1 h-0.5 mx-2 ${
+                          isActive ? 'bg-green-500' : 'bg-gray-200'
+                        }`} />
+                      )}
+                    </React.Fragment>
+                  )
+                })
+              })()}
             </div>
 
             {/* Step 1: 영상 업로드 */}
@@ -1788,7 +1819,9 @@ const CampaignCard = ({ application, campaign, submissions, onUpdate, language }
 
   const campaignType = campaign?.campaign_type || 'regular'
   const typeInfo = CAMPAIGN_TYPES[campaignType] || CAMPAIGN_TYPES.regular
-  const totalSteps = campaign?.total_steps || typeInfo.steps
+  const videoSteps = campaign?.total_steps || typeInfo.steps
+  const snsSteps = typeInfo.snsSteps || videoSteps
+  const totalSteps = Math.max(videoSteps, snsSteps)
 
   const calculateProgress = () => {
     if (!submissions?.length) return 0
@@ -1805,19 +1838,34 @@ const CampaignCard = ({ application, campaign, submissions, onUpdate, language }
     const now = new Date()
     let nearest = null
 
-    if (campaign?.step_deadlines) {
-      for (const sd of campaign.step_deadlines) {
-        if (sd.video_deadline && new Date(sd.video_deadline) > now) {
-          if (!nearest || new Date(sd.video_deadline) < new Date(nearest.date)) {
-            nearest = { date: sd.video_deadline, type: 'video', step: sd.step }
-          }
-        }
-        if (sd.sns_deadline && new Date(sd.sns_deadline) > now) {
-          if (!nearest || new Date(sd.sns_deadline) < new Date(nearest.date)) {
-            nearest = { date: sd.sns_deadline, type: 'sns', step: sd.step }
-          }
+    const checkDate = (date, type, step) => {
+      if (date && new Date(date) > now) {
+        if (!nearest || new Date(date) < new Date(nearest.date)) {
+          nearest = { date, type, step }
         }
       }
+    }
+
+    // step_deadlines 배열 확인
+    if (campaign?.step_deadlines) {
+      for (const sd of campaign.step_deadlines) {
+        checkDate(sd.video_deadline, 'video', sd.step)
+        checkDate(sd.sns_deadline, 'sns', sd.step)
+      }
+    }
+
+    // 4주 챌린지: week1~4 필드 확인
+    if (campaignType === '4week_challenge') {
+      for (let w = 1; w <= 4; w++) {
+        checkDate(campaign?.[`week${w}_deadline`], 'video', w)
+        checkDate(campaign?.[`week${w}_sns_deadline`], 'sns', w)
+      }
+    }
+
+    // 기본 마감일 (기획형 등)
+    if (!nearest) {
+      checkDate(campaign?.video_deadline, 'video', 1)
+      checkDate(campaign?.sns_deadline, 'sns', 1)
     }
 
     return nearest
@@ -1857,7 +1905,13 @@ const CampaignCard = ({ application, campaign, submissions, onUpdate, language }
                       ? (language === 'ja' ? '動画' : '영상')
                       : 'SNS'
                     }
-                    ({language === 'ja' ? `ステップ${nextDeadline.step}` : `${nextDeadline.step}스텝`})
+                    {totalSteps > 1 && (
+                      campaignType === '4week_challenge'
+                        ? ` (Week ${nextDeadline.step})`
+                        : campaignType === 'megawari'
+                          ? (language === 'ja' ? ` (ステップ${nextDeadline.step})` : ` (${nextDeadline.step}스텝)`)
+                          : ''
+                    )}
                     {' - '}
                     {new Date(nextDeadline.date).toLocaleDateString(language === 'ja' ? 'ja-JP' : 'ko-KR', {
                       month: 'short',
@@ -1926,6 +1980,9 @@ const CampaignCard = ({ application, campaign, submissions, onUpdate, language }
               step_number: stepNumber,
               workflow_status: 'guide_pending'
             }
+            // 메가와리: step 3은 SNS only (영상 2개 + SNS 3개)
+            const hasVideoUpload = stepNumber <= videoSteps
+            const hasSnsUpload = stepNumber <= snsSteps
 
             return (
               <StepCard
@@ -1938,6 +1995,8 @@ const CampaignCard = ({ application, campaign, submissions, onUpdate, language }
                 application={application}
                 onUpdate={onUpdate}
                 language={language}
+                hasVideoUpload={hasVideoUpload}
+                hasSnsUpload={hasSnsUpload}
               />
             )
           })}
@@ -2009,8 +2068,10 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
               if (!submissionsLoaded || !submissionsData?.some(s => s.application_id === app.id)) {
                 const campaign = campaignsMap?.[app.campaign_id]
                 const campaignType = campaign?.campaign_type || 'regular'
-                const totalSteps = campaign?.total_steps ||
-                  (campaignType === '4week_challenge' ? 4 : campaignType === 'megawari' ? 2 : 1)
+                const typeInfoLocal = CAMPAIGN_TYPES[campaignType] || CAMPAIGN_TYPES.regular
+                const videoStepsLocal = campaign?.total_steps || typeInfoLocal.steps
+                const snsStepsLocal = typeInfoLocal.snsSteps || videoStepsLocal
+                const totalSteps = Math.max(videoStepsLocal, snsStepsLocal)
 
                 for (let step = 1; step <= totalSteps; step++) {
                   const stepLabel = campaignType === '4week_challenge' ? `Week ${step}` :
@@ -2100,8 +2161,11 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
     completed: approvedApplications.filter(app => {
       const subs = submissions[app.id] || []
       const campaign = campaigns[app.campaign_id]
-      const totalSteps = campaign?.total_steps || CAMPAIGN_TYPES[campaign?.campaign_type || 'regular']?.steps || 1
-      return subs.filter(s => s.workflow_status === 'completed' || s.workflow_status === 'points_paid').length >= totalSteps
+      const typeInfoStat = CAMPAIGN_TYPES[campaign?.campaign_type || 'regular'] || CAMPAIGN_TYPES.regular
+      const vSteps = campaign?.total_steps || typeInfoStat.steps
+      const sSteps = typeInfoStat.snsSteps || vSteps
+      const total = Math.max(vSteps, sSteps)
+      return subs.filter(s => s.workflow_status === 'completed' || s.workflow_status === 'points_paid').length >= total
     }).length
   }
 
