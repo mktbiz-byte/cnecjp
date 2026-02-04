@@ -9,6 +9,7 @@ import {
   FileText
 } from 'lucide-react'
 import ExternalGuideViewer from './ExternalGuideViewer'
+import ShootingGuideModal from './ShootingGuideModal'
 
 // personalized_guide 파싱 헬퍼
 // 3가지 형태:
@@ -1740,16 +1741,37 @@ const StepCard = ({
         )}
       </div>
 
-      {/* 가이드 모달 */}
-      <GuideModal
-        isOpen={showGuideModal}
-        onClose={() => setShowGuideModal(false)}
-        campaign={campaign}
-        application={application}
-        language={language}
-        stepNumber={stepNumber}
-        campaignType={campaignType}
-      />
+      {/* 가이드 모달 - AI 가이드는 ShootingGuideModal, 그 외는 GuideModal */}
+      {(() => {
+        // personalized_guide 또는 shooting_guide_content에서 AI 가이드 확인
+        const parsed = parsePersonalizedGuide(application?.personalized_guide)
+        const parsedCampaignGuide = !parsed.isAiGuide
+          ? parsePersonalizedGuide(campaign?.shooting_guide_content)
+          : { isAiGuide: false, aiData: null }
+        const aiGuideData = parsed.isAiGuide ? parsed.aiData : parsedCampaignGuide.isAiGuide ? parsedCampaignGuide.aiData : null
+
+        if (aiGuideData) {
+          return (
+            <ShootingGuideModal
+              isOpen={showGuideModal}
+              onClose={() => setShowGuideModal(false)}
+              guide={aiGuideData}
+              campaignTitle={campaign?.title || ''}
+            />
+          )
+        }
+        return (
+          <GuideModal
+            isOpen={showGuideModal}
+            onClose={() => setShowGuideModal(false)}
+            campaign={campaign}
+            application={application}
+            language={language}
+            stepNumber={stepNumber}
+            campaignType={campaignType}
+          />
+        )
+      })()}
     </>
   )
 }

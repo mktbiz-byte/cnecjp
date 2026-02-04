@@ -318,7 +318,7 @@ export const database = {
             if (campaignIds.length > 0) {
               const { data: campaigns, error: campaignsError } = await supabase
                 .from('campaigns')
-                .select('id, title, guide_type, guide_pdf_url')
+                .select('*')
                 .in('id', campaignIds)
 
               if (!campaignsError && campaigns) {
@@ -328,7 +328,8 @@ export const database = {
                     ...app,
                     campaign_title: campaign ? campaign.title : 'Unknown Campaign',
                     campaign_guide_type: campaign?.guide_type || null,
-                    campaign_guide_pdf_url: campaign?.guide_pdf_url || null
+                    campaign_guide_pdf_url: campaign?.guide_pdf_url || null,
+                    campaign_data: campaign || null
                   }
                 })
                 return applicationsWithCampaigns
