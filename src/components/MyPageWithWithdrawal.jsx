@@ -1384,7 +1384,7 @@ const MyPageWithWithdrawal = () => {
                     <div className="ml-4">
                       <p className="text-sm font-medium text-gray-500">{t.approvedApplications}</p>
                       <p className="text-2xl font-bold text-gray-900">
-                        {applications.filter(a => ['approved', 'video_submitted', 'sns_submitted', 'completed'].includes(a.status)).length}
+                        {applications.filter(a => ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed'].includes(a.status)).length}
                       </p>
                     </div>
                   </div>
@@ -1442,13 +1442,15 @@ const MyPageWithWithdrawal = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              ['approved', 'video_submitted', 'sns_submitted', 'completed'].includes(application.status) ? 'bg-green-100 text-green-800' :
+                              ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed'].includes(application.status) ? 'bg-green-100 text-green-800' :
                               application.status === 'rejected' ? 'bg-red-100 text-red-800' :
                               'bg-yellow-100 text-yellow-800'
                             }`}>
                               {application.status === 'video_submitted' ? (language === 'ko' ? '영상 제출' : '動画提出済み') :
                                application.status === 'sns_submitted' ? (language === 'ko' ? 'SNS 제출' : 'SNS提出済み') :
                                application.status === 'completed' ? (language === 'ko' ? '완료' : '完了') :
+                               application.status === 'selected' ? (language === 'ko' ? '선정됨' : '選定済み') :
+                               application.status === 'filming' ? (language === 'ko' ? '촬영중' : '撮影中') :
                                application.status === 'approved' ? (language === 'ko' ? '승인됨' : '承認済み') :
                                application.status === 'rejected' ? (language === 'ko' ? '거절됨' : '拒否済み') :
                                (language === 'ko' ? '대기중' : '待機中')}
@@ -1459,7 +1461,7 @@ const MyPageWithWithdrawal = () => {
                           </td>
                           {/* 가이드 열 */}
                           <td className="px-6 py-4 whitespace-nowrap">
-                            {['approved', 'video_submitted', 'sns_submitted', 'completed'].includes(application.status) && application.campaign_guide_type === 'pdf' && application.campaign_guide_pdf_url ? (
+                            {['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed'].includes(application.status) && application.campaign_guide_type === 'pdf' && application.campaign_guide_pdf_url ? (
                               <div className="space-y-2">
                                 {/* 외부 가이드 (PDF/Google Slides) */}
                                 <ExternalGuideViewer
@@ -1487,7 +1489,7 @@ const MyPageWithWithdrawal = () => {
                                   </span>
                                 )}
                               </div>
-                            ) : ['approved', 'video_submitted', 'sns_submitted', 'completed'].includes(application.status) && application.personalized_guide ? (
+                            ) : ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed'].includes(application.status) && application.personalized_guide ? (
                               <div className="space-y-2">
                                 {/* AI 가이드 보기 버튼 */}
                                 <button
@@ -1532,7 +1534,7 @@ const MyPageWithWithdrawal = () => {
                                   </div>
                                 )}
                               </div>
-                            ) : ['approved', 'video_submitted', 'sns_submitted', 'completed'].includes(application.status) ? (
+                            ) : ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed'].includes(application.status) ? (
                               <span className="text-xs text-gray-400">
                                 {language === 'ko' ? '가이드 준비중' : 'ガイド準備中'}
                               </span>
@@ -1541,7 +1543,7 @@ const MyPageWithWithdrawal = () => {
                             )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            {['approved', 'video_submitted', 'sns_submitted', 'completed'].includes(application.status) ? (
+                            {['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed'].includes(application.status) ? (
                               <div className="space-y-2">
                                 {/* 송장번호 및 가이드 URL */}
                                 {(application.tracking_number || application.guide_url) && (
@@ -1650,7 +1652,7 @@ const MyPageWithWithdrawal = () => {
               </div>
               
               {/* SNS 업로드 경고 메시지 */}
-              {applications.some(app => app.status === 'approved') && (
+              {applications.some(app => ['approved', 'selected', 'filming'].includes(app.status)) && (
                 <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
                   <div className="flex items-start">
                     <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 mr-3 flex-shrink-0" />
@@ -1804,7 +1806,7 @@ const MyPageWithWithdrawal = () => {
               </div>
               
               {/* SNS 업로드 경고 메시지 */}
-              {applications.some(app => app.status === 'approved') && (
+              {applications.some(app => ['approved', 'selected', 'filming'].includes(app.status)) && (
                 <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
                   <div className="flex items-start">
                     <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 mr-3 flex-shrink-0" />

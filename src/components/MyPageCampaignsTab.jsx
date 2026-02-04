@@ -1778,10 +1778,10 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
             submissionsLoaded = true
           }
 
-          // submissions가 없는 approved applications에 대해 자동 생성 시도
+          // submissions가 없는 approved/selected/filming applications에 대해 자동 생성 시도
           if (!submissionsError) {
             const approvedApps = applications.filter(a =>
-              ['approved', 'video_submitted', 'sns_submitted', 'completed'].includes(a.status)
+              ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed'].includes(a.status)
             )
             for (const app of approvedApps) {
               if (!submissionsLoaded || !submissionsData?.some(s => s.application_id === app.id)) {
@@ -1849,8 +1849,8 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
   }, [applications])
 
   // 상태별 분류
-  // approved 상태 + 워크플로우 진행 중인 상태도 포함 (기존 데이터 호환)
-  const approvedStatuses = ['approved', 'video_submitted', 'sns_submitted', 'completed']
+  // cnecbiz.com 관리자 사용 status: selected(선정), filming(촬영중), approved(승인)
+  const approvedStatuses = ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed']
   const knownStatuses = [...approvedStatuses, 'pending', 'virtual_selected', 'rejected']
   const approvedApplications = applications.filter(a => approvedStatuses.includes(a.status))
   const pendingApplications = applications.filter(a => a.status === 'pending' || a.status === 'virtual_selected')

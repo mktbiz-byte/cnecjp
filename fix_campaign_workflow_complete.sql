@@ -278,8 +278,9 @@ DECLARE
     v_step INTEGER;
     v_step_label TEXT;
 BEGIN
-    -- approved 상태로 변경된 경우에만 실행
-    IF NEW.status = 'approved' AND (OLD IS NULL OR OLD.status IS DISTINCT FROM 'approved') THEN
+    -- approved/selected/filming 상태로 변경된 경우 실행
+    -- cnecbiz.com 관리자가 selected, filming 상태도 사용함
+    IF NEW.status IN ('approved', 'selected', 'filming') AND (OLD IS NULL OR OLD.status IS DISTINCT FROM NEW.status) THEN
         -- 캠페인 정보 조회
         SELECT campaign_type, total_steps
         INTO v_campaign_type, v_total_steps
@@ -337,13 +338,13 @@ DROP TRIGGER IF EXISTS trigger_create_campaign_submissions_insert ON application
 CREATE TRIGGER trigger_create_campaign_submissions_insert
     AFTER INSERT ON applications
     FOR EACH ROW
-    WHEN (NEW.status = 'approved')
+    WHEN (NEW.status IN ('approved', 'selected', 'filming'))
     EXECUTE FUNCTION create_campaign_submissions();
 
 
 -- ============================================================
--- STEP 7: 기존 approved applications에 대해 누락된 submissions 백필
--- (트리거가 없었을 때 approved 된 applications에 submissions가 없는 경우)
+-- STEP 7: 기존 approved/selected/filming applications에 대해 누락된 submissions 백필
+-- (트리거가 없었을 때 승인된 applications에 submissions가 없는 경우)
 -- ============================================================
 DO $$
 DECLARE
@@ -354,11 +355,11 @@ DECLARE
     v_step_label TEXT;
     v_created_count INTEGER := 0;
 BEGIN
-    -- approved 상태이지만 submissions가 없는 applications 찾기
+    -- approved/selected/filming 상태이지만 submissions가 없는 applications 찾기
     FOR v_app IN
         SELECT a.id, a.user_id, a.campaign_id
         FROM applications a
-        WHERE a.status IN ('approved', 'video_submitted', 'sns_submitted', 'completed')
+        WHERE a.status IN ('approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed')
         AND NOT EXISTS (
             SELECT 1 FROM campaign_submissions cs
             WHERE cs.application_id = a.id
@@ -462,18 +463,18 @@ SELECT 'campaign_submissions 총 레코드' as item,
     COUNT(*)::text as value
 FROM campaign_submissions;
 
-SELECT 'approved applications' as item,
+SELECT 'approved/selected/filming applications' as item,
     COUNT(*)::text as value
-FROM applications WHERE status = 'approved';
+FROM applications WHERE status IN ('approved', 'selected', 'filming');
 
 SELECT 'submissions가 있는 applications' as item,
     COUNT(DISTINCT application_id)::text as value
 FROM campaign_submissions;
 
-SELECT 'submissions가 없는 approved applications' as item,
+SELECT 'submissions가 없는 승인 applications' as item,
     COUNT(*)::text || '개 (0이어야 정상)' as value
 FROM applications a
-WHERE a.status = 'approved'
+WHERE a.status IN ('approved', 'selected', 'filming')
 AND NOT EXISTS (
     SELECT 1 FROM campaign_submissions cs WHERE cs.application_id = a.id
 );
