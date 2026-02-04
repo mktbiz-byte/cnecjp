@@ -970,14 +970,43 @@ const StepCard = ({
       return
     }
 
+    // 클린본 필수인데 없는 경우
+    if (campaign?.requires_clean_video && !cleanVideoFile && !submission?.clean_video_file_url) {
+      alert(language === 'ja' ? 'クリーン動画ファイルを選択してください' : '클린본 파일을 선택해주세요')
+      return
+    }
+
     setSubmitting(true)
     try {
+      // 클린본 파일이 있으면 Supabase Storage에 업로드
+      let uploadedCleanUrl = submission?.clean_video_file_url || null
+      if (cleanVideoFile) {
+        const timestamp = Date.now()
+        const userId = application.user_id
+        const getExt = (name) => {
+          const dot = name.lastIndexOf('.')
+          return dot >= 0 ? name.substring(dot) : ''
+        }
+        const cleanPath = `${userId}/${application.campaign_id}/${submission?.id || 'new'}/${timestamp}_clean${getExt(cleanVideoFile.name)}`
+        const { error: cleanUploadError } = await supabase.storage
+          .from('campaign-videos')
+          .upload(cleanPath, cleanVideoFile, { cacheControl: '3600', upsert: false })
+        if (cleanUploadError) throw cleanUploadError
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('campaign-videos')
+          .getPublicUrl(cleanPath)
+        uploadedCleanUrl = publicUrl
+      }
+
       // DB 스키마에 맞는 필드만 사용 (video_file_url, clean_video_file_url, ad_code)
       const updateData = {
         workflow_status: 'video_uploaded',
         video_file_url: videoUrl,
         video_uploaded_at: new Date().toISOString(),
-        clean_video_file_url: cleanVideoUrl || null,
+        clean_video_file_url: uploadedCleanUrl,
+        clean_video_file_name: cleanVideoFile?.name || null,
+        clean_video_uploaded_at: cleanVideoFile ? new Date().toISOString() : null,
         ad_code: partnershipCode || null,
         updated_at: new Date().toISOString()
       }
@@ -1309,30 +1338,30 @@ const StepCard = ({
                 )}
 
                 <div className="space-y-4">
-                  {/* 메인 영상 URL */}
+                  {/* 편집본 영상 URL */}
                   <div>
                     <label className="block text-sm text-gray-700 mb-2 font-medium">
-                      {language === 'ja' ? '動画URL' : '영상 URL'} *
+                      {language === 'ja' ? '編集済み動画URL' : '편집본 영상 URL'} *
                     </label>
                     <input
                       type="url"
                       value={videoUrl}
                       onChange={(e) => setVideoUrl(e.target.value)}
-                      placeholder="https://drive.google.com/... or https://youtube.com/..."
+                      placeholder="https://www.instagram.com/reel/... or https://www.tiktok.com/..."
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       {language === 'ja'
-                        ? 'Google Drive、YouTube、TikTokなどのリンクを入力'
-                        : 'Google Drive, YouTube, TikTok 등의 링크 입력'}
+                        ? 'Instagram、TikTok、YouTubeなどのSNS投稿URLを入力'
+                        : 'Instagram, TikTok, YouTube 등 SNS 게시물 URL 입력'}
                     </p>
                   </div>
 
-                  {/* 클린본 URL */}
+                  {/* 클린본 파일 업로드 */}
                   <div>
                     <label className="block text-sm text-gray-700 mb-2 font-medium">
-                      {language === 'ja' ? 'クリーン動画URL（字幕/BGMなし）' : '클린본 URL (자막/BGM 없는 버전)'}
-                      <span className="text-gray-400 ml-1">
+                      {language === 'ja' ? 'クリーン動画（字幕/BGMなし）' : '클린본 (자막/BGM 없는 버전)'}
+                      <span className={`ml-1 ${campaign?.requires_clean_video ? 'text-red-500' : 'text-gray-400'}`}>
                         ({campaign?.requires_clean_video
                           ? (language === 'ja' ? '必須' : '필수')
                           : (language === 'ja' ? '任意' : '선택')
@@ -1340,23 +1369,54 @@ const StepCard = ({
                       </span>
                     </label>
                     <input
-                      type="url"
-                      value={cleanVideoUrl}
-                      onChange={(e) => setCleanVideoUrl(e.target.value)}
-                      placeholder="https://drive.google.com/..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      ref={cleanVideoInputRef}
+                      type="file"
+                      accept="video/*"
+                      onChange={(e) => {
+                        if (e.target.files?.[0]) setCleanVideoFile(e.target.files[0])
+                      }}
+                      className="hidden"
                     />
+                    <div
+                      onClick={() => cleanVideoInputRef.current?.click()}
+                      className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+                        cleanVideoFile ? 'border-green-400 bg-green-50' : 'border-gray-300 hover:border-blue-400'
+                      }`}
+                    >
+                      {cleanVideoFile ? (
+                        <div className="flex items-center justify-center space-x-3">
+                          <FileVideo className="w-5 h-5 text-green-600" />
+                          <span className="text-sm text-gray-700 truncate max-w-xs">{cleanVideoFile.name}</span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setCleanVideoFile(null) }}
+                            className="p-1 hover:bg-gray-200 rounded"
+                          >
+                            <X className="w-4 h-4 text-gray-500" />
+                          </button>
+                        </div>
+                      ) : submission?.clean_video_file_url ? (
+                        <div className="flex items-center justify-center space-x-2 text-green-600">
+                          <CheckCircle className="w-5 h-5" />
+                          <span className="text-sm">{language === 'ja' ? 'アップロード済み（再選択で上書き）' : '업로드됨 (재선택시 덮어쓰기)'}</span>
+                        </div>
+                      ) : (
+                        <div className="text-gray-400 text-sm">
+                          <Upload className="w-5 h-5 mx-auto mb-1 text-gray-300" />
+                          {language === 'ja' ? 'クリックしてクリーン動画を選択' : '클릭하여 클린본 선택'}
+                        </div>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500 mt-1">
                       {language === 'ja'
-                        ? 'BGMや字幕なしのオリジナル動画'
-                        : 'BGM, 자막이 없는 원본 영상'}
+                        ? 'BGMや字幕なしのオリジナル動画ファイル'
+                        : 'BGM, 자막이 없는 원본 영상 파일'}
                     </p>
                   </div>
 
-                  {/* 메타 파트너십 코드 */}
+                  {/* 광고코드 (Meta/Spark Ads/YouTube 등) */}
                   <div>
                     <label className="block text-sm text-gray-700 mb-2 font-medium">
-                      {language === 'ja' ? 'Meta パートナーシップコード' : '메타 파트너십 코드 (광고코드)'}
+                      {language === 'ja' ? '広告コード' : '광고 코드'}
                       <span className="text-gray-400 ml-1">
                         ({campaign?.meta_ad_code_requested
                           ? (language === 'ja' ? '必須' : '필수')
@@ -1373,8 +1433,8 @@ const StepCard = ({
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       {language === 'ja'
-                        ? 'Instagram/TikTokのパートナーシップコード'
-                        : 'Instagram/TikTok 파트너십 코드'}
+                        ? 'Meta パートナーシップ / TikTok Spark Ads / YouTube広告共有コード'
+                        : 'Meta 파트너십 / TikTok Spark Ads / YouTube 광고 공유 코드'}
                     </p>
                   </div>
 
