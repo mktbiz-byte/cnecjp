@@ -1480,35 +1480,6 @@ const StepCard = ({
                   }
                 </h4>
 
-                {/* 전체 버전 히스토리 표시 (v1, v2, v3...) */}
-                {submission?.video_file_url && (
-                  <div className="mb-4 space-y-2">
-                    <p className="text-xs text-gray-500">{language === 'ja' ? '提出済み動画:' : '제출된 영상:'}</p>
-                    {(submission?.video_versions?.length > 0
-                      ? [...submission.video_versions].sort((a, b) => b.version - a.version)
-                      : [{ version: getVideoVersion(), file_url: submission.video_file_url, file_name: submission.video_file_name, uploaded_at: submission.video_uploaded_at }]
-                    ).map((ver, idx) => (
-                      <div key={idx} className={`p-3 bg-white rounded-lg border ${idx === 0 ? 'border-blue-300 ring-1 ring-blue-100' : 'border-gray-200'}`}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-700 truncate">
-                              v{ver.version} - {ver.file_name || (language === 'ja' ? 'アップロード済み' : '업로드됨')}
-                            </p>
-                            {ver.uploaded_at && (
-                              <p className="text-xs text-gray-400 mt-0.5">
-                                {new Date(ver.uploaded_at).toLocaleString(language === 'ja' ? 'ja-JP' : 'ko-KR')}
-                              </p>
-                            )}
-                          </div>
-                          <span className={`px-2 py-1 rounded text-xs font-medium flex-shrink-0 ml-2 ${idx === 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
-                            v{ver.version}{idx === 0 ? (language === 'ja' ? ' 最新' : ' 최신') : ''}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
                 {/* 수정 요청사항 표시 */}
                 {(submission?.revision_requests?.length > 0 || application?.revision_requests?.length > 0) && (
                   <RevisionRequestsSection
@@ -1521,70 +1492,6 @@ const StepCard = ({
                   <div className="mb-4 bg-red-100 border border-red-200 rounded-lg p-3 text-sm text-red-700">
                     <p className="font-medium mb-1">{language === 'ja' ? '修正内容:' : '수정 내용:'}</p>
                     {submission.revision_notes}
-                  </div>
-                )}
-
-                {/* 영상 재업로드 (수정확인 중 또는 수정 요청 시 모두 가능) */}
-                {(status === 'video_uploaded' || status === 'revision_required' || status === 'revision_requested') && (
-                  <div className="mt-4 space-y-3">
-                    <p className="text-sm font-medium text-orange-700">
-                      {(status === 'revision_required' || status === 'revision_requested')
-                        ? (language === 'ja' ? '修正した動画を再アップロード:' : '수정한 영상을 재업로드:')
-                        : (language === 'ja' ? '動画を再アップロード（新しいバージョンとして追加）:' : '영상 재업로드 (새 버전으로 추가):')
-                      }
-                    </p>
-                    <input
-                      ref={videoInputRef}
-                      type="file"
-                      accept="video/*"
-                      onChange={(e) => handleFileSelect(e, false)}
-                      className="hidden"
-                    />
-                    <div
-                      onClick={() => !uploading && videoInputRef.current?.click()}
-                      className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
-                        videoFile ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-blue-400'
-                      }`}
-                    >
-                      {videoFile ? (
-                        <div className="flex items-center justify-center space-x-3">
-                          <Film className="w-6 h-6 text-blue-500" />
-                          <span className="text-sm text-gray-700">{videoFile.name}</span>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setVideoFile(null) }}
-                            className="p-1 hover:bg-gray-200 rounded"
-                          >
-                            <X className="w-4 h-4 text-gray-500" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="text-gray-400 text-sm">
-                          <Upload className="w-6 h-6 mx-auto mb-1 text-gray-300" />
-                          {language === 'ja' ? 'クリックして修正動画を選択 (最大2GB)' : '클릭하여 수정 영상 선택 (최대 2GB)'}
-                        </div>
-                      )}
-                    </div>
-
-                    {uploading && (
-                      <div className="space-y-2">
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className="bg-blue-500 h-2 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
-                        </div>
-                        <p className="text-center text-xs text-gray-500">{uploadProgress}%</p>
-                      </div>
-                    )}
-
-                    {videoFile && !uploading && (
-                      <button
-                        onClick={handleVideoUpload}
-                        className="w-full px-4 py-3 bg-orange-600 text-white rounded-md font-medium hover:bg-orange-700 flex items-center justify-center"
-                      >
-                        <Upload className="w-4 h-4 mr-2" />
-                        {language === 'ja'
-                          ? `v${getVideoVersion() + 1} 修正動画をアップロード`
-                          : `v${getVideoVersion() + 1} 수정 영상 업로드`}
-                      </button>
-                    )}
                   </div>
                 )}
 
@@ -1803,7 +1710,101 @@ const StepCard = ({
               </div>
             )}
           </div>
-        )}
+
+          {/* 영상 재업로드 섹션 - 영상 업로드 완료 후 어느 단계에서든 항상 표시 */}
+          {currentStep >= 2 && submission?.video_file_url && (
+            <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              {/* 전체 버전 히스토리 */}
+              <div className="mb-3">
+                <p className="text-xs font-medium text-gray-600 mb-2">{language === 'ja' ? '提出済み動画:' : '제출된 영상:'}</p>
+                <div className="space-y-1.5">
+                  {(submission?.video_versions?.length > 0
+                    ? [...submission.video_versions].sort((a, b) => b.version - a.version)
+                    : [{ version: getVideoVersion(), file_url: submission.video_file_url, file_name: submission.video_file_name, uploaded_at: submission.video_uploaded_at }]
+                  ).map((ver, idx) => (
+                    <div key={idx} className={`p-2.5 bg-white rounded-lg border ${idx === 0 ? 'border-blue-300 ring-1 ring-blue-100' : 'border-gray-200'}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-700 truncate">
+                            v{ver.version} - {ver.file_name || (language === 'ja' ? 'アップロード済み' : '업로드됨')}
+                          </p>
+                          {ver.uploaded_at && (
+                            <p className="text-xs text-gray-400 mt-0.5">
+                              {new Date(ver.uploaded_at).toLocaleString(language === 'ja' ? 'ja-JP' : 'ko-KR')}
+                            </p>
+                          )}
+                        </div>
+                        <span className={`px-2 py-1 rounded text-xs font-medium flex-shrink-0 ml-2 ${idx === 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
+                          v{ver.version}{idx === 0 ? (language === 'ja' ? ' 最新' : ' 최신') : ''}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 재업로드 영역 */}
+              {status !== 'points_paid' && status !== 'completed' && (
+                <div className="space-y-3 pt-3 border-t border-gray-200">
+                  <p className="text-sm font-medium text-gray-600">
+                    {language === 'ja' ? '動画を再アップロード（新しいバージョンとして追加）' : '영상 재업로드 (새 버전으로 추가)'}
+                  </p>
+                  <input
+                    ref={videoInputRef}
+                    type="file"
+                    accept="video/*"
+                    onChange={(e) => handleFileSelect(e, false)}
+                    className="hidden"
+                  />
+                  <div
+                    onClick={() => !uploading && videoInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+                      videoFile ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-blue-400 hover:bg-white'
+                    }`}
+                  >
+                    {videoFile ? (
+                      <div className="flex items-center justify-center space-x-3">
+                        <Film className="w-6 h-6 text-blue-500" />
+                        <span className="text-sm text-gray-700">{videoFile.name}</span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setVideoFile(null) }}
+                          className="p-1 hover:bg-gray-200 rounded"
+                        >
+                          <X className="w-4 h-4 text-gray-500" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="text-gray-400 text-sm">
+                        <Upload className="w-6 h-6 mx-auto mb-1 text-gray-300" />
+                        {language === 'ja' ? 'クリックして動画を選択 (最大2GB)' : '클릭하여 영상 선택 (최대 2GB)'}
+                      </div>
+                    )}
+                  </div>
+
+                  {uploading && (
+                    <div className="space-y-2">
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="bg-blue-500 h-2 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
+                      </div>
+                      <p className="text-center text-xs text-gray-500">{uploadProgress}%</p>
+                    </div>
+                  )}
+
+                  {videoFile && !uploading && (
+                    <button
+                      onClick={handleVideoUpload}
+                      className="w-full px-4 py-3 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 flex items-center justify-center"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      {language === 'ja'
+                        ? `v${getVideoVersion() + 1} 動画をアップロード`
+                        : `v${getVideoVersion() + 1} 영상 업로드`}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}}
       </div>
 
       {/* 가이드 모달 - AI 가이드는 ShootingGuideModal, 그 외는 GuideModal */}
