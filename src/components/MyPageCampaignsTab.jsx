@@ -1524,11 +1524,14 @@ const StepCard = ({
                   </div>
                 )}
 
-                {/* 수정 요청시 재업로드 */}
-                {(status === 'revision_required' || status === 'revision_requested') && (
+                {/* 영상 재업로드 (수정확인 중 또는 수정 요청 시 모두 가능) */}
+                {(status === 'video_uploaded' || status === 'revision_required' || status === 'revision_requested') && (
                   <div className="mt-4 space-y-3">
                     <p className="text-sm font-medium text-orange-700">
-                      {language === 'ja' ? '修正した動画を再アップロード:' : '수정한 영상을 재업로드:'}
+                      {(status === 'revision_required' || status === 'revision_requested')
+                        ? (language === 'ja' ? '修正した動画を再アップロード:' : '수정한 영상을 재업로드:')
+                        : (language === 'ja' ? '動画を再アップロード（新しいバージョンとして追加）:' : '영상 재업로드 (새 버전으로 추가):')
+                      }
                     </p>
                     <input
                       ref={videoInputRef}
