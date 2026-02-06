@@ -2081,8 +2081,8 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
   const [submissions, setSubmissions] = useState({})
   const [filter, setFilter] = useState('all')
 
-  const loadData = async () => {
-    setLoading(true)
+  const loadData = async (silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const campaignIds = [...new Set(applications.map(a => a.campaign_id).filter(Boolean))]
       let campaignsMap = {}
@@ -2341,7 +2341,7 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
                 application={application}
                 campaign={campaigns[application.campaign_id]}
                 submissions={submissions[application.id] || []}
-                onUpdate={loadData}
+                onUpdate={() => loadData(true)}
                 language={language}
               />
             ))}
