@@ -1881,7 +1881,14 @@ const StepCard = ({
 }
 
 // 캠페인 카드
-const CampaignCard = ({ application, campaign, submissions, onUpdate, language }) => {
+// 업로드 채널 정보
+const CHANNEL_INFO = {
+  instagram: { icon: '📸', label: 'Instagram', bgClass: 'bg-pink-100 text-pink-700 border-pink-200' },
+  youtube: { icon: '📺', label: 'YouTube', bgClass: 'bg-red-100 text-red-700 border-red-200' },
+  tiktok: { icon: '🎵', label: 'TikTok', bgClass: 'bg-gray-100 text-gray-700 border-gray-300' }
+}
+
+const CampaignCard = ({ application, campaign, submissions, mainChannel, onUpdate, language }) => {
   const [expanded, setExpanded] = useState(true)
 
   const campaignType = campaign?.campaign_type || 'regular'
@@ -1962,7 +1969,16 @@ const CampaignCard = ({ application, campaign, submissions, onUpdate, language }
                 {campaign?.title || application.campaign_title}
               </h3>
 
-              {/* 다음 마감일 표시 */}
+              {/* 업로드 채널 표시 */}
+              {mainChannel && CHANNEL_INFO[mainChannel] && (
+                <div className="mt-1">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${CHANNEL_INFO[mainChannel].bgClass}`}>
+                    {CHANNEL_INFO[mainChannel].icon} アップロード先: {CHANNEL_INFO[mainChannel].label}
+                  </span>
+                </div>
+              )}
+
+              {/* 다음 마감일 表示 */}
               {nextDeadline && (
                 <div className="mt-1 flex items-center text-xs text-orange-600">
                   <Calendar className="w-3 h-3 mr-1" />
@@ -2079,6 +2095,7 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
   const [loading, setLoading] = useState(true)
   const [campaigns, setCampaigns] = useState({})
   const [submissions, setSubmissions] = useState({})
+  const [mainChannels, setMainChannels] = useState({})
   const [filter, setFilter] = useState('all')
 
   const loadData = async (silent = false) => {
@@ -2096,6 +2113,28 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
         if (campaignsData) {
           campaignsData.forEach(c => { campaignsMap[c.id] = c })
           setCampaigns(campaignsMap)
+        }
+      }
+
+      // main_channel 조회 (기업이 크리에이터 선정 시 저장한 업로드 채널)
+      if (user?.email) {
+        try {
+          const { data: channelData } = await supabase
+            .from('applications')
+            .select('campaign_id, main_channel')
+            .not('main_channel', 'is', null)
+            .or(`applicant_email.eq.${user.email},email.eq.${user.email},creator_email.eq.${user.email}`)
+          if (channelData) {
+            const channelMap = {}
+            channelData.forEach(row => {
+              if (row.campaign_id && row.main_channel) {
+                channelMap[row.campaign_id] = row.main_channel
+              }
+            })
+            setMainChannels(channelMap)
+          }
+        } catch (e) {
+          // main_channel 컬럼이 없을 수 있음 - 무시
         }
       }
 
@@ -2341,6 +2380,7 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
                 application={application}
                 campaign={campaigns[application.campaign_id]}
                 submissions={submissions[application.id] || []}
+                mainChannel={mainChannels[application.campaign_id]}
                 onUpdate={() => loadData(true)}
                 language={language}
               />
