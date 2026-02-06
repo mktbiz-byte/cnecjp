@@ -183,6 +183,7 @@ CREATE TABLE IF NOT EXISTS campaign_submissions (
     video_file_name TEXT,
     video_file_size BIGINT,
     video_uploaded_at TIMESTAMP WITH TIME ZONE,
+    video_versions JSONB DEFAULT '[]'::JSONB,
     clean_video_file_path TEXT,
     clean_video_file_url TEXT,
     clean_video_file_name TEXT,

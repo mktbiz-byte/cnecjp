@@ -1027,8 +1027,25 @@ const StepCard = ({
 
       setUploadProgress(80)
 
+      // 버전 히스토리에 새 버전 추가 (기존 버전 보존)
+      const existingVersions = Array.isArray(submission?.video_versions) ? submission.video_versions : []
+      const newVersionEntry = {
+        version: nextVersion,
+        file_path: videoPath,
+        file_url: videoUrl,
+        file_name: videoFile.name,
+        file_size: videoFile.size,
+        uploaded_at: new Date().toISOString()
+      }
+      const updatedVersions = [...existingVersions, newVersionEntry]
+
+      // 재업로드 시 현재 워크플로우 상태 보존 (SNS 제출 등 이후 단계에서 재업로드해도 상태 리셋 안함)
+      // 단, guide_confirmed 이전이거나 첫 업로드면 video_uploaded로 설정
+      const preserveStatus = ['sns_pending', 'sns_submitted', 'review_pending'].includes(status)
+      const newStatus = preserveStatus ? status : 'video_uploaded'
+
       const updateData = {
-        workflow_status: 'video_uploaded',
+        workflow_status: newStatus,
         video_file_path: videoPath,
         video_file_url: videoUrl,
         video_file_name: videoFile.name,
@@ -1041,6 +1058,9 @@ const StepCard = ({
         updated_at: new Date().toISOString()
       }
 
+      // video_versions 컬럼이 DB에 있으면 포함, 없으면 제외
+      const updateDataWithVersions = { ...updateData, video_versions: updatedVersions }
+
       if (!submission?.id || submission.id.startsWith('temp-')) {
         const { error } = await supabase
           .from('campaign_submissions')
@@ -1052,15 +1072,45 @@ const StepCard = ({
             step_label: getStepLabel(),
             video_deadline: videoDeadline,
             sns_deadline: snsDeadline,
-            ...updateData
+            ...updateDataWithVersions
           })
-        if (error) throw error
+        if (error) {
+          // video_versions 컬럼이 없으면 해당 필드 제외하고 재시도
+          if (error.message?.includes('video_versions') || error.code === 'PGRST204') {
+            const { error: retryError } = await supabase
+              .from('campaign_submissions')
+              .insert({
+                application_id: application.id,
+                user_id: application.user_id,
+                campaign_id: application.campaign_id,
+                step_number: stepNumber,
+                step_label: getStepLabel(),
+                video_deadline: videoDeadline,
+                sns_deadline: snsDeadline,
+                ...updateData
+              })
+            if (retryError) throw retryError
+          } else {
+            throw error
+          }
+        }
       } else {
         const { error } = await supabase
           .from('campaign_submissions')
-          .update(updateData)
+          .update(updateDataWithVersions)
           .eq('id', submission.id)
-        if (error) throw error
+        if (error) {
+          // video_versions 컬럼이 없으면 해당 필드 제외하고 재시도
+          if (error.message?.includes('video_versions') || error.code === 'PGRST204') {
+            const { error: retryError } = await supabase
+              .from('campaign_submissions')
+              .update(updateData)
+              .eq('id', submission.id)
+            if (retryError) throw retryError
+          } else {
+            throw error
+          }
+        }
       }
 
       setUploadProgress(100)
@@ -1467,23 +1517,6 @@ const StepCard = ({
                   }
                 </h4>
 
-                {/* 현재 제출 버전 표시 */}
-                {submission?.video_file_url && (
-                  <div className="mb-4 p-3 bg-white rounded-lg border border-orange-200">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-gray-500">{language === 'ja' ? '提出済み動画:' : '제출된 영상:'}</p>
-                        <p className="text-sm font-medium text-gray-700">
-                          v{getVideoVersion()} - {submission.video_file_name || (language === 'ja' ? 'アップロード済み' : '업로드됨')}
-                        </p>
-                      </div>
-                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
-                        v{getVideoVersion()}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
                 {/* 수정 요청사항 표시 */}
                 {(submission?.revision_requests?.length > 0 || application?.revision_requests?.length > 0) && (
                   <RevisionRequestsSection
@@ -1496,67 +1529,6 @@ const StepCard = ({
                   <div className="mb-4 bg-red-100 border border-red-200 rounded-lg p-3 text-sm text-red-700">
                     <p className="font-medium mb-1">{language === 'ja' ? '修正内容:' : '수정 내용:'}</p>
                     {submission.revision_notes}
-                  </div>
-                )}
-
-                {/* 수정 요청시 재업로드 */}
-                {(status === 'revision_required' || status === 'revision_requested') && (
-                  <div className="mt-4 space-y-3">
-                    <p className="text-sm font-medium text-orange-700">
-                      {language === 'ja' ? '修正した動画を再アップロード:' : '수정한 영상을 재업로드:'}
-                    </p>
-                    <input
-                      ref={videoInputRef}
-                      type="file"
-                      accept="video/*"
-                      onChange={(e) => handleFileSelect(e, false)}
-                      className="hidden"
-                    />
-                    <div
-                      onClick={() => !uploading && videoInputRef.current?.click()}
-                      className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
-                        videoFile ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-blue-400'
-                      }`}
-                    >
-                      {videoFile ? (
-                        <div className="flex items-center justify-center space-x-3">
-                          <Film className="w-6 h-6 text-blue-500" />
-                          <span className="text-sm text-gray-700">{videoFile.name}</span>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setVideoFile(null) }}
-                            className="p-1 hover:bg-gray-200 rounded"
-                          >
-                            <X className="w-4 h-4 text-gray-500" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="text-gray-400 text-sm">
-                          <Upload className="w-6 h-6 mx-auto mb-1 text-gray-300" />
-                          {language === 'ja' ? 'クリックして修正動画を選択 (最大2GB)' : '클릭하여 수정 영상 선택 (최대 2GB)'}
-                        </div>
-                      )}
-                    </div>
-
-                    {uploading && (
-                      <div className="space-y-2">
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className="bg-blue-500 h-2 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
-                        </div>
-                        <p className="text-center text-xs text-gray-500">{uploadProgress}%</p>
-                      </div>
-                    )}
-
-                    {videoFile && !uploading && (
-                      <button
-                        onClick={handleVideoUpload}
-                        className="w-full px-4 py-3 bg-orange-600 text-white rounded-md font-medium hover:bg-orange-700 flex items-center justify-center"
-                      >
-                        <Upload className="w-4 h-4 mr-2" />
-                        {language === 'ja'
-                          ? `v${getVideoVersion() + 1} 修正動画をアップロード`
-                          : `v${getVideoVersion() + 1} 수정 영상 업로드`}
-                      </button>
-                    )}
                   </div>
                 )}
 
@@ -1774,6 +1746,101 @@ const StepCard = ({
                 )}
               </div>
             )}
+
+            {/* 영상 재업로드 섹션 - 영상 업로드 완료 후 어느 단계에서든 항상 표시 */}
+            {currentStep >= 2 && submission?.video_file_url && (
+              <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                {/* 전체 버전 히스토리 */}
+                <div className="mb-3">
+                  <p className="text-xs font-medium text-gray-600 mb-2">{language === 'ja' ? '提出済み動画:' : '제출된 영상:'}</p>
+                  <div className="space-y-1.5">
+                    {(Array.isArray(submission?.video_versions) && submission.video_versions.length > 0
+                      ? [...submission.video_versions].sort((a, b) => (b.version || 0) - (a.version || 0))
+                      : [{ version: getVideoVersion() || 1, file_url: submission.video_file_url, file_name: submission.video_file_name, uploaded_at: submission.video_uploaded_at }]
+                    ).map((ver, idx) => (
+                      <div key={idx} className={`p-2.5 bg-white rounded-lg border ${idx === 0 ? 'border-blue-300 ring-1 ring-blue-100' : 'border-gray-200'}`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-700 truncate">
+                              v{ver.version} - {ver.file_name || (language === 'ja' ? 'アップロード済み' : '업로드됨')}
+                            </p>
+                            {ver.uploaded_at && (
+                              <p className="text-xs text-gray-400 mt-0.5">
+                                {new Date(ver.uploaded_at).toLocaleString(language === 'ja' ? 'ja-JP' : 'ko-KR')}
+                              </p>
+                            )}
+                          </div>
+                          <span className={`px-2 py-1 rounded text-xs font-medium flex-shrink-0 ml-2 ${idx === 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
+                            v{ver.version}{idx === 0 ? (language === 'ja' ? ' 最新' : ' 최신') : ''}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 재업로드 영역 */}
+                {status !== 'points_paid' && status !== 'completed' && (
+                  <div className="space-y-3 pt-3 border-t border-gray-200">
+                    <p className="text-sm font-medium text-gray-600">
+                      {language === 'ja' ? '動画を再アップロード（新しいバージョンとして追加）' : '영상 재업로드 (새 버전으로 추가)'}
+                    </p>
+                    <input
+                      ref={videoInputRef}
+                      type="file"
+                      accept="video/*"
+                      onChange={(e) => handleFileSelect(e, false)}
+                      className="hidden"
+                    />
+                    <div
+                      onClick={() => !uploading && videoInputRef.current?.click()}
+                      className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+                        videoFile ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-blue-400 hover:bg-white'
+                      }`}
+                    >
+                      {videoFile ? (
+                        <div className="flex items-center justify-center space-x-3">
+                          <Film className="w-6 h-6 text-blue-500" />
+                          <span className="text-sm text-gray-700">{videoFile.name}</span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setVideoFile(null) }}
+                            className="p-1 hover:bg-gray-200 rounded"
+                          >
+                            <X className="w-4 h-4 text-gray-500" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-gray-400 text-sm">
+                          <Upload className="w-6 h-6 mx-auto mb-1 text-gray-300" />
+                          {language === 'ja' ? 'クリックして動画を選択 (最大2GB)' : '클릭하여 영상 선택 (최대 2GB)'}
+                        </div>
+                      )}
+                    </div>
+
+                    {uploading && (
+                      <div className="space-y-2">
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="bg-blue-500 h-2 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
+                        </div>
+                        <p className="text-center text-xs text-gray-500">{uploadProgress}%</p>
+                      </div>
+                    )}
+
+                    {videoFile && !uploading && (
+                      <button
+                        onClick={handleVideoUpload}
+                        className="w-full px-4 py-3 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 flex items-center justify-center"
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        {language === 'ja'
+                          ? `v${getVideoVersion() + 1} 動画をアップロード`
+                          : `v${getVideoVersion() + 1} 영상 업로드`}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -1814,7 +1881,14 @@ const StepCard = ({
 }
 
 // 캠페인 카드
-const CampaignCard = ({ application, campaign, submissions, onUpdate, language }) => {
+// 업로드 채널 정보
+const CHANNEL_INFO = {
+  instagram: { icon: '📸', label: 'Instagram', bgClass: 'bg-pink-100 text-pink-700 border-pink-200' },
+  youtube: { icon: '📺', label: 'YouTube', bgClass: 'bg-red-100 text-red-700 border-red-200' },
+  tiktok: { icon: '🎵', label: 'TikTok', bgClass: 'bg-gray-100 text-gray-700 border-gray-300' }
+}
+
+const CampaignCard = ({ application, campaign, submissions, mainChannel, onUpdate, language }) => {
   const [expanded, setExpanded] = useState(true)
 
   const campaignType = campaign?.campaign_type || 'regular'
@@ -1895,7 +1969,16 @@ const CampaignCard = ({ application, campaign, submissions, onUpdate, language }
                 {campaign?.title || application.campaign_title}
               </h3>
 
-              {/* 다음 마감일 표시 */}
+              {/* 업로드 채널 표시 */}
+              {mainChannel && CHANNEL_INFO[mainChannel] && (
+                <div className="mt-1">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${CHANNEL_INFO[mainChannel].bgClass}`}>
+                    {CHANNEL_INFO[mainChannel].icon} アップロード先: {CHANNEL_INFO[mainChannel].label}
+                  </span>
+                </div>
+              )}
+
+              {/* 다음 마감일 表示 */}
               {nextDeadline && (
                 <div className="mt-1 flex items-center text-xs text-orange-600">
                   <Calendar className="w-3 h-3 mr-1" />
@@ -2012,10 +2095,11 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
   const [loading, setLoading] = useState(true)
   const [campaigns, setCampaigns] = useState({})
   const [submissions, setSubmissions] = useState({})
+  const [mainChannels, setMainChannels] = useState({})
   const [filter, setFilter] = useState('all')
 
-  const loadData = async () => {
-    setLoading(true)
+  const loadData = async (silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const campaignIds = [...new Set(applications.map(a => a.campaign_id).filter(Boolean))]
       let campaignsMap = {}
@@ -2029,6 +2113,28 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
         if (campaignsData) {
           campaignsData.forEach(c => { campaignsMap[c.id] = c })
           setCampaigns(campaignsMap)
+        }
+      }
+
+      // main_channel 조회 (기업이 크리에이터 선정 시 저장한 업로드 채널)
+      if (user?.email) {
+        try {
+          const { data: channelData } = await supabase
+            .from('applications')
+            .select('campaign_id, main_channel')
+            .not('main_channel', 'is', null)
+            .or(`applicant_email.eq.${user.email},email.eq.${user.email},creator_email.eq.${user.email}`)
+          if (channelData) {
+            const channelMap = {}
+            channelData.forEach(row => {
+              if (row.campaign_id && row.main_channel) {
+                channelMap[row.campaign_id] = row.main_channel
+              }
+            })
+            setMainChannels(channelMap)
+          }
+        } catch (e) {
+          // main_channel 컬럼이 없을 수 있음 - 무시
         }
       }
 
@@ -2274,7 +2380,8 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
                 application={application}
                 campaign={campaigns[application.campaign_id]}
                 submissions={submissions[application.id] || []}
-                onUpdate={loadData}
+                mainChannel={mainChannels[application.campaign_id]}
+                onUpdate={() => loadData(true)}
                 language={language}
               />
             ))}

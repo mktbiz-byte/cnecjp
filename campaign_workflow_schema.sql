@@ -95,11 +95,12 @@ CREATE TABLE IF NOT EXISTS campaign_submissions (
         )),
 
     -- 영상 업로드 정보 (Supabase Storage)
-    video_file_path TEXT,         -- Supabase Storage 경로
-    video_file_url TEXT,          -- 공개 URL
-    video_file_name TEXT,         -- 원본 파일명
-    video_file_size BIGINT,       -- 파일 크기 (bytes)
+    video_file_path TEXT,         -- Supabase Storage 경로 (최신 버전)
+    video_file_url TEXT,          -- 공개 URL (최신 버전)
+    video_file_name TEXT,         -- 원본 파일명 (최신 버전)
+    video_file_size BIGINT,       -- 파일 크기 (bytes, 최신 버전)
     video_uploaded_at TIMESTAMP WITH TIME ZONE,
+    video_versions JSONB DEFAULT '[]'::JSONB,  -- 전체 버전 히스토리 [{version, file_path, file_url, file_name, file_size, uploaded_at}]
 
     -- 클린본 (자막 없는 버전)
     clean_video_file_path TEXT,
