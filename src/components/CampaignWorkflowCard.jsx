@@ -291,8 +291,8 @@ const StepSubmissionCard = ({
                     {language === 'ja' ? '動画アップロード済み' : '영상 업로드 완료'}
                   </div>
                   {/* 전체 버전 히스토리 표시 */}
-                  {(submission?.video_versions?.length > 0
-                    ? [...submission.video_versions].sort((a, b) => b.version - a.version)
+                  {(Array.isArray(submission?.video_versions) && submission.video_versions.length > 0
+                    ? [...submission.video_versions].sort((a, b) => (b.version || 0) - (a.version || 0))
                     : [{ version: 1, file_name: submission.video_file_name, uploaded_at: submission.video_uploaded_at }]
                   ).map((ver, idx) => (
                     <div key={idx} className={`p-2 rounded border text-xs ${idx === 0 ? 'border-blue-200 bg-blue-50' : 'border-gray-100 bg-gray-50'}`}>
@@ -571,7 +571,7 @@ const CampaignWorkflowCard = ({
 
     // 현재 submission 찾기 (버전 계산)
     const currentSubmission = submissions.find(s => s.id === submissionId)
-    const existingVersions = currentSubmission?.video_versions || []
+    const existingVersions = Array.isArray(currentSubmission?.video_versions) ? currentSubmission.video_versions : []
     const currentPath = currentSubmission?.video_file_path || ''
     const pathMatch = currentPath.match(/_v(\d+)_/)
     const currentVersion = pathMatch ? parseInt(pathMatch[1]) : (currentSubmission?.video_file_url ? 1 : 0)
@@ -637,25 +637,37 @@ const CampaignWorkflowCard = ({
     const updatedVersions = [...existingVersions, newVersionEntry]
 
     // DB 업데이트 (최신 버전 + 버전 히스토리)
+    const updateData = {
+      video_file_path: videoPath,
+      video_file_url: videoUrl,
+      video_file_name: videoFile.name,
+      video_file_size: videoFile.size,
+      video_uploaded_at: new Date().toISOString(),
+      clean_video_file_path: cleanVideoPath,
+      clean_video_file_url: cleanVideoUrl,
+      clean_video_file_name: cleanVideoFile?.name,
+      clean_video_uploaded_at: cleanVideoFile ? new Date().toISOString() : null,
+      workflow_status: 'video_uploaded',
+      updated_at: new Date().toISOString()
+    }
+
+    // video_versions 포함하여 시도, 컬럼 없으면 제외하고 재시도
     const { error: updateError } = await supabase
       .from('campaign_submissions')
-      .update({
-        video_file_path: videoPath,
-        video_file_url: videoUrl,
-        video_file_name: videoFile.name,
-        video_file_size: videoFile.size,
-        video_uploaded_at: new Date().toISOString(),
-        video_versions: updatedVersions,
-        clean_video_file_path: cleanVideoPath,
-        clean_video_file_url: cleanVideoUrl,
-        clean_video_file_name: cleanVideoFile?.name,
-        clean_video_uploaded_at: cleanVideoFile ? new Date().toISOString() : null,
-        workflow_status: 'video_uploaded',
-        updated_at: new Date().toISOString()
-      })
+      .update({ ...updateData, video_versions: updatedVersions })
       .eq('id', submissionId)
 
-    if (updateError) throw updateError
+    if (updateError) {
+      if (updateError.message?.includes('video_versions') || updateError.code === 'PGRST204') {
+        const { error: retryError } = await supabase
+          .from('campaign_submissions')
+          .update(updateData)
+          .eq('id', submissionId)
+        if (retryError) throw retryError
+      } else {
+        throw updateError
+      }
+    }
 
     onProgress?.(100)
     onRefresh?.()

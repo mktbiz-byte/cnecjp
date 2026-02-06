@@ -1028,7 +1028,7 @@ const StepCard = ({
       setUploadProgress(80)
 
       // 버전 히스토리에 새 버전 추가 (기존 버전 보존)
-      const existingVersions = submission?.video_versions || []
+      const existingVersions = Array.isArray(submission?.video_versions) ? submission.video_versions : []
       const newVersionEntry = {
         version: nextVersion,
         file_path: videoPath,
@@ -1039,20 +1039,27 @@ const StepCard = ({
       }
       const updatedVersions = [...existingVersions, newVersionEntry]
 
+      // 재업로드 시 현재 워크플로우 상태 보존 (SNS 제출 등 이후 단계에서 재업로드해도 상태 리셋 안함)
+      // 단, guide_confirmed 이전이거나 첫 업로드면 video_uploaded로 설정
+      const preserveStatus = ['sns_pending', 'sns_submitted', 'review_pending'].includes(status)
+      const newStatus = preserveStatus ? status : 'video_uploaded'
+
       const updateData = {
-        workflow_status: 'video_uploaded',
+        workflow_status: newStatus,
         video_file_path: videoPath,
         video_file_url: videoUrl,
         video_file_name: videoFile.name,
         video_file_size: videoFile.size,
         video_uploaded_at: new Date().toISOString(),
-        video_versions: updatedVersions,
         clean_video_file_path: cleanVideoPath,
         clean_video_file_url: cleanVideoUrl,
         clean_video_file_name: cleanVideoFile?.name,
         clean_video_uploaded_at: cleanVideoFile ? new Date().toISOString() : null,
         updated_at: new Date().toISOString()
       }
+
+      // video_versions 컬럼이 DB에 있으면 포함, 없으면 제외
+      const updateDataWithVersions = { ...updateData, video_versions: updatedVersions }
 
       if (!submission?.id || submission.id.startsWith('temp-')) {
         const { error } = await supabase
@@ -1065,15 +1072,45 @@ const StepCard = ({
             step_label: getStepLabel(),
             video_deadline: videoDeadline,
             sns_deadline: snsDeadline,
-            ...updateData
+            ...updateDataWithVersions
           })
-        if (error) throw error
+        if (error) {
+          // video_versions 컬럼이 없으면 해당 필드 제외하고 재시도
+          if (error.message?.includes('video_versions') || error.code === 'PGRST204') {
+            const { error: retryError } = await supabase
+              .from('campaign_submissions')
+              .insert({
+                application_id: application.id,
+                user_id: application.user_id,
+                campaign_id: application.campaign_id,
+                step_number: stepNumber,
+                step_label: getStepLabel(),
+                video_deadline: videoDeadline,
+                sns_deadline: snsDeadline,
+                ...updateData
+              })
+            if (retryError) throw retryError
+          } else {
+            throw error
+          }
+        }
       } else {
         const { error } = await supabase
           .from('campaign_submissions')
-          .update(updateData)
+          .update(updateDataWithVersions)
           .eq('id', submission.id)
-        if (error) throw error
+        if (error) {
+          // video_versions 컬럼이 없으면 해당 필드 제외하고 재시도
+          if (error.message?.includes('video_versions') || error.code === 'PGRST204') {
+            const { error: retryError } = await supabase
+              .from('campaign_submissions')
+              .update(updateData)
+              .eq('id', submission.id)
+            if (retryError) throw retryError
+          } else {
+            throw error
+          }
+        }
       }
 
       setUploadProgress(100)
@@ -1717,9 +1754,9 @@ const StepCard = ({
                 <div className="mb-3">
                   <p className="text-xs font-medium text-gray-600 mb-2">{language === 'ja' ? '提出済み動画:' : '제출된 영상:'}</p>
                   <div className="space-y-1.5">
-                    {(submission?.video_versions?.length > 0
-                      ? [...submission.video_versions].sort((a, b) => b.version - a.version)
-                      : [{ version: getVideoVersion(), file_url: submission.video_file_url, file_name: submission.video_file_name, uploaded_at: submission.video_uploaded_at }]
+                    {(Array.isArray(submission?.video_versions) && submission.video_versions.length > 0
+                      ? [...submission.video_versions].sort((a, b) => (b.version || 0) - (a.version || 0))
+                      : [{ version: getVideoVersion() || 1, file_url: submission.video_file_url, file_name: submission.video_file_name, uploaded_at: submission.video_uploaded_at }]
                     ).map((ver, idx) => (
                       <div key={idx} className={`p-2.5 bg-white rounded-lg border ${idx === 0 ? 'border-blue-300 ring-1 ring-blue-100' : 'border-gray-200'}`}>
                         <div className="flex items-center justify-between">
