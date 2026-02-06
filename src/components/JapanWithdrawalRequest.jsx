@@ -209,20 +209,20 @@ const JapanWithdrawalRequest = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-4 sm:py-8">
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-4 sm:mb-8">
           <Button variant="outline" onClick={() => window.history.back()}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             戻る
           </Button>
-          <h1 className="text-3xl font-bold text-gray-800 mt-4 mb-2">出金申請</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mt-4 mb-2">出金申請</h1>
           <p className="text-gray-600">日本の銀行口座への送金申請</p>
         </div>
 
         {/* Point Balance */}
-        <Card className="mb-8 border-l-4 border-l-green-500">
+        <Card className="mb-4 sm:mb-8 border-l-4 border-l-green-500">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Coins className="h-6 w-6 text-green-600" />
@@ -230,7 +230,7 @@ const JapanWithdrawalRequest = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold text-green-600 mb-2">
+            <div className="text-2xl sm:text-4xl font-bold text-green-600 mb-2">
               {formatCurrency(pointBalance)}
             </div>
             <p className="text-sm text-gray-600">出金可能金額</p>
@@ -252,7 +252,7 @@ const JapanWithdrawalRequest = () => {
           </Alert>
         )}
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-4 lg:gap-8">
           {/* Bank Information */}
           <Card>
             <CardHeader>
@@ -420,7 +420,7 @@ const JapanWithdrawalRequest = () => {
                       </p>
                     </div>
 
-                    <div className="flex space-x-2 pt-4">
+                    <div className="flex flex-col sm:flex-row gap-2 pt-4">
                       <Button
                         onClick={handleSaveBankInfo}
                         disabled={processing}
@@ -448,7 +448,7 @@ const JapanWithdrawalRequest = () => {
                   </>
                 ) : existingBankInfo ? (
                   <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
                       <div>
                         <span className="font-medium text-gray-700">銀行名:</span>
                         <p className="text-gray-900">{bankInfo.bank_name}</p>

@@ -163,9 +163,9 @@ const MyPageWorkflow = () => {
       
       await database.videoSubmissions.create(submissionData)
       
-      // 신청 상태 업데이트
+      // 신청 제출 상태 업데이트 (status는 approved 유지 - 워크플로우 표시를 위해)
       await database.applications.update(selectedApplication.id, {
-        status: 'video_submitted',
+        submission_status: 'video_submitted',
         updated_at: new Date().toISOString()
       })
       

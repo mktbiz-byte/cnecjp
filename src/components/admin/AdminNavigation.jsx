@@ -174,7 +174,7 @@ const AdminNavigation = () => {
                 return (
                   <div
                     key={item.path}
-                    className="flex items-center pl-3 pr-4 py-2 text-base font-medium text-gray-400 cursor-not-allowed"
+                    className="flex items-center pl-3 pr-4 py-3 text-base font-medium text-gray-400 cursor-not-allowed"
                   >
                     <Icon className="w-5 h-5 mr-3" />
                     {item.label}
@@ -186,7 +186,7 @@ const AdminNavigation = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200 ${
+                  className={`flex items-center pl-3 pr-4 py-3 border-l-4 text-base font-medium transition-colors duration-200 ${
                     active
                       ? 'bg-purple-50 border-purple-500 text-purple-700'
                       : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300'

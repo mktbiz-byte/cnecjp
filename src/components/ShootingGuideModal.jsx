@@ -1,10 +1,21 @@
 import React, { useState } from 'react'
 import { X, Camera, MessageSquare, Lightbulb, ChevronLeft, ChevronRight, Play, Clock, Sparkles } from 'lucide-react'
 
-const ShootingGuideModal = ({ isOpen, onClose, guide, campaignTitle }) => {
+const ShootingGuideModal = ({ isOpen, onClose, guide: guideProp, campaignTitle }) => {
   const [currentScene, setCurrentScene] = useState(0)
 
-  if (!isOpen || !guide) return null
+  if (!isOpen || !guideProp) return null
+
+  // guide가 JSON 문자열인 경우 파싱
+  let guide = guideProp
+  if (typeof guideProp === 'string') {
+    try {
+      guide = JSON.parse(guideProp)
+    } catch (e) {
+      // 파싱 실패 시 빈 가이드
+      guide = {}
+    }
+  }
 
   const scenes = guide.scenes || []
   const totalScenes = scenes.length

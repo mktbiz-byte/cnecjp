@@ -5,8 +5,125 @@ import {
   Award, Shield, Download, Filter,
   ChevronDown, ChevronUp, BookOpen, Upload, Link as LinkIcon,
   CheckCircle, Clock, AlertCircle, Film, FileVideo, Share2,
-  Loader2, ExternalLink, X, XCircle, Play, Calendar, AlertTriangle
+  Loader2, ExternalLink, X, XCircle, Play, Calendar, AlertTriangle,
+  FileText
 } from 'lucide-react'
+import ExternalGuideViewer from './ExternalGuideViewer'
+import ShootingGuideModal from './ShootingGuideModal'
+
+// personalized_guide 파싱 헬퍼
+// 3가지 형태:
+// 1. PDF: {"type":"external_pdf","fileUrl":"https://...pdf","title":"..."}
+// 2. AI 가이드: {"mood":"bright","scenes":[{"order":1,"dialogue":"...","shooting_tip":"..."},...]}
+// 3. 텍스트: 일반 문자열
+const parsePersonalizedGuide = (guide) => {
+  if (!guide) return { isPdf: false, isAiGuide: false, text: null, pdfUrl: null, title: null, aiData: null }
+
+  let parsed = null
+
+  if (typeof guide === 'object') {
+    parsed = guide
+  } else if (typeof guide === 'string') {
+    const trimmed = guide.trim()
+    if (trimmed.startsWith('{') || trimmed.startsWith('[') || trimmed.startsWith('"')) {
+      try {
+        parsed = JSON.parse(trimmed)
+        // 이중 인코딩 처리: JSON.parse 결과가 문자열이면 한번 더 파싱
+        if (typeof parsed === 'string') {
+          try { parsed = JSON.parse(parsed) } catch (e2) { /* single string value */ }
+        }
+      } catch (e) { /* not JSON */ }
+    }
+    if (!parsed) {
+      return { isPdf: false, isAiGuide: false, text: guide, pdfUrl: null, title: null, aiData: null }
+    }
+  } else {
+    return { isPdf: false, isAiGuide: false, text: null, pdfUrl: null, title: null, aiData: null }
+  }
+
+  // PDF 가이드
+  if (parsed.type === 'external_pdf' && parsed.fileUrl) {
+    return { isPdf: true, isAiGuide: false, text: null, pdfUrl: parsed.fileUrl, title: parsed.title || null, aiData: null }
+  }
+  if (parsed.fileUrl && parsed.fileUrl.endsWith('.pdf')) {
+    return { isPdf: true, isAiGuide: false, text: null, pdfUrl: parsed.fileUrl, title: parsed.title || null, aiData: null }
+  }
+
+  // AI 가이드 (scenes 배열이 있는 경우)
+  if (parsed.scenes && Array.isArray(parsed.scenes)) {
+    return { isPdf: false, isAiGuide: true, text: null, pdfUrl: null, title: null, aiData: parsed }
+  }
+
+  // 기타 JSON → 텍스트로 표시
+  return { isPdf: false, isAiGuide: false, text: JSON.stringify(parsed, null, 2), pdfUrl: null, title: null, aiData: null }
+}
+
+// AI 가이드 렌더링 컴포넌트
+const AiGuideRenderer = ({ data, language }) => {
+  if (!data?.scenes) return null
+  const isJa = language === 'ja'
+
+  return (
+    <div className="space-y-4">
+      {/* 무드/템포 */}
+      {(data.mood || data.tempo) && (
+        <div className="flex flex-wrap gap-2">
+          {data.mood && (
+            <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+              🎨 {isJa ? 'ムード' : '무드'}: {data.mood}
+            </span>
+          )}
+          {data.tempo && (
+            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+              🎵 {isJa ? 'テンポ' : '템포'}: {data.tempo}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* 씬 목록 */}
+      {data.scenes.map((scene, idx) => (
+        <div key={idx} className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h5 className="text-sm font-bold text-gray-800">
+              {isJa ? `シーン ${scene.order || idx + 1}` : `씬 ${scene.order || idx + 1}`}
+            </h5>
+          </div>
+
+          {/* 대사 */}
+          {(scene.dialogue_translated || scene.dialogue) && (
+            <div className="mb-3">
+              <p className="text-xs font-medium text-gray-500 mb-1">💬 {isJa ? 'セリフ' : '대사'}</p>
+              <p className="text-sm text-gray-800 bg-yellow-50 rounded p-2 border-l-3 border-yellow-400">
+                {isJa ? (scene.dialogue_translated || scene.dialogue) : scene.dialogue}
+              </p>
+            </div>
+          )}
+
+          {/* 촬영 팁 */}
+          {(scene.shooting_tip_translated || scene.shooting_tip) && (
+            <div className="mb-3">
+              <p className="text-xs font-medium text-gray-500 mb-1">📸 {isJa ? '撮影ポイント' : '촬영 팁'}</p>
+              <p className="text-sm text-gray-700 bg-blue-50 rounded p-2">
+                {isJa ? (scene.shooting_tip_translated || scene.shooting_tip) : scene.shooting_tip}
+              </p>
+            </div>
+          )}
+
+          {/* 장면 설명 */}
+          {(scene.scene_description_translated || scene.scene_description) && (
+            <div>
+              <p className="text-xs font-medium text-gray-500 mb-1">🎬 {isJa ? 'シーン説明' : '장면 설명'}</p>
+              <p className="text-sm text-gray-600">
+                {isJa ? (scene.scene_description_translated || scene.scene_description) : scene.scene_description}
+              </p>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
 
 // 캠페인 유형 정보 (일본 마이페이지용 - 올리브영 제외)
 const CAMPAIGN_TYPES = {
@@ -51,11 +168,11 @@ const CAMPAIGN_TYPES = {
   }
 }
 
-// 워크플로우 스텝
+// 워크플로우 스텝: 영상업로드 → 수정확인 → SNS/클린본/광고코드 → 포인트
 const WORKFLOW_STEPS = [
-  { id: 'guide', labelKo: '가이드 확인', labelJa: 'ガイド確認', icon: BookOpen },
   { id: 'video', labelKo: '영상 업로드', labelJa: '動画提出', icon: Upload },
-  { id: 'sns', labelKo: 'SNS 공유', labelJa: 'SNS投稿', icon: Share2 },
+  { id: 'revision', labelKo: '수정 확인', labelJa: '修正確認', icon: AlertCircle },
+  { id: 'sns', labelKo: 'SNS/クリーン', labelJa: 'SNS/クリーン', icon: Share2 },
   { id: 'complete', labelKo: '포인트 지급', labelJa: 'ポイント支給', icon: Award }
 ]
 
@@ -197,8 +314,14 @@ const AllDeadlinesOverview = ({ campaign, campaignType, language }) => {
     deadline: getSnsDeadline(i + 1)
   }))
 
-  const getStepLabel = (step) => {
+  const getStepLabel = (step, type) => {
     if (campaignType === '4week_challenge') return `Week ${step}`
+    if (campaignType === 'megawari') {
+      if (type === 'sns' && step > totalVideoSteps) {
+        return language === 'ja' ? `SNS ${step}` : `SNS ${step}`
+      }
+      return `${step}`
+    }
     if (totalVideoSteps > 1 || totalSnsSteps > 1) return `${step}`
     return ''
   }
@@ -208,7 +331,7 @@ const AllDeadlinesOverview = ({ campaign, campaignType, language }) => {
       <p className="text-xs font-medium text-gray-500 mb-2">
         {language === 'ja' ? '📅 スケジュール' : '📅 스케줄'}
       </p>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {/* 영상 마감일 */}
         <div>
           <p className="text-xs text-gray-400 mb-1">
@@ -217,7 +340,7 @@ const AllDeadlinesOverview = ({ campaign, campaignType, language }) => {
           <div className="space-y-1">
             {videoDeadlines.map(({ step, deadline }) => (
               <div key={`v-${step}`} className={`text-xs px-2 py-1 rounded ${getStatusClass(deadline)}`}>
-                {getStepLabel(step) && <span className="font-medium">{getStepLabel(step)}: </span>}
+                {getStepLabel(step, 'video') && <span className="font-medium">{getStepLabel(step, 'video')}: </span>}
                 {formatDate(deadline)}
               </div>
             ))}
@@ -227,11 +350,14 @@ const AllDeadlinesOverview = ({ campaign, campaignType, language }) => {
         <div>
           <p className="text-xs text-gray-400 mb-1">
             📤 {language === 'ja' ? 'SNS締切' : 'SNS 마감일'}
+            {totalSnsSteps > totalVideoSteps && (
+              <span className="text-gray-300 ml-1">({totalSnsSteps}{language === 'ja' ? '回' : '회'})</span>
+            )}
           </p>
           <div className="space-y-1">
             {snsDeadlines.map(({ step, deadline }) => (
               <div key={`s-${step}`} className={`text-xs px-2 py-1 rounded ${getStatusClass(deadline)}`}>
-                {getStepLabel(step) && <span className="font-medium">{getStepLabel(step)}: </span>}
+                {getStepLabel(step, 'sns') && <span className="font-medium">{getStepLabel(step, 'sns')}: </span>}
                 {formatDate(deadline)}
               </div>
             ))}
@@ -260,8 +386,17 @@ const GuideModal = ({ isOpen, onClose, campaign, application, language, stepNumb
   }
 
   const weeklyGuide = getWeeklyGuideContent()
-  const guideContent = weeklyGuide || application?.personalized_guide || campaign?.shooting_guide_content
   const guideUrl = campaign?.shooting_guide_url
+
+  // personalized_guide 파싱 (JSON PDF 가이드 vs 텍스트 가이드)
+  const parsedGuide = parsePersonalizedGuide(application?.personalized_guide)
+
+  // 외부 가이드 (PDF/Google Slides) 확인 - campaign 레벨 또는 personalized_guide JSON
+  const hasExternalGuide = (campaign?.guide_type === 'pdf' && campaign?.guide_pdf_url) || parsedGuide.isPdf
+  const externalGuideUrl = parsedGuide.isPdf ? parsedGuide.pdfUrl : campaign?.guide_pdf_url
+
+  // 텍스트 가이드 콘텐츠
+  const guideContent = weeklyGuide || parsedGuide.text || campaign?.shooting_guide_content
 
   // 주차별 라벨
   const getStepLabel = () => {
@@ -291,9 +426,9 @@ const GuideModal = ({ isOpen, onClose, campaign, application, language, stepNumb
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50">
-          <h3 className="text-lg font-bold text-gray-900 flex items-center">
+      <div className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
+        <div className="p-3 sm:p-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50">
+          <h3 className="text-base sm:text-lg font-bold text-gray-900 flex items-center">
             <BookOpen className="w-5 h-5 mr-2 text-purple-600" />
             {language === 'ja' ? '撮影ガイド' : '촬영 가이드'}
             {stepLabel && (
@@ -310,7 +445,7 @@ const GuideModal = ({ isOpen, onClose, campaign, application, language, stepNumb
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[70vh] space-y-6">
+        <div className="p-4 sm:p-6 overflow-y-auto max-h-[70vh] space-y-4 sm:space-y-6">
           {/* 캠페인 기본 정보 */}
           <div className="pb-4 border-b border-gray-100">
             <h4 className="font-bold text-lg text-gray-900">{campaign?.title}</h4>
@@ -427,10 +562,10 @@ const GuideModal = ({ isOpen, onClose, campaign, application, language, stepNumb
               <h5 className="font-semibold text-indigo-800 mb-3 flex items-center">
                 📷 {language === 'ja' ? '必須撮影シーン' : '필수 촬영 장면'}
               </h5>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {shootingScenes.map((scene, idx) => (
                   <div key={idx} className="flex items-center text-sm text-gray-700">
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
                     {language === 'ja' ? scene.ja : scene.ko}
                   </div>
                 ))}
@@ -478,8 +613,26 @@ const GuideModal = ({ isOpen, onClose, campaign, application, language, stepNumb
             </div>
           )}
 
-          {/* 기존 가이드 내용 (텍스트) */}
-          {guideContent && (
+          {/* 외부 가이드 (PDF/Google Slides) - 최우선 표시 */}
+          {hasExternalGuide && externalGuideUrl && (
+            <ExternalGuideViewer
+              url={externalGuideUrl}
+              language={language}
+            />
+          )}
+
+          {/* AI 가이드 (scenes 배열) */}
+          {!hasExternalGuide && parsedGuide.isAiGuide && parsedGuide.aiData && (
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h5 className="font-semibold text-gray-800 mb-3">
+                {language === 'ja' ? '詳細ガイド' : '상세 가이드'}
+              </h5>
+              <AiGuideRenderer data={parsedGuide.aiData} language={language} />
+            </div>
+          )}
+
+          {/* 텍스트 가이드 - PDF/AI 가이드가 없는 경우 */}
+          {!hasExternalGuide && !parsedGuide.isAiGuide && guideContent && (
             <div className="bg-gray-50 rounded-lg p-4">
               <h5 className="font-semibold text-gray-800 mb-3">
                 {language === 'ja' ? '詳細ガイド' : '상세 가이드'}
@@ -491,7 +644,7 @@ const GuideModal = ({ isOpen, onClose, campaign, application, language, stepNumb
           )}
 
           {/* 외부 가이드 링크 */}
-          {guideUrl && (
+          {!hasExternalGuide && guideUrl && (
             <div className="p-4 bg-blue-50 rounded-lg">
               <p className="text-sm text-blue-800 mb-2">
                 {language === 'ja' ? '詳細ガイドリンク:' : '상세 가이드 링크:'}
@@ -661,9 +814,11 @@ const StepCard = ({
   campaign,
   application,
   onUpdate,
-  language
+  language,
+  hasVideoUpload = true,
+  hasSnsUpload = true
 }) => {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [snsUrl, setSnsUrl] = useState(submission?.sns_url || '')
@@ -674,10 +829,10 @@ const StepCard = ({
   // 영상 업로드 모드: 'file' 또는 'url'
   const [uploadMode, setUploadMode] = useState('url')
 
-  // URL 입력 상태
-  const [videoUrl, setVideoUrl] = useState(submission?.video_url || submission?.video_file_url || '')
-  const [cleanVideoUrl, setCleanVideoUrl] = useState(submission?.clean_video_url || submission?.clean_video_file_url || '')
-  const [partnershipCode, setPartnershipCode] = useState(submission?.partnership_code || submission?.ad_code || '')
+  // URL 입력 상태 (DB 스키마: video_file_url, clean_video_file_url, ad_code)
+  const [videoUrl, setVideoUrl] = useState(submission?.video_file_url || '')
+  const [cleanVideoUrl, setCleanVideoUrl] = useState(submission?.clean_video_file_url || '')
+  const [partnershipCode, setPartnershipCode] = useState(submission?.ad_code || '')
 
   const videoInputRef = useRef(null)
   const cleanVideoInputRef = useRef(null)
@@ -743,19 +898,32 @@ const StepCard = ({
       return language === 'ja' ? `Week ${stepNumber}` : `${stepNumber}주차`
     }
     if (campaignType === 'megawari') {
+      if (!hasVideoUpload) {
+        return language === 'ja' ? `SNS ${stepNumber}` : `SNS ${stepNumber}`
+      }
       return language === 'ja' ? `ステップ ${stepNumber}` : `${stepNumber}스텝`
     }
     return null
   }
 
   // 현재 워크플로우 단계
+  // 영상 있는 스텝: 영상업로드(1) → 수정확인(2) → SNS/클린본/광고코드(3) → 포인트(4)
+  // SNS only 스텝 (메가와리 3번째): SNS제출(3) → 포인트(4) (영상/수정 스킵)
   const getCurrentStep = () => {
     if (status === 'points_paid' || status === 'completed') return 4
     if (status === 'sns_submitted' || status === 'review_pending') return 4
-    if (status === 'revision_required' || status === 'revision_requested') return 4 // 수정 요청도 Step 4
-    if (status === 'video_uploaded' || status === 'sns_pending') return 3
-    if (status === 'guide_confirmed' || status === 'video_uploading') return 2
-    return 1
+    if (status === 'sns_pending') return 3
+    if (!hasVideoUpload) return 3 // SNS only 스텝은 바로 SNS 제출 단계
+    if (status === 'video_uploaded') return 2
+    if (status === 'revision_required' || status === 'revision_requested') return 2
+    return 1 // 영상 업로드
+  }
+
+  // 영상 버전 계산 (v1, v2, v3...)
+  const getVideoVersion = () => {
+    const path = submission?.video_file_path || ''
+    const match = path.match(/_v(\d+)_/)
+    return match ? parseInt(match[1]) : (submission?.video_file_url ? 1 : 0)
   }
 
   // 수정 요청 확인
@@ -802,8 +970,8 @@ const StepCard = ({
   const handleFileSelect = (e, isClean = false) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 500 * 1024 * 1024) {
-      alert(language === 'ja' ? 'ファイルサイズは500MB以下にしてください' : '파일 크기는 500MB 이하여야 합니다')
+    if (file.size > 2 * 1024 * 1024 * 1024) {
+      alert(language === 'ja' ? 'ファイルサイズは2GB以下にしてください' : '파일 크기는 2GB 이하여야 합니다')
       return
     }
     if (isClean) {
@@ -822,7 +990,13 @@ const StepCard = ({
     try {
       const timestamp = Date.now()
       const userId = application.user_id
-      const videoPath = `${userId}/${application.campaign_id}/${submission?.id || 'new'}/${timestamp}_main_${videoFile.name}`
+      const getExt = (name) => {
+        const dot = name.lastIndexOf('.')
+        return dot >= 0 ? name.substring(dot) : ''
+      }
+      // 버전 자동 증가 (v1, v2, v3...)
+      const nextVersion = getVideoVersion() + 1
+      const videoPath = `${userId}/${application.campaign_id}/${submission?.id || 'new'}/${timestamp}_v${nextVersion}_main${getExt(videoFile.name)}`
 
       const { error: uploadError } = await supabase.storage
         .from('campaign-videos')
@@ -839,7 +1013,7 @@ const StepCard = ({
       let cleanVideoPath = null
 
       if (cleanVideoFile) {
-        cleanVideoPath = `${userId}/${application.campaign_id}/${submission?.id || 'new'}/${timestamp}_clean_${cleanVideoFile.name}`
+        cleanVideoPath = `${userId}/${application.campaign_id}/${submission?.id || 'new'}/${timestamp}_clean${getExt(cleanVideoFile.name)}`
         const { error: cleanError } = await supabase.storage
           .from('campaign-videos')
           .upload(cleanVideoPath, cleanVideoFile, { cacheControl: '3600', upsert: false })
@@ -902,23 +1076,51 @@ const StepCard = ({
     }
   }
 
-  // 영상 URL 제출 (파일 업로드 대신 URL 입력)
+  // Step 3: SNS + 클린본 + 광고코드 제출
   const handleVideoUrlSubmit = async () => {
-    if (!videoUrl.trim()) {
-      alert(language === 'ja' ? '動画URLを入力してください' : '영상 URL을 입력해주세요')
+    if (!snsUrl.trim()) {
+      alert(language === 'ja' ? 'SNS投稿URLを入力してください' : 'SNS 게시물 URL을 입력해주세요')
+      return
+    }
+
+    // 클린본 필수인데 없는 경우
+    if (campaign?.requires_clean_video && !cleanVideoFile && !submission?.clean_video_file_url) {
+      alert(language === 'ja' ? 'クリーン動画ファイルを選択してください' : '클린본 파일을 선택해주세요')
       return
     }
 
     setSubmitting(true)
     try {
+      // 클린본 파일이 있으면 Supabase Storage에 업로드
+      let uploadedCleanUrl = submission?.clean_video_file_url || null
+      if (cleanVideoFile) {
+        const timestamp = Date.now()
+        const userId = application.user_id
+        const getExt = (name) => {
+          const dot = name.lastIndexOf('.')
+          return dot >= 0 ? name.substring(dot) : ''
+        }
+        const cleanPath = `${userId}/${application.campaign_id}/${submission?.id || 'new'}/${timestamp}_clean${getExt(cleanVideoFile.name)}`
+        const { error: cleanUploadError } = await supabase.storage
+          .from('campaign-videos')
+          .upload(cleanPath, cleanVideoFile, { cacheControl: '3600', upsert: false })
+        if (cleanUploadError) throw cleanUploadError
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('campaign-videos')
+          .getPublicUrl(cleanPath)
+        uploadedCleanUrl = publicUrl
+      }
+
+      // SNS + 클린본 + 광고코드 제출 → sns_submitted
       const updateData = {
-        workflow_status: 'video_uploaded',
-        video_url: videoUrl,
-        video_file_url: videoUrl,
-        video_uploaded_at: new Date().toISOString(),
-        clean_video_url: cleanVideoUrl || null,
-        clean_video_file_url: cleanVideoUrl || null,
-        partnership_code: partnershipCode || null,
+        workflow_status: 'sns_submitted',
+        sns_url: snsUrl,
+        sns_submitted_at: new Date().toISOString(),
+        clean_video_file_url: uploadedCleanUrl,
+        clean_video_file_name: cleanVideoFile?.name || null,
+        clean_video_uploaded_at: cleanVideoFile ? new Date().toISOString() : null,
+        ad_code: partnershipCode || null,
         updated_at: new Date().toISOString()
       }
 
@@ -931,8 +1133,6 @@ const StepCard = ({
             campaign_id: application.campaign_id,
             step_number: stepNumber,
             step_label: getStepLabel(),
-            video_deadline: videoDeadline,
-            sns_deadline: snsDeadline,
             ...updateData
           })
         if (error) throw error
@@ -944,22 +1144,19 @@ const StepCard = ({
         if (error) throw error
       }
 
-      // applications 테이블에도 업데이트
+      // applications 테이블에도 상태 기록 (status는 변경하지 않음 - approved/selected 유지)
       if (application?.id) {
         await supabase
           .from('applications')
           .update({
-            video_url: videoUrl,
-            clean_video_url: cleanVideoUrl || null,
-            partnership_code: partnershipCode || null,
-            status: 'video_submitted',
+            submission_status: 'sns_submitted',
             updated_at: new Date().toISOString()
           })
           .eq('id', application.id)
       }
 
       onUpdate?.()
-      alert(language === 'ja' ? '動画を提出しました！' : '영상을 제출했습니다!')
+      alert(language === 'ja' ? 'SNS・クリーン動画・広告コードを提出しました！' : 'SNS/클린본/광고코드를 제출했습니다!')
     } catch (error) {
       console.error('Video URL submit error:', error)
       alert(language === 'ja' ? '提出に失敗しました' : '제출에 실패했습니다')
@@ -1070,9 +1267,10 @@ const StepCard = ({
                      status === 'completed' ? (language === 'ja' ? '完了' : '완료') :
                      (status === 'revision_required' || status === 'revision_requested') ? (language === 'ja' ? '修正必要' : '수정 필요') :
                      status === 'sns_submitted' ? (language === 'ja' ? 'SNS提出済み' : 'SNS 제출완료') :
-                     status === 'video_uploaded' ? (language === 'ja' ? '動画提出済み' : '영상 제출완료') :
-                     status === 'guide_confirmed' ? (language === 'ja' ? 'ガイド確認済み' : '가이드 확인완료') :
-                     (language === 'ja' ? 'ガイド確認待ち' : '가이드 확인 대기')}
+                     status === 'sns_pending' ? (language === 'ja' ? 'SNS提出待ち' : 'SNS 제출 대기') :
+                     status === 'video_uploaded' ? (language === 'ja' ? '修正確認中' : '수정 확인중') :
+                     !hasVideoUpload ? (language === 'ja' ? 'SNS提出待ち' : 'SNS 제출 대기') :
+                     (language === 'ja' ? '動画提出待ち' : '영상 제출 대기')}
                   </span>
                   {/* 수정 요청 알림 배지 */}
                   {hasRevisionRequests && (
@@ -1117,206 +1315,196 @@ const StepCard = ({
           <div className="px-4 pb-4 border-t border-gray-100 pt-4">
             {/* 워크플로우 타임라인 */}
             <div className="flex items-center justify-between mb-6 px-2">
-              {WORKFLOW_STEPS.map((step, idx) => {
-                const Icon = step.icon
-                const isActive = currentStep > idx
-                const isCurrent = currentStep === idx + 1
-                return (
-                  <React.Fragment key={step.id}>
-                    <div className={`flex flex-col items-center ${
-                      isActive ? 'text-green-600' : isCurrent ? 'text-blue-600' : 'text-gray-400'
-                    }`}>
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        isActive ? 'bg-green-100' : isCurrent ? 'bg-blue-100' : 'bg-gray-100'
+              {(() => {
+                // SNS only 스텝 (메가와리 3번째 등): 영상/수정 생략
+                const steps = hasVideoUpload
+                  ? WORKFLOW_STEPS
+                  : WORKFLOW_STEPS.filter(s => s.id === 'sns' || s.id === 'complete')
+                const getStepIdx = (stepId) => {
+                  if (!hasVideoUpload) {
+                    if (stepId === 'sns') return 3
+                    if (stepId === 'complete') return 4
+                  }
+                  return WORKFLOW_STEPS.findIndex(s => s.id === stepId) + 1
+                }
+                return steps.map((step, idx) => {
+                  const Icon = step.icon
+                  const stepIdx = getStepIdx(step.id)
+                  const isActive = currentStep > stepIdx - 1
+                  const isCurrent = currentStep === stepIdx
+                  return (
+                    <React.Fragment key={step.id}>
+                      <div className={`flex flex-col items-center ${
+                        isActive ? 'text-green-600' : isCurrent ? 'text-blue-600' : 'text-gray-400'
                       }`}>
-                        <Icon className="w-4 h-4" />
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          isActive ? 'bg-green-100' : isCurrent ? 'bg-blue-100' : 'bg-gray-100'
+                        }`}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <span className="text-xs mt-1 text-center">
+                          {language === 'ja' ? step.labelJa : step.labelKo}
+                        </span>
                       </div>
-                      <span className="text-xs mt-1 text-center">
-                        {language === 'ja' ? step.labelJa : step.labelKo}
-                      </span>
-                    </div>
-                    {idx < WORKFLOW_STEPS.length - 1 && (
-                      <div className={`flex-1 h-0.5 mx-2 ${
-                        currentStep > idx + 1 ? 'bg-green-500' : 'bg-gray-200'
-                      }`} />
-                    )}
-                  </React.Fragment>
-                )
-              })}
+                      {idx < steps.length - 1 && (
+                        <div className={`flex-1 h-0.5 mx-2 ${
+                          isActive ? 'bg-green-500' : 'bg-gray-200'
+                        }`} />
+                      )}
+                    </React.Fragment>
+                  )
+                })
+              })()}
             </div>
 
-            {/* Step 1: 가이드 확인 */}
+            {/* Step 1: 영상 업로드 */}
             {currentStep === 1 && (
-              <div className="bg-purple-50 rounded-lg p-4">
-                <h4 className="font-medium text-purple-800 mb-3 flex items-center">
-                  <BookOpen className="w-4 h-4 mr-2" />
-                  {language === 'ja' ? '撮影ガイドを確認してください' : '촬영 가이드를 확인해주세요'}
+              <div className="bg-blue-50 rounded-lg p-4">
+                {/* 경고: SNS 미리 업로드 금지 */}
+                <div className="mb-4 p-3 bg-red-50 rounded-lg border-2 border-red-300">
+                  <p className="text-sm font-bold text-red-700 flex items-center">
+                    <AlertTriangle className="w-5 h-5 mr-2 flex-shrink-0" />
+                    {language === 'ja'
+                      ? '⛔ SNSへの事前アップロード絶対禁止！修正確認後にアップロードしてください'
+                      : '⛔ SNS 미리 업로드 절대 금지! 수정사항 체크 후 업로드하세요'}
+                  </p>
+                </div>
+
+                <h4 className="font-medium text-blue-800 mb-3 flex items-center">
+                  <Upload className="w-4 h-4 mr-2" />
+                  {language === 'ja' ? '編集済み動画をアップロードしてください' : '편집본 영상을 업로드해주세요'}
                 </h4>
 
-                {/* 가이드 미리보기 */}
-                {(application?.personalized_guide || campaign?.shooting_guide_content) && (
-                  <div className="bg-white rounded-lg p-3 mb-3 border border-purple-200 max-h-32 overflow-hidden relative">
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-3">
-                      {application?.personalized_guide || campaign?.shooting_guide_content}
-                    </p>
-                    <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent" />
-                  </div>
-                )}
+                {/* ガイド確認ボタン */}
+                <button
+                  onClick={() => setShowGuideModal(true)}
+                  className="w-full mb-4 px-4 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 flex items-center justify-center shadow-sm"
+                >
+                  <BookOpen className="w-5 h-5 mr-2" />
+                  {language === 'ja' ? '📖 撮影ガイドを確認する' : '📖 촬영 가이드 확인하기'}
+                </button>
 
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setShowGuideModal(true)}
-                    className="px-4 py-2 bg-white border border-purple-300 text-purple-700 rounded-md text-sm hover:bg-purple-50 flex items-center"
+                {/* 파일 업로드 (메인) */}
+                <div className="space-y-3">
+                  <input
+                    ref={videoInputRef}
+                    type="file"
+                    accept="video/*"
+                    onChange={(e) => handleFileSelect(e, false)}
+                    className="hidden"
+                  />
+                  <div
+                    onClick={() => !uploading && videoInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                      videoFile ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-blue-400'
+                    }`}
                   >
-                    <BookOpen className="w-4 h-4 mr-2" />
-                    {language === 'ja' ? '全体ガイドを見る' : '전체 가이드 보기'}
-                  </button>
-
-                  <button
-                    onClick={handleGuideConfirm}
-                    disabled={submitting}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-700 disabled:opacity-50 flex items-center"
-                  >
-                    {submitting ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {videoFile ? (
+                      <div className="flex items-center justify-center space-x-3">
+                        <Film className="w-6 h-6 text-blue-500" />
+                        <span className="text-sm text-gray-700">{videoFile.name}</span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setVideoFile(null) }}
+                          className="p-1 hover:bg-gray-200 rounded"
+                        >
+                          <X className="w-4 h-4 text-gray-500" />
+                        </button>
+                      </div>
                     ) : (
-                      <CheckCircle className="w-4 h-4 mr-2" />
+                      <div className="text-gray-400">
+                        <Upload className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                        <p className="text-sm font-medium">{language === 'ja' ? 'クリックして編集済み動画を選択' : '클릭하여 편집본 영상 선택'}</p>
+                        <p className="text-xs mt-1">{language === 'ja' ? '最大2GB' : '최대 2GB'}</p>
+                      </div>
                     )}
-                    {language === 'ja' ? 'ガイド確認完了' : '가이드 확인 완료'}
-                  </button>
+                  </div>
+
+                  {uploading && (
+                    <div className="space-y-2">
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-blue-500 h-2 rounded-full transition-all"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                      <p className="text-center text-xs text-gray-500">{uploadProgress}%</p>
+                    </div>
+                  )}
+
+                  {videoFile && !uploading && (
+                    <button
+                      onClick={handleVideoUpload}
+                      className="w-full px-4 py-3 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 flex items-center justify-center"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      {language === 'ja'
+                        ? `v${getVideoVersion() + 1} 動画をアップロード`
+                        : `v${getVideoVersion() + 1} 영상 업로드`}
+                    </button>
+                  )}
                 </div>
               </div>
             )}
 
-            {/* Step 2: 영상 업로드 */}
+            {/* Step 2: 수정 확인 */}
             {currentStep === 2 && (
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h4 className="font-medium text-blue-800 mb-3 flex items-center justify-between">
-                  <span className="flex items-center">
-                    <Upload className="w-4 h-4 mr-2" />
-                    {language === 'ja' ? '動画を提出してください' : '영상을 제출해주세요'}
-                  </span>
-                  <button
-                    onClick={() => setShowGuideModal(true)}
-                    className="text-xs text-blue-600 hover:underline flex items-center"
-                  >
-                    <BookOpen className="w-3 h-3 mr-1" />
-                    {language === 'ja' ? 'ガイド確認' : '가이드 확인'}
-                  </button>
+              <div className="bg-orange-50 rounded-lg p-4">
+                {/* 경고: SNS 미리 업로드 금지 */}
+                <div className="mb-4 p-3 bg-red-50 rounded-lg border-2 border-red-300">
+                  <p className="text-sm font-bold text-red-700 flex items-center">
+                    <AlertTriangle className="w-5 h-5 mr-2 flex-shrink-0" />
+                    {language === 'ja'
+                      ? '⛔ SNSへの事前アップロード絶対禁止！修正確認後にアップロードしてください'
+                      : '⛔ SNS 미리 업로드 절대 금지! 수정사항 체크 후 업로드하세요'}
+                  </p>
+                </div>
+
+                <h4 className="font-medium text-orange-800 mb-3 flex items-center">
+                  <AlertCircle className="w-4 h-4 mr-2" />
+                  {(status === 'revision_required' || status === 'revision_requested')
+                    ? (language === 'ja' ? '修正リクエストがあります → 再アップロードしてください' : '수정 요청이 있습니다 → 재업로드 해주세요')
+                    : (language === 'ja' ? '修正確認中です（担当者がレビュー中）' : '수정 확인 중입니다 (담당자 검토 중)')
+                  }
                 </h4>
 
-                {/* 특별 요청 알림 */}
-                {(campaign?.meta_ad_code_requested || campaign?.requires_clean_video) && (
-                  <div className="mb-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                    <p className="text-xs font-medium text-yellow-800 mb-1">
-                      {language === 'ja' ? '⚠️ この캠페인の特別要件:' : '⚠️ 이 캠페인의 특별 요청:'}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {campaign?.meta_ad_code_requested && (
-                        <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
-                          📱 {language === 'ja' ? 'Metaパートナーシップコード必要' : '메타 광고코드 필요'}
-                        </span>
-                      )}
-                      {campaign?.requires_clean_video && (
-                        <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
-                          🎞️ {language === 'ja' ? 'クリーン動画必要' : '클린본 필요'}
-                        </span>
-                      )}
+                {/* 현재 제출 버전 표시 */}
+                {submission?.video_file_url && (
+                  <div className="mb-4 p-3 bg-white rounded-lg border border-orange-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-gray-500">{language === 'ja' ? '提出済み動画:' : '제출된 영상:'}</p>
+                        <p className="text-sm font-medium text-gray-700">
+                          v{getVideoVersion()} - {submission.video_file_name || (language === 'ja' ? 'アップロード済み' : '업로드됨')}
+                        </p>
+                      </div>
+                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                        v{getVideoVersion()}
+                      </span>
                     </div>
                   </div>
                 )}
 
-                <div className="space-y-4">
-                  {/* 메인 영상 URL */}
-                  <div>
-                    <label className="block text-sm text-gray-700 mb-2 font-medium">
-                      {language === 'ja' ? '動画URL' : '영상 URL'} *
-                    </label>
-                    <input
-                      type="url"
-                      value={videoUrl}
-                      onChange={(e) => setVideoUrl(e.target.value)}
-                      placeholder="https://drive.google.com/... or https://youtube.com/..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      {language === 'ja'
-                        ? 'Google Drive、YouTube、TikTokなどのリンクを入力'
-                        : 'Google Drive, YouTube, TikTok 등의 링크 입력'}
-                    </p>
+                {/* 수정 요청사항 표시 */}
+                {(submission?.revision_requests?.length > 0 || application?.revision_requests?.length > 0) && (
+                  <RevisionRequestsSection
+                    revisionRequests={submission?.revision_requests || application?.revision_requests}
+                    language={language}
+                  />
+                )}
+
+                {status === 'revision_required' && submission?.revision_notes && !submission?.revision_requests?.length && (
+                  <div className="mb-4 bg-red-100 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+                    <p className="font-medium mb-1">{language === 'ja' ? '修正内容:' : '수정 내용:'}</p>
+                    {submission.revision_notes}
                   </div>
+                )}
 
-                  {/* 클린본 URL */}
-                  <div>
-                    <label className="block text-sm text-gray-700 mb-2 font-medium">
-                      {language === 'ja' ? 'クリーン動画URL（字幕/BGMなし）' : '클린본 URL (자막/BGM 없는 버전)'}
-                      <span className="text-gray-400 ml-1">
-                        ({campaign?.requires_clean_video
-                          ? (language === 'ja' ? '必須' : '필수')
-                          : (language === 'ja' ? '任意' : '선택')
-                        })
-                      </span>
-                    </label>
-                    <input
-                      type="url"
-                      value={cleanVideoUrl}
-                      onChange={(e) => setCleanVideoUrl(e.target.value)}
-                      placeholder="https://drive.google.com/..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      {language === 'ja'
-                        ? 'BGMや字幕なしのオリジナル動画'
-                        : 'BGM, 자막이 없는 원본 영상'}
+                {/* 수정 요청시 재업로드 */}
+                {(status === 'revision_required' || status === 'revision_requested') && (
+                  <div className="mt-4 space-y-3">
+                    <p className="text-sm font-medium text-orange-700">
+                      {language === 'ja' ? '修正した動画を再アップロード:' : '수정한 영상을 재업로드:'}
                     </p>
-                  </div>
-
-                  {/* 메타 파트너십 코드 */}
-                  <div>
-                    <label className="block text-sm text-gray-700 mb-2 font-medium">
-                      {language === 'ja' ? 'Meta パートナーシップコード' : '메타 파트너십 코드 (광고코드)'}
-                      <span className="text-gray-400 ml-1">
-                        ({campaign?.meta_ad_code_requested
-                          ? (language === 'ja' ? '必須' : '필수')
-                          : (language === 'ja' ? '任意' : '선택')
-                        })
-                      </span>
-                    </label>
-                    <input
-                      type="text"
-                      value={partnershipCode}
-                      onChange={(e) => setPartnershipCode(e.target.value)}
-                      placeholder="adcode-Q9jTBBAen2L45CCA8KP_..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      {language === 'ja'
-                        ? 'Instagram/TikTokのパートナーシップコード'
-                        : 'Instagram/TikTok 파트너십 코드'}
-                    </p>
-                  </div>
-
-                  {/* 제출 버튼 */}
-                  <button
-                    onClick={handleVideoUrlSubmit}
-                    disabled={submitting || !videoUrl.trim()}
-                    className="w-full px-4 py-3 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                  >
-                    {submitting ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Upload className="w-4 h-4 mr-2" />
-                    )}
-                    {language === 'ja' ? '動画を提出する' : '영상 제출하기'}
-                  </button>
-                </div>
-
-                {/* 파일 직접 업로드 옵션 (접기) */}
-                <details className="mt-4">
-                  <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700">
-                    {language === 'ja' ? '📁 ファイルを直接アップロードする場合' : '📁 파일 직접 업로드하기'}
-                  </summary>
-                  <div className="mt-3 p-3 bg-white rounded-lg border border-gray-200 space-y-3">
                     <input
                       ref={videoInputRef}
                       type="file"
@@ -1343,7 +1531,8 @@ const StepCard = ({
                         </div>
                       ) : (
                         <div className="text-gray-400 text-sm">
-                          {language === 'ja' ? 'クリックして動画を選択 (最大500MB)' : '클릭하여 영상 선택 (최대 500MB)'}
+                          <Upload className="w-6 h-6 mx-auto mb-1 text-gray-300" />
+                          {language === 'ja' ? 'クリックして修正動画を選択 (最大2GB)' : '클릭하여 수정 영상 선택 (최대 2GB)'}
                         </div>
                       )}
                     </div>
@@ -1351,57 +1540,54 @@ const StepCard = ({
                     {uploading && (
                       <div className="space-y-2">
                         <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-blue-500 h-2 rounded-full transition-all"
-                            style={{ width: `${uploadProgress}%` }}
-                          />
+                          <div className="bg-blue-500 h-2 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
                         </div>
-                        <p className="text-center text-xs text-gray-500">
-                          {uploadProgress}%
-                        </p>
+                        <p className="text-center text-xs text-gray-500">{uploadProgress}%</p>
                       </div>
                     )}
 
                     {videoFile && !uploading && (
                       <button
                         onClick={handleVideoUpload}
-                        className="w-full px-3 py-2 bg-gray-600 text-white rounded-md text-sm hover:bg-gray-700"
+                        className="w-full px-4 py-3 bg-orange-600 text-white rounded-md font-medium hover:bg-orange-700 flex items-center justify-center"
                       >
-                        {language === 'ja' ? 'ファイルをアップロード' : '파일 업로드'}
+                        <Upload className="w-4 h-4 mr-2" />
+                        {language === 'ja'
+                          ? `v${getVideoVersion() + 1} 修正動画をアップロード`
+                          : `v${getVideoVersion() + 1} 수정 영상 업로드`}
                       </button>
                     )}
                   </div>
-                </details>
+                )}
+
+                {/* ガイド確認ボタン */}
+                <button
+                  onClick={() => setShowGuideModal(true)}
+                  className="w-full mt-4 px-4 py-2.5 bg-purple-100 text-purple-700 border border-purple-300 rounded-lg font-medium hover:bg-purple-200 flex items-center justify-center"
+                >
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  {language === 'ja' ? '📖 撮影ガイドを確認する' : '📖 촬영 가이드 확인하기'}
+                </button>
               </div>
             )}
 
-            {/* Step 3: SNS 공유 */}
+            {/* Step 3: SNS + 클린본 + 광고코드 */}
             {currentStep === 3 && (
               <div className="bg-indigo-50 rounded-lg p-4">
-                <h4 className="font-medium text-indigo-800 mb-3 flex items-center justify-between">
-                  <span className="flex items-center">
-                    <Share2 className="w-4 h-4 mr-2" />
-                    {language === 'ja' ? 'SNS投稿情報を入力してください' : 'SNS 공유 정보를 입력해주세요'}
-                  </span>
-                  <button
-                    onClick={() => setShowGuideModal(true)}
-                    className="text-xs text-indigo-600 hover:underline flex items-center"
-                  >
-                    <BookOpen className="w-3 h-3 mr-1" />
-                    {language === 'ja' ? 'ガイド確認' : '가이드 확인'}
-                  </button>
+                <h4 className="font-medium text-indigo-800 mb-3 flex items-center">
+                  <Share2 className="w-4 h-4 mr-2" />
+                  {language === 'ja' ? 'SNS投稿 / クリーン動画 / 広告コードを提出' : 'SNS 게시 / 클린본 / 광고코드 제출'}
                 </h4>
 
-                {submission?.video_file_url && (
-                  <div className="mb-4 p-3 bg-white rounded border border-indigo-200">
-                    <p className="text-xs text-gray-500 mb-1">
-                      {language === 'ja' ? '提出済み動画:' : '제출된 영상:'}
-                    </p>
-                    <p className="text-sm text-gray-700 truncate">{submission.video_file_name}</p>
-                  </div>
-                )}
+                <p className="text-sm text-green-700 mb-4 bg-green-50 p-3 rounded-lg border border-green-200 flex items-center">
+                  <CheckCircle className="w-4 h-4 mr-2 flex-shrink-0" />
+                  {language === 'ja'
+                    ? '動画の修正確認が完了しました。SNSにアップロードしてください。'
+                    : '영상 수정 확인이 완료되었습니다. SNS에 업로드해주세요.'}
+                </p>
 
                 <div className="space-y-4">
+                  {/* SNS URL */}
                   <div>
                     <label className="block text-sm text-gray-700 mb-2 font-medium">
                       {language === 'ja' ? 'SNS投稿URL' : 'SNS 게시물 URL'} *
@@ -1410,38 +1596,107 @@ const StepCard = ({
                       type="url"
                       value={snsUrl}
                       onChange={(e) => setSnsUrl(e.target.value)}
-                      placeholder="https://www.instagram.com/p/..."
+                      placeholder="https://www.instagram.com/reel/... or https://www.tiktok.com/..."
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {language === 'ja'
+                        ? 'Instagram、TikTok、YouTube等のSNS投稿リンク'
+                        : 'Instagram, TikTok, YouTube 등 SNS 게시물 링크'}
+                    </p>
                   </div>
 
+                  {/* 클린본 파일 업로드 */}
                   <div>
                     <label className="block text-sm text-gray-700 mb-2 font-medium">
-                      {language === 'ja' ? '広告コード' : '광고코드'}
+                      {language === 'ja' ? 'クリーン動画（字幕/BGMなし）' : '클린본 (자막/BGM 없는 버전)'}
+                      <span className={`ml-1 ${campaign?.requires_clean_video ? 'text-red-500' : 'text-gray-400'}`}>
+                        ({campaign?.requires_clean_video
+                          ? (language === 'ja' ? '必須' : '필수')
+                          : (language === 'ja' ? '任意' : '선택')
+                        })
+                      </span>
+                    </label>
+                    <input
+                      ref={cleanVideoInputRef}
+                      type="file"
+                      accept="video/*"
+                      onChange={(e) => {
+                        if (e.target.files?.[0]) setCleanVideoFile(e.target.files[0])
+                      }}
+                      className="hidden"
+                    />
+                    <div
+                      onClick={() => cleanVideoInputRef.current?.click()}
+                      className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+                        cleanVideoFile ? 'border-green-400 bg-green-50' : 'border-gray-300 hover:border-blue-400'
+                      }`}
+                    >
+                      {cleanVideoFile ? (
+                        <div className="flex items-center justify-center space-x-3">
+                          <FileVideo className="w-5 h-5 text-green-600" />
+                          <span className="text-sm text-gray-700 truncate max-w-xs">{cleanVideoFile.name}</span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setCleanVideoFile(null) }}
+                            className="p-1 hover:bg-gray-200 rounded"
+                          >
+                            <X className="w-4 h-4 text-gray-500" />
+                          </button>
+                        </div>
+                      ) : submission?.clean_video_file_url ? (
+                        <div className="flex items-center justify-center space-x-2 text-green-600">
+                          <CheckCircle className="w-5 h-5" />
+                          <span className="text-sm">{language === 'ja' ? 'アップロード済み（再選択で上書き）' : '업로드됨 (재선택시 덮어쓰기)'}</span>
+                        </div>
+                      ) : (
+                        <div className="text-gray-400 text-sm">
+                          <Upload className="w-5 h-5 mx-auto mb-1 text-gray-300" />
+                          {language === 'ja' ? 'クリックしてクリーン動画を選択' : '클릭하여 클린본 선택'}
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {language === 'ja' ? 'BGMや字幕なしのオリジナル動画ファイル' : 'BGM, 자막이 없는 원본 영상 파일'}
+                    </p>
+                  </div>
+
+                  {/* 광고코드 */}
+                  <div>
+                    <label className="block text-sm text-gray-700 mb-2 font-medium">
+                      {language === 'ja' ? '広告コード' : '광고 코드'}
                       <span className="text-gray-400 ml-1">
-                        ({language === 'ja' ? '任意' : '선택'})
+                        ({campaign?.meta_ad_code_requested
+                          ? (language === 'ja' ? '必須' : '필수')
+                          : (language === 'ja' ? '任意' : '선택')
+                        })
                       </span>
                     </label>
                     <input
                       type="text"
-                      value={adCode}
-                      onChange={(e) => setAdCode(e.target.value)}
-                      placeholder="#AD #PR #협찬"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      value={partnershipCode}
+                      onChange={(e) => setPartnershipCode(e.target.value)}
+                      placeholder="adcode-Q9jTBBAen2L45CCA8KP_..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm"
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {language === 'ja'
+                        ? 'Meta パートナーシップ / TikTok Spark Ads / YouTube広告共有コード'
+                        : 'Meta 파트너십 / TikTok Spark Ads / YouTube 광고 공유 코드'}
+                    </p>
                   </div>
 
+                  {/* 제출 버튼 */}
                   <button
-                    onClick={handleSnsSubmit}
+                    onClick={handleVideoUrlSubmit}
                     disabled={submitting || !snsUrl.trim()}
-                    className="w-full px-4 py-3 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center"
+                    className="w-full px-4 py-3 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                   >
                     {submitting ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     ) : (
                       <Share2 className="w-4 h-4 mr-2" />
                     )}
-                    {language === 'ja' ? 'SNS情報を提出' : 'SNS 정보 제출'}
+                    {language === 'ja' ? 'SNS・クリーン動画・広告コードを提出' : 'SNS/클린본/광고코드 제출'}
                   </button>
                 </div>
               </div>
@@ -1523,16 +1778,37 @@ const StepCard = ({
         )}
       </div>
 
-      {/* 가이드 모달 */}
-      <GuideModal
-        isOpen={showGuideModal}
-        onClose={() => setShowGuideModal(false)}
-        campaign={campaign}
-        application={application}
-        language={language}
-        stepNumber={stepNumber}
-        campaignType={campaignType}
-      />
+      {/* 가이드 모달 - AI 가이드는 ShootingGuideModal, 그 외는 GuideModal */}
+      {(() => {
+        // personalized_guide 또는 shooting_guide_content에서 AI 가이드 확인
+        const parsed = parsePersonalizedGuide(application?.personalized_guide)
+        const parsedCampaignGuide = !parsed.isAiGuide
+          ? parsePersonalizedGuide(campaign?.shooting_guide_content)
+          : { isAiGuide: false, aiData: null }
+        const aiGuideData = parsed.isAiGuide ? parsed.aiData : parsedCampaignGuide.isAiGuide ? parsedCampaignGuide.aiData : null
+
+        if (aiGuideData) {
+          return (
+            <ShootingGuideModal
+              isOpen={showGuideModal}
+              onClose={() => setShowGuideModal(false)}
+              guide={aiGuideData}
+              campaignTitle={campaign?.title || ''}
+            />
+          )
+        }
+        return (
+          <GuideModal
+            isOpen={showGuideModal}
+            onClose={() => setShowGuideModal(false)}
+            campaign={campaign}
+            application={application}
+            language={language}
+            stepNumber={stepNumber}
+            campaignType={campaignType}
+          />
+        )
+      })()}
     </>
   )
 }
@@ -1543,7 +1819,9 @@ const CampaignCard = ({ application, campaign, submissions, onUpdate, language }
 
   const campaignType = campaign?.campaign_type || 'regular'
   const typeInfo = CAMPAIGN_TYPES[campaignType] || CAMPAIGN_TYPES.regular
-  const totalSteps = campaign?.total_steps || typeInfo.steps
+  const videoSteps = campaign?.total_steps || typeInfo.steps
+  const snsSteps = typeInfo.snsSteps || videoSteps
+  const totalSteps = Math.max(videoSteps, snsSteps)
 
   const calculateProgress = () => {
     if (!submissions?.length) return 0
@@ -1560,19 +1838,34 @@ const CampaignCard = ({ application, campaign, submissions, onUpdate, language }
     const now = new Date()
     let nearest = null
 
-    if (campaign?.step_deadlines) {
-      for (const sd of campaign.step_deadlines) {
-        if (sd.video_deadline && new Date(sd.video_deadline) > now) {
-          if (!nearest || new Date(sd.video_deadline) < new Date(nearest.date)) {
-            nearest = { date: sd.video_deadline, type: 'video', step: sd.step }
-          }
-        }
-        if (sd.sns_deadline && new Date(sd.sns_deadline) > now) {
-          if (!nearest || new Date(sd.sns_deadline) < new Date(nearest.date)) {
-            nearest = { date: sd.sns_deadline, type: 'sns', step: sd.step }
-          }
+    const checkDate = (date, type, step) => {
+      if (date && new Date(date) > now) {
+        if (!nearest || new Date(date) < new Date(nearest.date)) {
+          nearest = { date, type, step }
         }
       }
+    }
+
+    // step_deadlines 배열 확인
+    if (campaign?.step_deadlines) {
+      for (const sd of campaign.step_deadlines) {
+        checkDate(sd.video_deadline, 'video', sd.step)
+        checkDate(sd.sns_deadline, 'sns', sd.step)
+      }
+    }
+
+    // 4주 챌린지: week1~4 필드 확인
+    if (campaignType === '4week_challenge') {
+      for (let w = 1; w <= 4; w++) {
+        checkDate(campaign?.[`week${w}_deadline`], 'video', w)
+        checkDate(campaign?.[`week${w}_sns_deadline`], 'sns', w)
+      }
+    }
+
+    // 기본 마감일 (기획형 등)
+    if (!nearest) {
+      checkDate(campaign?.video_deadline, 'video', 1)
+      checkDate(campaign?.sns_deadline, 'sns', 1)
     }
 
     return nearest
@@ -1612,7 +1905,13 @@ const CampaignCard = ({ application, campaign, submissions, onUpdate, language }
                       ? (language === 'ja' ? '動画' : '영상')
                       : 'SNS'
                     }
-                    ({language === 'ja' ? `ステップ${nextDeadline.step}` : `${nextDeadline.step}스텝`})
+                    {totalSteps > 1 && (
+                      campaignType === '4week_challenge'
+                        ? ` (Week ${nextDeadline.step})`
+                        : campaignType === 'megawari'
+                          ? (language === 'ja' ? ` (ステップ${nextDeadline.step})` : ` (${nextDeadline.step}스텝)`)
+                          : ''
+                    )}
                     {' - '}
                     {new Date(nextDeadline.date).toLocaleDateString(language === 'ja' ? 'ja-JP' : 'ko-KR', {
                       month: 'short',
@@ -1622,10 +1921,17 @@ const CampaignCard = ({ application, campaign, submissions, onUpdate, language }
                 </div>
               )}
 
-              {/* 캠페인 설명 */}
-              <p className="text-xs text-gray-500 mt-1">
-                {language === 'ja' ? typeInfo.descJa : typeInfo.descKo}
-              </p>
+              {/* 캠페인 설명 + 보수 */}
+              <div className="flex items-center gap-2 mt-1">
+                <p className="text-xs text-gray-500">
+                  {language === 'ja' ? typeInfo.descJa : typeInfo.descKo}
+                </p>
+                {campaign?.reward_amount > 0 && (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                    💰 ¥{campaign.reward_amount.toLocaleString()}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -1674,6 +1980,9 @@ const CampaignCard = ({ application, campaign, submissions, onUpdate, language }
               step_number: stepNumber,
               workflow_status: 'guide_pending'
             }
+            // 메가와리: step 3은 SNS only (영상 2개 + SNS 3개)
+            const hasVideoUpload = stepNumber <= videoSteps
+            const hasSnsUpload = stepNumber <= snsSteps
 
             return (
               <StepCard
@@ -1686,6 +1995,8 @@ const CampaignCard = ({ application, campaign, submissions, onUpdate, language }
                 application={application}
                 onUpdate={onUpdate}
                 language={language}
+                hasVideoUpload={hasVideoUpload}
+                hasSnsUpload={hasSnsUpload}
               />
             )
           })}
@@ -1707,6 +2018,7 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
     setLoading(true)
     try {
       const campaignIds = [...new Set(applications.map(a => a.campaign_id).filter(Boolean))]
+      let campaignsMap = {}
 
       if (campaignIds.length > 0) {
         const { data: campaignsData } = await supabase
@@ -1715,7 +2027,6 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
           .in('id', campaignIds)
 
         if (campaignsData) {
-          const campaignsMap = {}
           campaignsData.forEach(c => { campaignsMap[c.id] = c })
           setCampaigns(campaignsMap)
         }
@@ -1724,21 +2035,89 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
       const applicationIds = applications.map(a => a.id)
 
       if (applicationIds.length > 0) {
-        const { data: submissionsData } = await supabase
-          .from('campaign_submissions')
-          .select('*')
-          .in('application_id', applicationIds)
-          .order('step_number', { ascending: true })
+        let submissionsLoaded = false
 
-        if (submissionsData) {
-          const submissionsMap = {}
-          submissionsData.forEach(s => {
-            if (!submissionsMap[s.application_id]) {
-              submissionsMap[s.application_id] = []
+        try {
+          const { data: submissionsData, error: submissionsError } = await supabase
+            .from('campaign_submissions')
+            .select('*')
+            .in('application_id', applicationIds)
+            .order('step_number', { ascending: true })
+
+          if (submissionsError) {
+            console.error('Submissions query error:', submissionsError)
+            // campaign_submissions 테이블이 없거나 RLS 오류
+          } else if (submissionsData && submissionsData.length > 0) {
+            const submissionsMap = {}
+            submissionsData.forEach(s => {
+              if (!submissionsMap[s.application_id]) {
+                submissionsMap[s.application_id] = []
+              }
+              submissionsMap[s.application_id].push(s)
+            })
+            setSubmissions(submissionsMap)
+            submissionsLoaded = true
+          }
+
+          // submissions가 없는 approved/selected/filming applications에 대해 자동 생성 시도
+          if (!submissionsError) {
+            const approvedApps = applications.filter(a =>
+              ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed'].includes(a.status)
+            )
+            for (const app of approvedApps) {
+              if (!submissionsLoaded || !submissionsData?.some(s => s.application_id === app.id)) {
+                const campaign = campaignsMap?.[app.campaign_id]
+                const campaignType = campaign?.campaign_type || 'regular'
+                const typeInfoLocal = CAMPAIGN_TYPES[campaignType] || CAMPAIGN_TYPES.regular
+                const videoStepsLocal = campaign?.total_steps || typeInfoLocal.steps
+                const snsStepsLocal = typeInfoLocal.snsSteps || videoStepsLocal
+                const totalSteps = Math.max(videoStepsLocal, snsStepsLocal)
+
+                for (let step = 1; step <= totalSteps; step++) {
+                  const stepLabel = campaignType === '4week_challenge' ? `Week ${step}` :
+                    campaignType === 'megawari' ? `Step ${step}` : null
+
+                  try {
+                    await supabase
+                      .from('campaign_submissions')
+                      .upsert({
+                        application_id: app.id,
+                        user_id: app.user_id,
+                        campaign_id: app.campaign_id,
+                        step_number: step,
+                        step_label: stepLabel,
+                        workflow_status: 'guide_pending'
+                      }, { onConflict: 'application_id,step_number', ignoreDuplicates: true })
+                  } catch (e) {
+                    console.warn('Auto-create submission failed:', e)
+                  }
+                }
+              }
             }
-            submissionsMap[s.application_id].push(s)
-          })
-          setSubmissions(submissionsMap)
+
+            // 자동 생성 후 다시 로드
+            if (!submissionsLoaded && approvedApps.length > 0) {
+              const { data: retryData } = await supabase
+                .from('campaign_submissions')
+                .select('*')
+                .in('application_id', applicationIds)
+                .order('step_number', { ascending: true })
+
+              if (retryData && retryData.length > 0) {
+                const submissionsMap = {}
+                retryData.forEach(s => {
+                  if (!submissionsMap[s.application_id]) {
+                    submissionsMap[s.application_id] = []
+                  }
+                  submissionsMap[s.application_id].push(s)
+                })
+                setSubmissions(submissionsMap)
+              }
+            }
+          }
+        } catch (submissionsQueryError) {
+          console.error('Submissions query/create error:', submissionsQueryError)
+          // 테이블이 없어도 UI는 계속 표시 (guide_pending fallback)
         }
       }
     } catch (error) {
@@ -1753,8 +2132,10 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
   }, [applications])
 
   // 상태별 분류
-  const knownStatuses = ['approved', 'pending', 'virtual_selected', 'rejected']
-  const approvedApplications = applications.filter(a => a.status === 'approved')
+  // cnecbiz.com 관리자 사용 status: selected(선정), filming(촬영중), approved(승인)
+  const approvedStatuses = ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed']
+  const knownStatuses = [...approvedStatuses, 'pending', 'virtual_selected', 'rejected']
+  const approvedApplications = applications.filter(a => approvedStatuses.includes(a.status))
   const pendingApplications = applications.filter(a => a.status === 'pending' || a.status === 'virtual_selected')
   const rejectedApplications = applications.filter(a => a.status === 'rejected')
   const otherApplications = applications.filter(a => !knownStatuses.includes(a.status))
@@ -1780,8 +2161,11 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
     completed: approvedApplications.filter(app => {
       const subs = submissions[app.id] || []
       const campaign = campaigns[app.campaign_id]
-      const totalSteps = campaign?.total_steps || CAMPAIGN_TYPES[campaign?.campaign_type || 'regular']?.steps || 1
-      return subs.filter(s => s.workflow_status === 'completed' || s.workflow_status === 'points_paid').length >= totalSteps
+      const typeInfoStat = CAMPAIGN_TYPES[campaign?.campaign_type || 'regular'] || CAMPAIGN_TYPES.regular
+      const vSteps = campaign?.total_steps || typeInfoStat.steps
+      const sSteps = typeInfoStat.snsSteps || vSteps
+      const total = Math.max(vSteps, sSteps)
+      return subs.filter(s => s.workflow_status === 'completed' || s.workflow_status === 'points_paid').length >= total
     }).length
   }
 
@@ -1794,53 +2178,53 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       {/* 통계 */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="bg-blue-50 rounded-lg p-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <div className="bg-blue-50 rounded-lg p-3 sm:p-4">
           <div className="flex items-center">
-            <Award className="h-8 w-8 text-blue-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">
+            <Award className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 flex-shrink-0" />
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-500">
                 {language === 'ja' ? '総応募数' : '총 신청'}
               </p>
-              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.total}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-yellow-50 rounded-lg p-4">
+        <div className="bg-yellow-50 rounded-lg p-3 sm:p-4">
           <div className="flex items-center">
-            <Clock className="h-8 w-8 text-yellow-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">
+            <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-600 flex-shrink-0" />
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-500">
                 {language === 'ja' ? '審査中' : '심사중'}
               </p>
-              <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.pending}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-green-50 rounded-lg p-4">
+        <div className="bg-green-50 rounded-lg p-3 sm:p-4">
           <div className="flex items-center">
-            <Shield className="h-8 w-8 text-green-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">
+            <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-green-600 flex-shrink-0" />
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-500">
                 {language === 'ja' ? '選定済み' : '선정됨'}
               </p>
-              <p className="text-2xl font-bold text-gray-900">{stats.approved}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.approved}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-purple-50 rounded-lg p-4">
+        <div className="bg-purple-50 rounded-lg p-3 sm:p-4">
           <div className="flex items-center">
-            <Download className="h-8 w-8 text-purple-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">
+            <Download className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600 flex-shrink-0" />
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-500">
                 {language === 'ja' ? '完了' : '완료'}
               </p>
-              <p className="text-2xl font-bold text-gray-900">{stats.completed}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.completed}</p>
             </div>
           </div>
         </div>
@@ -1883,7 +2267,7 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
               {filteredApproved.length}
             </span>
           </h3>
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {filteredApproved.map(application => (
               <CampaignCard
                 key={application.id}

@@ -216,11 +216,8 @@ const CampaignApplicationUpdated = () => {
       setLoading(true)
       setError('')
 
-      console.log('데이터 로딩 시작')
-
       // 1. 캠페인 정보 로드
       const campaignData = await database.campaigns.getById(campaignId)
-      console.log('캠페인 데이터:', campaignData)
       
       if (!campaignData) {
         throw new Error(t.campaignNotFound)
@@ -229,7 +226,6 @@ const CampaignApplicationUpdated = () => {
 
       // 2. 사용자 프로필 로드
       const profileData = await database.userProfiles.get(user.id)
-      console.log('프로필 데이터:', profileData)
       setUserProfile(profileData)
 
       // 프로필에서 기존 정보 가져와서 폼에 미리 채우기
@@ -251,7 +247,6 @@ const CampaignApplicationUpdated = () => {
 
       // 3. 기존 신청서 확인
       const existingApp = await database.applications.getByUserAndCampaign(user.id, campaignId)
-      console.log('기존 신청서:', existingApp)
       setExistingApplication(existingApp)
 
       // 기존 신청서가 있으면 데이터 로드
@@ -292,7 +287,7 @@ const CampaignApplicationUpdated = () => {
           const hoursDiff = (now - savedTime) / (1000 * 60 * 60)
 
           if (hoursDiff < 24 && draftData) {
-            console.log('저장된 드래프트 복원:', draftData)
+            // 드래프트 복원
             setApplicationData(prev => ({
               ...prev,
               ...draftData
@@ -394,15 +389,9 @@ const CampaignApplicationUpdated = () => {
         updated_at: new Date().toISOString()
       }
 
-      console.log('申請書提出データ:', submissionData)
-
       if (existingApplication) {
-        // 既存申請書の更新
-        console.log('既存申請書を更新:', existingApplication.id)
         await database.applications.update(existingApplication.id, submissionData)
       } else {
-        // 新規申請書作成
-        console.log('新規申請書を作成')
         await database.applications.create(submissionData)
       }
 
@@ -487,9 +476,9 @@ const CampaignApplicationUpdated = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-4 sm:py-6 lg:py-8">
         {/* 헤더 */}
-        <div className="mb-8">
+        <div className="mb-4 sm:mb-6 lg:mb-8">
           <button
             onClick={() => navigate('/')}
             className="inline-flex items-center text-purple-600 hover:text-purple-800 mb-4"
@@ -499,13 +488,13 @@ const CampaignApplicationUpdated = () => {
             </svg>
             {t.backToCampaigns}
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">{t.title}</h1>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">{t.title}</h1>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           {/* 캠페인 정보 */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 flex items-center">
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
               </svg>
@@ -540,9 +529,9 @@ const CampaignApplicationUpdated = () => {
                 )}
 
                 {/* 기본 정보 */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="flex items-center">
-                    <svg className="w-4 h-4 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-green-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
                     </svg>
                     <div>
@@ -657,8 +646,8 @@ const CampaignApplicationUpdated = () => {
           </div>
 
           {/* 신청서 폼 */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 flex items-center">
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
               </svg>
@@ -677,10 +666,10 @@ const CampaignApplicationUpdated = () => {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               {/* 개인정보 섹션 */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">{t.personalInfo}</h3>
+                <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">{t.personalInfo}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -748,7 +737,7 @@ const CampaignApplicationUpdated = () => {
 
               {/* 연락처 및 배송 정보 섹션 */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">{t.contactInfo}</h3>
+                <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">{t.contactInfo}</h3>
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -839,7 +828,7 @@ const CampaignApplicationUpdated = () => {
 
               {/* SNS 정보 섹션 */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">{t.snsInfo}</h3>
+                <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">{t.snsInfo}</h3>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -888,7 +877,7 @@ const CampaignApplicationUpdated = () => {
               {/* 질문 답변 섹션 */}
               {(campaign?.question1 || campaign?.question2 || campaign?.question3 || campaign?.question4) && (
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">{t.questions}</h3>
+                  <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">{t.questions}</h3>
                   <div className="space-y-4">
                     {/* 질문 1 */}
                     {campaign?.question1 && (
@@ -1078,8 +1067,8 @@ const CampaignApplicationUpdated = () => {
               )}
 
               {/* 초상권 동의 섹션 */}
-              <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-3">
+              <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4 sm:p-6">
+                <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-3">
                   {t.portraitRightsTitle}
                 </h3>
                 <div className="bg-white rounded p-4 mb-4 text-sm text-gray-700 leading-relaxed">

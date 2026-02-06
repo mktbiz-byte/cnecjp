@@ -91,7 +91,7 @@ const AdminHeader = ({ title, subtitle }) => {
               <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">C</span>
               </div>
-              <span className="text-xl font-bold text-gray-900">
+              <span className="text-base sm:text-xl font-bold text-gray-900">
                 {currentTexts.adminDashboard}
               </span>
             </Link>

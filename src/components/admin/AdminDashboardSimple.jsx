@@ -195,7 +195,7 @@ const AdminDashboardSimple = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>
+          <div className="animate-spin rounded-full h-16 w-16 sm:h-32 sm:w-32 border-b-2 border-purple-600"></div>
           <p className="mt-4 text-gray-600">{t.loading}</p>
         </div>
       </div>
@@ -208,7 +208,7 @@ const AdminDashboardSimple = () => {
       <AdminNavigation />
 
       {/* 메인 콘텐츠 */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         {error && (
           <Alert className="mb-6 border-red-200 bg-red-50">
             <AlertDescription className="text-red-800">
@@ -218,14 +218,14 @@ const AdminDashboardSimple = () => {
         )}
 
         {/* 통계 카드 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{t.totalCampaigns}</CardTitle>
               <Award className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalCampaigns}</div>
+              <div className="text-lg sm:text-xl md:text-2xl font-bold">{stats.totalCampaigns}</div>
               <p className="text-xs text-muted-foreground">
                 {t.activeCampaigns}: {stats.activeCampaigns}{language === 'ko' ? '개' : '件'}
               </p>
@@ -238,7 +238,7 @@ const AdminDashboardSimple = () => {
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalApplications}</div>
+              <div className="text-lg sm:text-xl md:text-2xl font-bold">{stats.totalApplications}</div>
               <p className="text-xs text-muted-foreground">
                 {t.pendingApplications}: {stats.pendingApplications}{language === 'ko' ? '개' : '件'}
               </p>
@@ -251,7 +251,7 @@ const AdminDashboardSimple = () => {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalUsers}</div>
+              <div className="text-lg sm:text-xl md:text-2xl font-bold">{stats.totalUsers}</div>
               <p className="text-xs text-muted-foreground">
                 {language === 'ko' ? '활성 크리에이터' : 'アクティブクリエイター'}
               </p>
@@ -264,7 +264,7 @@ const AdminDashboardSimple = () => {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">¥{stats.totalRewards.toLocaleString()}</div>
+              <div className="text-lg sm:text-xl md:text-2xl font-bold">¥{stats.totalRewards.toLocaleString()}</div>
               <p className="text-xs text-muted-foreground">
                 {language === 'ko' ? '지급 완료/예정' : '支払完了/予定'}
               </p>
@@ -273,7 +273,7 @@ const AdminDashboardSimple = () => {
         </div>
 
         {/* 관리 메뉴 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -415,7 +415,7 @@ const AdminDashboardSimple = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-2 sm:space-x-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   <div className="flex-1">
                     <p className="text-sm font-medium">새로운 캠페인 신청</p>
@@ -424,7 +424,7 @@ const AdminDashboardSimple = () => {
                   <span className="text-xs text-gray-400">2시간 전</span>
                 </div>
                 
-                <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-2 sm:space-x-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                   <div className="flex-1">
                     <p className="text-sm font-medium">출금 요청</p>
@@ -433,7 +433,7 @@ const AdminDashboardSimple = () => {
                   <span className="text-xs text-gray-400">5시간 전</span>
                 </div>
                 
-                <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-2 sm:space-x-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
                   <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                   <div className="flex-1">
                     <p className="text-sm font-medium">새 사용자 등록</p>

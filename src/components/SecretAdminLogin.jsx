@@ -33,17 +33,11 @@ const SecretAdminLogin = () => {
             .eq('user_id', user.id)
             .single()
           
-          console.log('사용자 프로필 확인:', profile)
-          
-          // 관리자 또는 매니저 권한이 있는 경우에만 리다이렉트
           if (profile?.role === 'admin' || profile?.role === 'manager') {
-            console.log('관리자 권한 확인됨, 관리자 페이지로 이동')
             navigate('/dashboard')
-          } else {
-            console.log('관리자 권한 없음:', profile?.role)
           }
         } catch (error) {
-          console.error('Admin access check error:', error)
+          // admin check failed silently
         }
       }
     }
@@ -70,7 +64,7 @@ const SecretAdminLogin = () => {
       navigate('/dashboard')
       
     } catch (error) {
-      console.error('Google admin login error:', error)
+      console.error('Google login failed')
       setError('Google 로그인에 실패했습니다. 관리자 계정으로 로그인해주세요.')
     } finally {
       setIsLoading(false)
@@ -89,8 +83,7 @@ const SecretAdminLogin = () => {
       setIsLoading(true)
       setError('')
       
-      const result = await signInWithEmail(formData.email, formData.password)
-      console.log('로그인 결과:', result)
+      await signInWithEmail(formData.email, formData.password)
       
       // 로그인 성공 시 잠시 대기 후 관리자 페이지로 이동
       setTimeout(() => {
@@ -98,7 +91,7 @@ const SecretAdminLogin = () => {
       }, 1000)
       
     } catch (error) {
-      console.error('Admin login error:', error)
+      console.error('Login failed')
       setError('로그인에 실패했습니다. 관리자 계정 정보를 확인해주세요.')
     } finally {
       setIsLoading(false)
@@ -113,7 +106,7 @@ const SecretAdminLogin = () => {
             <div className="w-16 h-16 bg-purple-600/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
               <Shield className="h-8 w-8 text-purple-300" />
             </div>
-            <CardTitle className="text-2xl font-bold text-white">
+            <CardTitle className="text-xl sm:text-2xl font-bold text-white">
               관리자 인증
             </CardTitle>
             <CardDescription className="text-purple-200">
@@ -121,7 +114,7 @@ const SecretAdminLogin = () => {
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4 sm:space-y-6">
             <form onSubmit={handleAdminLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-purple-200">
