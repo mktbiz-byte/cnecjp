@@ -2117,7 +2117,16 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
       }
 
       // main_channel 조회 (기업이 크리에이터 선정 시 저장한 업로드 채널)
-      if (user?.email) {
+      // 1. 먼저 기존 로드된 applications에서 확인
+      const channelMap = {}
+      applications.forEach(app => {
+        if (app.campaign_id && app.main_channel) {
+          channelMap[app.campaign_id] = app.main_channel
+        }
+      })
+
+      // 2. 기존 데이터에 없으면 이메일 기반으로 추가 조회
+      if (Object.keys(channelMap).length === 0 && user?.email) {
         try {
           const { data: channelData } = await supabase
             .from('applications')
@@ -2125,18 +2134,17 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
             .not('main_channel', 'is', null)
             .or(`applicant_email.eq.${user.email},email.eq.${user.email},creator_email.eq.${user.email}`)
           if (channelData) {
-            const channelMap = {}
             channelData.forEach(row => {
               if (row.campaign_id && row.main_channel) {
                 channelMap[row.campaign_id] = row.main_channel
               }
             })
-            setMainChannels(channelMap)
           }
         } catch (e) {
-          // main_channel 컬럼이 없을 수 있음 - 무시
+          // 컬럼이 없을 수 있음 - 무시
         }
       }
+      setMainChannels(channelMap)
 
       const applicationIds = applications.map(a => a.id)
 
