@@ -1027,6 +1027,18 @@ const StepCard = ({
 
       setUploadProgress(80)
 
+      // 버전 히스토리에 새 버전 추가 (기존 버전 보존)
+      const existingVersions = submission?.video_versions || []
+      const newVersionEntry = {
+        version: nextVersion,
+        file_path: videoPath,
+        file_url: videoUrl,
+        file_name: videoFile.name,
+        file_size: videoFile.size,
+        uploaded_at: new Date().toISOString()
+      }
+      const updatedVersions = [...existingVersions, newVersionEntry]
+
       const updateData = {
         workflow_status: 'video_uploaded',
         video_file_path: videoPath,
@@ -1034,6 +1046,7 @@ const StepCard = ({
         video_file_name: videoFile.name,
         video_file_size: videoFile.size,
         video_uploaded_at: new Date().toISOString(),
+        video_versions: updatedVersions,
         clean_video_file_path: cleanVideoPath,
         clean_video_file_url: cleanVideoUrl,
         clean_video_file_name: cleanVideoFile?.name,
@@ -1467,20 +1480,32 @@ const StepCard = ({
                   }
                 </h4>
 
-                {/* 현재 제출 버전 표시 */}
+                {/* 전체 버전 히스토리 표시 (v1, v2, v3...) */}
                 {submission?.video_file_url && (
-                  <div className="mb-4 p-3 bg-white rounded-lg border border-orange-200">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-gray-500">{language === 'ja' ? '提出済み動画:' : '제출된 영상:'}</p>
-                        <p className="text-sm font-medium text-gray-700">
-                          v{getVideoVersion()} - {submission.video_file_name || (language === 'ja' ? 'アップロード済み' : '업로드됨')}
-                        </p>
+                  <div className="mb-4 space-y-2">
+                    <p className="text-xs text-gray-500">{language === 'ja' ? '提出済み動画:' : '제출된 영상:'}</p>
+                    {(submission?.video_versions?.length > 0
+                      ? [...submission.video_versions].sort((a, b) => b.version - a.version)
+                      : [{ version: getVideoVersion(), file_url: submission.video_file_url, file_name: submission.video_file_name, uploaded_at: submission.video_uploaded_at }]
+                    ).map((ver, idx) => (
+                      <div key={idx} className={`p-3 bg-white rounded-lg border ${idx === 0 ? 'border-blue-300 ring-1 ring-blue-100' : 'border-gray-200'}`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-700 truncate">
+                              v{ver.version} - {ver.file_name || (language === 'ja' ? 'アップロード済み' : '업로드됨')}
+                            </p>
+                            {ver.uploaded_at && (
+                              <p className="text-xs text-gray-400 mt-0.5">
+                                {new Date(ver.uploaded_at).toLocaleString(language === 'ja' ? 'ja-JP' : 'ko-KR')}
+                              </p>
+                            )}
+                          </div>
+                          <span className={`px-2 py-1 rounded text-xs font-medium flex-shrink-0 ml-2 ${idx === 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
+                            v{ver.version}{idx === 0 ? (language === 'ja' ? ' 最新' : ' 최신') : ''}
+                          </span>
+                        </div>
                       </div>
-                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
-                        v{getVideoVersion()}
-                      </span>
-                    </div>
+                    ))}
                   </div>
                 )}
 
