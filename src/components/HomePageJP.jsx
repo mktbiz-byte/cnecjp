@@ -327,31 +327,31 @@ const HomePageJP = () => {
       </header>
 
       {/* ========== Hero Section ========== */}
-      <section className="relative py-20 md:py-32 overflow-hidden">
+      <section className="relative py-12 sm:py-20 md:py-32 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-blue-50/60 via-white to-white" />
         <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-blue-100/30 rounded-full blur-3xl pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-5 sm:px-8 text-center relative">
-          <div className="inline-flex mb-8">
-            <span className="bg-emerald-50 text-emerald-600 border border-emerald-200 px-5 py-2 rounded-full text-sm font-medium inline-flex items-center gap-2">
-              <CheckCircle className="h-4 w-4" />
+          <div className="inline-flex mb-5 sm:mb-8">
+            <span className="bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium inline-flex items-center gap-1.5 sm:gap-2">
+              <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               週払い対応・手数料無料・安心のサポート
             </span>
           </div>
 
-          <h2 className="text-4xl sm:text-5xl md:text-7xl font-bold text-slate-900 mb-8 leading-[1.1] tracking-tight">
+          <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-slate-900 mb-5 sm:mb-8 leading-[1.15] tracking-tight">
             K-Beauty クリエイターとして
             <br />
             <span className="text-blue-600">収益を得よう</span>
           </h2>
 
-          <p className="text-base sm:text-lg md:text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm sm:text-lg md:text-xl text-slate-400 mb-8 sm:mb-12 max-w-2xl mx-auto leading-relaxed">
             韓国コスメブランドのショート動画を制作し、毎週報酬を受け取れます。
             <br className="hidden sm:block" />
             遅延なし、面倒なし、透明な報酬システム。
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-20">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-10 sm:mb-20 px-4 sm:px-0">
             <Button
               size="lg"
               className="bg-blue-600 hover:bg-blue-700 text-white text-base sm:text-lg px-8 sm:px-10 py-6 rounded-full shadow-xl shadow-blue-600/25 transition-all hover:shadow-2xl hover:shadow-blue-600/30 hover:-translate-y-0.5"
@@ -374,37 +374,37 @@ const HomePageJP = () => {
           </div>
 
           {/* Trust Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 max-w-4xl mx-auto">
-            <div className="bg-white rounded-[24px] p-5 md:p-7 shadow-xl shadow-slate-200/40 border border-slate-100/80">
-              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-600 mb-1.5">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 max-w-4xl mx-auto">
+            <div className="bg-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 md:p-7 shadow-xl shadow-slate-200/40 border border-slate-100/80">
+              <div className="text-xl sm:text-3xl md:text-4xl font-bold text-blue-600 mb-1">
                 {stats.totalCreators}+
               </div>
-              <div className="text-xs sm:text-sm text-slate-400 font-medium">登録クリエイター</div>
+              <div className="text-[10px] sm:text-sm text-slate-400 font-medium">登録クリエイター</div>
             </div>
-            <div className="bg-white rounded-[24px] p-5 md:p-7 shadow-xl shadow-slate-200/40 border border-slate-100/80">
-              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-emerald-500 mb-1.5">
+            <div className="bg-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 md:p-7 shadow-xl shadow-slate-200/40 border border-slate-100/80 overflow-hidden">
+              <div className="text-lg sm:text-2xl md:text-4xl font-bold text-emerald-500 mb-1 truncate">
                 {formatCurrency(stats.totalRewards)}
               </div>
-              <div className="text-xs sm:text-sm text-slate-400 font-medium">総支払額</div>
+              <div className="text-[10px] sm:text-sm text-slate-400 font-medium">総支払額</div>
             </div>
-            <div className="bg-white rounded-[24px] p-5 md:p-7 shadow-xl shadow-slate-200/40 border border-slate-100/80">
-              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-violet-500 mb-1.5">
+            <div className="bg-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 md:p-7 shadow-xl shadow-slate-200/40 border border-slate-100/80">
+              <div className="text-xl sm:text-3xl md:text-4xl font-bold text-violet-500 mb-1">
                 {stats.totalCampaigns}+
               </div>
-              <div className="text-xs sm:text-sm text-slate-400 font-medium">実施キャンペーン</div>
+              <div className="text-[10px] sm:text-sm text-slate-400 font-medium">実施キャンペーン</div>
             </div>
-            <div className="bg-white rounded-[24px] p-5 md:p-7 shadow-xl shadow-slate-200/40 border border-slate-100/80">
-              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-amber-500 mb-1.5">
+            <div className="bg-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 md:p-7 shadow-xl shadow-slate-200/40 border border-slate-100/80">
+              <div className="text-xl sm:text-3xl md:text-4xl font-bold text-amber-500 mb-1">
                 4.8★
               </div>
-              <div className="text-xs sm:text-sm text-slate-400 font-medium">クリエイター評価</div>
+              <div className="text-[10px] sm:text-sm text-slate-400 font-medium">クリエイター評価</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* ========== How It Works ========== */}
-      <section id="how-it-works" className="py-20 md:py-28 bg-slate-50/50">
+      <section id="how-it-works" className="py-14 sm:py-20 md:py-28 bg-slate-50/50">
         <div className="max-w-7xl mx-auto px-5 sm:px-8">
           <div className="text-center mb-16">
             <span className="bg-blue-50 text-blue-600 border border-blue-200 px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium inline-block mb-4">HOW IT WORKS</span>
@@ -465,7 +465,7 @@ const HomePageJP = () => {
       </section>
 
       {/* ========== Active Campaigns with Tabs ========== */}
-      <section id="campaigns" className="py-20 md:py-28 bg-white">
+      <section id="campaigns" className="py-14 sm:py-20 md:py-28 bg-white">
         <div className="max-w-7xl mx-auto px-5 sm:px-8">
           <div className="text-center mb-12">
             <span className="bg-blue-50 text-blue-600 border border-blue-200 px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium inline-block mb-4">CAMPAIGNS</span>
@@ -486,8 +486,8 @@ const HomePageJP = () => {
             </div>
           ) : (
             <Tabs defaultValue="all" className="w-full">
-              <div className="flex justify-center mb-10">
-                <TabsList className="bg-slate-100 rounded-full p-1.5 h-auto inline-flex">
+              <div className="flex justify-center mb-8 sm:mb-10 overflow-x-auto scrollbar-hide px-1">
+                <TabsList className="bg-slate-100 rounded-full p-1 sm:p-1.5 h-auto inline-flex">
                   <TabsTrigger value="all" className="rounded-full px-5 sm:px-7 py-2.5 text-xs sm:text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md text-slate-400 transition-all">
                     全体
                   </TabsTrigger>
@@ -521,10 +521,10 @@ const HomePageJP = () => {
       </section>
 
       {/* ========== Weekly Payment Section ========== */}
-      <section className="py-20 md:py-28 bg-slate-50/50">
+      <section className="py-14 sm:py-20 md:py-28 bg-slate-50/50">
         <div className="max-w-7xl mx-auto px-5 sm:px-8">
           <div className="max-w-6xl mx-auto">
-            <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
+            <div className="grid md:grid-cols-2 gap-8 md:gap-16 items-center">
               <div>
                 <span className="bg-emerald-50 text-emerald-600 border border-emerald-200 px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium inline-block mb-6">
                   安心の週払いシステム
@@ -628,7 +628,7 @@ const HomePageJP = () => {
       </section>
 
       {/* ========== Final CTA ========== */}
-      <section className="py-20 md:py-28 bg-gradient-to-br from-blue-600 via-blue-600 to-blue-700 relative overflow-hidden">
+      <section className="py-14 sm:py-20 md:py-28 bg-gradient-to-br from-blue-600 via-blue-600 to-blue-700 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
@@ -786,8 +786,22 @@ const HomePageJP = () => {
               </div>
             </div>
           </div>
-          <div className="border-t border-slate-800 mt-12 pt-8 text-center text-sm text-slate-500">
-            <p>&copy; 2025 CNEC Japan. All rights reserved.</p>
+          {/* 特定商取引法に基づく表記 / Company Information */}
+          <div className="border-t border-slate-800 mt-12 pt-8">
+            <div className="mb-6">
+              <h4 className="font-semibold text-slate-300 text-sm mb-4">運営会社情報</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-xs text-slate-500">
+                <div className="flex"><span className="text-slate-400 w-32 flex-shrink-0">会社名</span><span>株式会社ハウパパ（CNEC）</span></div>
+                <div className="flex"><span className="text-slate-400 w-32 flex-shrink-0">代表者</span><span>パク・ヒョンヨン</span></div>
+                <div className="flex"><span className="text-slate-400 w-32 flex-shrink-0">事業者登録番号</span><span>575-81-02253</span></div>
+                <div className="flex"><span className="text-slate-400 w-32 flex-shrink-0">通信販売業届出番号</span><span>2022-ソウルマポ-3903号</span></div>
+                <div className="flex sm:col-span-2"><span className="text-slate-400 w-32 flex-shrink-0">所在地</span><span>ソウル市 中区 退渓路36ギル2 東国大学 忠武路映像センター1009号</span></div>
+                <div className="flex"><span className="text-slate-400 w-32 flex-shrink-0">メール</span><span>howpapa@howpapa.co.kr</span></div>
+              </div>
+            </div>
+            <div className="text-center text-sm text-slate-500">
+              <p>&copy; 2025 CNEC Japan. All rights reserved.</p>
+            </div>
           </div>
         </div>
       </footer>

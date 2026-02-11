@@ -6,7 +6,8 @@ import {
   User, Mail, Phone, MapPin, Calendar, Award,
   CreditCard, Download, Settings, LogOut,
   AlertTriangle, Trash2, Shield, Eye, EyeOff, X,
-  Camera, Upload, Film, BookOpen, Layers
+  Camera, Upload, Film, BookOpen, Layers,
+  Home, Wallet, ChevronRight, Star, TrendingUp
 } from 'lucide-react'
 import ShootingGuideModal from './ShootingGuideModal'
 import ExternalGuideViewer from './ExternalGuideViewer'
@@ -867,108 +868,137 @@ const MyPageWithWithdrawal = () => {
     return types[type] || type
   }
 
+  // Tab configuration for navigation
+  const tabItems = [
+    { id: 'profile', label: t.profile, icon: User, mobileLabel: language === 'ja' ? 'プロフィール' : '프로필' },
+    { id: 'applications', label: t.applications, icon: Award, mobileLabel: language === 'ja' ? 'キャンペーン' : '캠페인' },
+    { id: 'withdrawals', label: t.withdrawals, icon: Wallet, mobileLabel: language === 'ja' ? '出金' : '출금' },
+    { id: 'points', label: t.points, icon: TrendingUp, mobileLabel: language === 'ja' ? 'ポイント' : '포인트' },
+    { id: 'settings', label: t.accountSettings, icon: Settings, mobileLabel: language === 'ja' ? '設定' : '설정' }
+  ]
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-blue-600 border-t-transparent"></div>
+          <span className="text-slate-400 text-sm">{language === 'ja' ? '読み込み中...' : '로딩중...'}</span>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* 헤더 */}
-        <div className="mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.title}</h1>
-              <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
-{language === 'ja' ? `${profile?.name || user?.email}さんのアカウント情報` : `${profile?.name || user?.email}님의 계정 정보`}
-              </p>
-            </div>
-            <div className="flex space-x-3">
-              <button
-                onClick={() => window.location.href = '/'}
-                className="inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-              >
-                <svg className="w-4 h-4 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                <span className="hidden sm:inline">{t.goHome}</span>
-              </button>
-              <button
-                onClick={signOut}
-                className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
-              >
-                <LogOut className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">{t.logout}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* 알림 메시지 */}
-        {error && error !== t.messages?.error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
-            <div className="flex">
-              <AlertTriangle className="h-5 w-5 text-red-400" />
-              <div className="ml-3">
-                <p className="text-sm text-red-800">{error}</p>
+    <div className="min-h-screen bg-slate-50/50">
+      {/* ========== PC Layout: Sidebar + Main ========== */}
+      <div className="hidden md:flex max-w-7xl mx-auto px-6 lg:px-8 py-8 gap-8">
+        {/* --- PC Sidebar --- */}
+        <aside className="w-72 flex-shrink-0">
+          <div className="sticky top-8 space-y-5">
+            {/* Instagram-style Profile Card */}
+            <div className="bg-white rounded-[24px] shadow-xl shadow-slate-200/40 border border-slate-100/80 p-6">
+              <div className="text-center mb-5">
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-600/25">
+                  <span className="text-white text-2xl font-bold">
+                    {(profile?.name || user?.email || '?')[0]?.toUpperCase()}
+                  </span>
+                </div>
+                <h2 className="text-lg font-bold text-slate-800">{profile?.name || user?.email}</h2>
+                <p className="text-xs text-slate-400 mt-0.5">{profile?.email || user?.email}</p>
+                <div className="mt-2">{getRoleBadge(profile?.user_role)}</div>
               </div>
-            </div>
-          </div>
-        )}
-
-        {success && (
-          <div className="mb-6 bg-green-50 border border-green-200 rounded-md p-4">
-            <div className="flex">
-              <Shield className="h-5 w-5 text-green-400" />
-              <div className="ml-3">
-                <p className="text-sm text-green-800">{success}</p>
+              {/* Stats Row */}
+              <div className="grid grid-cols-3 gap-2 py-4 border-t border-b border-slate-100">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-slate-800">{applications.length}</div>
+                  <div className="text-[10px] text-slate-400">{language === 'ja' ? '応募' : '신청'}</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-blue-600">{(profile?.points || 0).toLocaleString()}</div>
+                  <div className="text-[10px] text-slate-400">{language === 'ja' ? 'ポイント' : '포인트'}</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-slate-800">{withdrawals.length}</div>
+                  <div className="text-[10px] text-slate-400">{language === 'ja' ? '出金' : '출금'}</div>
+                </div>
               </div>
+              {/* Withdraw Button */}
+              <button
+                onClick={() => setShowWithdrawModal(true)}
+                className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2.5 rounded-full transition-colors shadow-lg shadow-blue-600/20"
+              >
+                {t.withdrawRequest}
+              </button>
             </div>
-          </div>
-        )}
 
-        {/* 탭 네비게이션 */}
-        <div className="bg-white rounded-lg shadow mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex overflow-x-auto scrollbar-hide px-3 sm:px-6 gap-1 sm:gap-6">
-              {[
-                { id: 'profile', label: t.profile, icon: User },
-                { id: 'applications', label: t.applications, icon: Award },
-                { id: 'withdrawals', label: t.withdrawals, icon: CreditCard },
-                { id: 'points', label: t.points, icon: Download },
-                { id: 'settings', label: t.accountSettings, icon: Settings }
-              ].map((tab) => {
+            {/* Sidebar Navigation */}
+            <div className="bg-white rounded-[24px] shadow-lg shadow-slate-100/50 border border-slate-100/80 overflow-hidden">
+              {tabItems.map((tab) => {
                 const Icon = tab.icon
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0 flex items-center gap-1 sm:gap-2 ${
+                    className={`w-full flex items-center gap-3 px-5 py-3.5 text-sm font-medium transition-all ${
                       activeTab === tab.id
-                        ? 'border-purple-500 text-purple-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600'
+                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                     }`}
                   >
-                    <Icon className="w-4 h-4" />
-                    <span className="hidden sm:inline">{tab.label}</span>
-                    <span className="sm:hidden">{tab.label.length > 4 ? tab.label.substring(0, 4) : tab.label}</span>
+                    <Icon className="w-4.5 h-4.5" />
+                    <span>{tab.label}</span>
+                    <ChevronRight className={`w-4 h-4 ml-auto transition-colors ${activeTab === tab.id ? 'text-blue-400' : 'text-slate-300'}`} />
                   </button>
                 )
               })}
-            </nav>
-          </div>
-        </div>
+            </div>
 
-        {/* 탭 콘텐츠 */}
-        <div className="bg-white rounded-lg shadow">
+            {/* Sidebar Actions */}
+            <div className="bg-white rounded-[24px] shadow-lg shadow-slate-100/50 border border-slate-100/80 p-4 space-y-2">
+              <button
+                onClick={() => window.location.href = '/'}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-xl transition-all"
+              >
+                <Home className="w-4 h-4" />
+                <span>{t.goHome}</span>
+              </button>
+              <button
+                onClick={signOut}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>{t.logout}</span>
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        {/* --- PC Main Content --- */}
+        <main className="flex-1 min-w-0">
+          {/* Alert Messages */}
+          {error && error !== t.messages?.error && (
+            <div className="mb-5 bg-red-50 border border-red-200 rounded-2xl p-4">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="h-5 w-5 text-red-400 flex-shrink-0" />
+                <p className="text-sm text-red-800">{error}</p>
+              </div>
+            </div>
+          )}
+          {success && (
+            <div className="mb-5 bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
+              <div className="flex items-center gap-3">
+                <Shield className="h-5 w-5 text-emerald-400 flex-shrink-0" />
+                <p className="text-sm text-emerald-800">{success}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Tab Content */}
+          <div className="bg-white rounded-[24px] shadow-xl shadow-slate-200/40 border border-slate-100/80">
           {activeTab === 'profile' && (
-            <div className="p-4 sm:p-6">
-              <div className="flex justify-between items-center mb-4 sm:mb-6">
-                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">{t.personalInfo}</h2>
+            <div className="p-6 lg:p-8">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-slate-800">{t.personalInfo}</h2>
                 <button
                   onClick={() => {
                     if (isEditing) {
@@ -978,47 +1008,46 @@ const MyPageWithWithdrawal = () => {
                     }
                   }}
                   disabled={processing}
-                  className="px-3 sm:px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-50 min-h-[44px]"
+                  className="px-5 py-2.5 bg-blue-600 text-white text-sm rounded-full hover:bg-blue-700 disabled:opacity-50 font-medium transition-all shadow-lg shadow-blue-600/20"
                 >
                   {processing ? t.processing : (isEditing ? t.save : t.edit)}
                 </button>
               </div>
-              
-              {/* 성공/오류 메시지 */}
+
               {success && (
-                <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
-                  <p className="text-green-800">{success}</p>
+                <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                  <p className="text-emerald-800 text-sm">{success}</p>
                 </div>
               )}
               {error && (
-                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
-                  <p className="text-red-800">{error}</p>
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl">
+                  <p className="text-red-800 text-sm">{error}</p>
                 </div>
               )}
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{t.name}</label>
+                    <label className="block text-xs font-medium text-slate-500">{t.name}</label>
                     {isEditing ? (
                       <input
                         type="text"
                         value={editForm.name}
                         onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="mt-1 w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                       />
                     ) : (
-                      <p className="mt-1 text-sm text-gray-900">{profile?.name || (language === 'ja' ? '名前未設定' : '이름 없음')}</p>
+                      <p className="mt-1 text-sm text-slate-800">{profile?.name || (language === 'ja' ? '名前未設定' : '이름 없음')}</p>
                     )}
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{t.email}</label>
-                    <p className="mt-1 text-sm text-gray-900">{profile?.email || user?.email}</p>
+                    <label className="block text-xs font-medium text-slate-500">{t.email}</label>
+                    <p className="mt-1 text-sm text-slate-800">{profile?.email || user?.email}</p>
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-xs font-medium text-slate-500">
                       {t.phone}
                       <span className="text-xs text-gray-500 ml-1">({language === 'ja' ? '任意' : '선택사항'})</span>
                     </label>
@@ -1027,18 +1056,18 @@ const MyPageWithWithdrawal = () => {
                         type="tel"
                         value={editForm.phone}
                         onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="mt-1 w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         placeholder="080-1234-5678"
                       />
                     ) : (
-                      <p className="mt-1 text-sm text-gray-900">{profile?.phone || (language === 'ja' ? '未登録' : '등록되지 않음')}</p>
+                      <p className="mt-1 text-sm text-slate-800">{profile?.phone || (language === 'ja' ? '未登録' : '등록되지 않음')}</p>
                     )}
                   </div>
                   
                   {/* 주소 필드는 데이터베이스 스키마 적용 후 활성화 */}
                   {/* 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-xs font-medium text-slate-500">
                       {t.address}
                       <span className="text-xs text-gray-500 ml-1">({language === 'ja' ? '任意' : '선택사항'})</span>
                     </label>
@@ -1047,22 +1076,22 @@ const MyPageWithWithdrawal = () => {
                         type="text"
                         value={editForm.address || ''}
                         onChange={(e) => setEditForm({...editForm, address: e.target.value})}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="mt-1 w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         placeholder={language === 'ja' ? '東京都渋谷区...' : '서울특별시 강남구...'}
                       />
                     ) : (
-                      <p className="mt-1 text-sm text-gray-900">{profile?.address || (language === 'ja' ? '未登録' : '등록되지 않음')}</p>
+                      <p className="mt-1 text-sm text-slate-800">{profile?.address || (language === 'ja' ? '未登録' : '등록되지 않음')}</p>
                     )}
                   </div>
                   */}
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{t.skinType}</label>
+                    <label className="block text-xs font-medium text-slate-500">{t.skinType}</label>
                     {isEditing ? (
                       <select
                         value={editForm.skin_type}
                         onChange={(e) => setEditForm({...editForm, skin_type: e.target.value})}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="mt-1 w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                       >
                         <option value="">選択してください</option>
                         <option value="乾燥肌">乾燥肌</option>
@@ -1072,14 +1101,14 @@ const MyPageWithWithdrawal = () => {
                         <option value="普通肌">普通肌</option>
                       </select>
                     ) : (
-                      <p className="mt-1 text-sm text-gray-900">{profile?.skin_type || '未設定'}</p>
+                      <p className="mt-1 text-sm text-slate-800">{profile?.skin_type || '未設定'}</p>
                     )}
                   </div>
                 </div>
                 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-xs font-medium text-slate-500">
                       {t.age}
                       <span className="text-xs text-gray-500 ml-1">({language === 'ja' ? '任意' : '선택사항'})</span>
                     </label>
@@ -1088,18 +1117,18 @@ const MyPageWithWithdrawal = () => {
                         type="number"
                         value={editForm.age || ''}
                         onChange={(e) => setEditForm({...editForm, age: e.target.value})}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="mt-1 w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         placeholder="25"
                         min="1"
                         max="100"
                       />
                     ) : (
-                      <p className="mt-1 text-sm text-gray-900">{profile?.age || (language === 'ja' ? '未設定' : '미설정')}</p>
+                      <p className="mt-1 text-sm text-slate-800">{profile?.age || (language === 'ja' ? '未設定' : '미설정')}</p>
                     )}
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-xs font-medium text-slate-500">
                       {t.region}
                       <span className="text-xs text-gray-500 ml-1">({language === 'ja' ? '任意' : '선택사항'})</span>
                     </label>
@@ -1108,16 +1137,16 @@ const MyPageWithWithdrawal = () => {
                         type="text"
                         value={editForm.region || ''}
                         onChange={(e) => setEditForm({...editForm, region: e.target.value})}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="mt-1 w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         placeholder={language === 'ja' ? '東京都' : '서울특별시'}
                       />
                     ) : (
-                      <p className="mt-1 text-sm text-gray-900">{profile?.region || (language === 'ja' ? '未設定' : '미설정')}</p>
+                      <p className="mt-1 text-sm text-slate-800">{profile?.region || (language === 'ja' ? '未設定' : '미설정')}</p>
                     )}
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-xs font-medium text-slate-500">
                       {t.bio}
                       <span className="text-xs text-gray-500 ml-1">({language === 'ja' ? '任意' : '선택사항'})</span>
                     </label>
@@ -1125,31 +1154,31 @@ const MyPageWithWithdrawal = () => {
                       <textarea
                         value={editForm.bio || ''}
                         onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="mt-1 w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         rows="2"
                         placeholder={language === 'ja' ? '自己紹介を入力してください...' : '자기소개를 입력하세요...'}
                       />
                     ) : (
-                      <p className="mt-1 text-sm text-gray-900">{profile?.bio || (language === 'ja' ? '未設定' : '미설정')}</p>
+                      <p className="mt-1 text-sm text-slate-800">{profile?.bio || (language === 'ja' ? '未設定' : '미설정')}</p>
                     )}
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{t.joinDate}</label>
-                    <p className="mt-1 text-sm text-gray-900">
+                    <label className="block text-xs font-medium text-slate-500">{t.joinDate}</label>
+                    <p className="mt-1 text-sm text-slate-800">
                       {profile?.created_at ? new Date(profile.created_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'ja-JP') : '-'}
                     </p>
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{t.userRole}</label>
+                    <label className="block text-xs font-medium text-slate-500">{t.userRole}</label>
                     <div className="mt-1">{getRoleBadge(profile?.user_role)}</div>
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{t.currentPoints}</label>
+                    <label className="block text-xs font-medium text-slate-500">{t.currentPoints}</label>
                     <div className="flex items-center justify-between mt-1 flex-wrap gap-2">
-                      <p className="text-lg font-semibold text-purple-600">
+                      <p className="text-lg font-bold text-blue-600">
                         {profile?.points?.toLocaleString() || 0}P
                       </p>
                       <button
@@ -1164,23 +1193,23 @@ const MyPageWithWithdrawal = () => {
               </div>
               
               {/* SNS 주소 섹션 */}
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
+              <div className="mt-8 pt-6 border-t border-slate-100">
+                <h3 className="text-base font-semibold text-slate-700 mb-4">
                   {language === 'ko' ? 'SNS 주소' : 'SNSアドレス'}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Instagram</label>
+                    <label className="block text-xs font-medium text-slate-500">Instagram</label>
                     {isEditing ? (
                       <input
                         type="url"
                         value={editForm.instagram_url}
                         onChange={(e) => setEditForm({...editForm, instagram_url: e.target.value})}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="mt-1 w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         placeholder="https://instagram.com/username"
                       />
                     ) : (
-                      <p className="mt-1 text-sm text-gray-900">
+                      <p className="mt-1 text-sm text-slate-800">
                         {profile?.instagram_url ? (
                           <a href={profile.instagram_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                             {profile.instagram_url}
@@ -1191,17 +1220,17 @@ const MyPageWithWithdrawal = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">TikTok</label>
+                    <label className="block text-xs font-medium text-slate-500">TikTok</label>
                     {isEditing ? (
                       <input
                         type="url"
                         value={editForm.tiktok_url}
                         onChange={(e) => setEditForm({...editForm, tiktok_url: e.target.value})}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="mt-1 w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         placeholder="https://tiktok.com/@username"
                       />
                     ) : (
-                      <p className="mt-1 text-sm text-gray-900">
+                      <p className="mt-1 text-sm text-slate-800">
                         {profile?.tiktok_url ? (
                           <a href={profile.tiktok_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                             {profile.tiktok_url}
@@ -1212,17 +1241,17 @@ const MyPageWithWithdrawal = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">YouTube</label>
+                    <label className="block text-xs font-medium text-slate-500">YouTube</label>
                     {isEditing ? (
                       <input
                         type="url"
                         value={editForm.youtube_url}
                         onChange={(e) => setEditForm({...editForm, youtube_url: e.target.value})}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="mt-1 w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         placeholder="https://youtube.com/@username"
                       />
                     ) : (
-                      <p className="mt-1 text-sm text-gray-900">
+                      <p className="mt-1 text-sm text-slate-800">
                         {profile?.youtube_url ? (
                           <a href={profile.youtube_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                             {profile.youtube_url}
@@ -1233,17 +1262,17 @@ const MyPageWithWithdrawal = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{language === 'ja' ? 'その他のSNS' : '기타 SNS'}</label>
+                    <label className="block text-xs font-medium text-slate-500">{language === 'ja' ? 'その他のSNS' : '기타 SNS'}</label>
                     {isEditing ? (
                       <input
                         type="url"
                         value={editForm.other_sns_url}
                         onChange={(e) => setEditForm({...editForm, other_sns_url: e.target.value})}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="mt-1 w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         placeholder="https://other-sns.com/username"
                       />
                     ) : (
-                      <p className="mt-1 text-sm text-gray-900">
+                      <p className="mt-1 text-sm text-slate-800">
                         {profile?.other_sns_url ? (
                           <a href={profile.other_sns_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                             {profile.other_sns_url}
@@ -1258,60 +1287,60 @@ const MyPageWithWithdrawal = () => {
 
 
               {/* SNS 팔로워 수 섹션 */}
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
+              <div className="mt-8 pt-6 border-t border-slate-100">
+                <h3 className="text-base font-semibold text-slate-700 mb-4">
                   {language === 'ja' ? 'SNSフォロワー数' : 'SNS 팔로워 수'}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{t.instagramFollowers}</label>
+                    <label className="block text-xs font-medium text-slate-500">{t.instagramFollowers}</label>
                     {isEditing ? (
                       <input
                         type="number"
                         value={editForm.instagram_followers}
                         onChange={(e) => setEditForm({...editForm, instagram_followers: e.target.value})}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="mt-1 w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         placeholder="1000"
                         min="0"
                       />
                     ) : (
-                      <p className="mt-1 text-sm text-gray-900">
+                      <p className="mt-1 text-sm text-slate-800">
                         {profile?.instagram_followers ? profile.instagram_followers.toLocaleString() : (language === 'ja' ? '未設定' : '설정되지 않음')}
                       </p>
                     )}
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{t.tiktokFollowers}</label>
+                    <label className="block text-xs font-medium text-slate-500">{t.tiktokFollowers}</label>
                     {isEditing ? (
                       <input
                         type="number"
                         value={editForm.tiktok_followers}
                         onChange={(e) => setEditForm({...editForm, tiktok_followers: e.target.value})}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="mt-1 w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         placeholder="1000"
                         min="0"
                       />
                     ) : (
-                      <p className="mt-1 text-sm text-gray-900">
+                      <p className="mt-1 text-sm text-slate-800">
                         {profile?.tiktok_followers ? profile.tiktok_followers.toLocaleString() : (language === 'ja' ? '未設定' : '설정되지 않음')}
                       </p>
                     )}
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{t.youtubeSubscribers}</label>
+                    <label className="block text-xs font-medium text-slate-500">{t.youtubeSubscribers}</label>
                     {isEditing ? (
                       <input
                         type="number"
                         value={editForm.youtube_subscribers}
                         onChange={(e) => setEditForm({...editForm, youtube_subscribers: e.target.value})}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="mt-1 w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         placeholder="1000"
                         min="0"
                       />
                     ) : (
-                      <p className="mt-1 text-sm text-gray-900">
+                      <p className="mt-1 text-sm text-slate-800">
                         {profile?.youtube_subscribers ? profile.youtube_subscribers.toLocaleString() : (language === 'ja' ? '未設定' : '설정되지 않음')}
                       </p>
                     )}
@@ -1320,8 +1349,8 @@ const MyPageWithWithdrawal = () => {
               </div>
 
               {/* 마케팅 수신 동의 */}
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
+              <div className="mt-6 pt-6 border-t border-slate-100">
+                <h3 className="text-base font-semibold text-slate-700 mb-4">
                   {language === 'ja' ? 'マーケティング受信同意' : '마케팅 수신 동의'}
                 </h3>
                 <div className="space-y-3">
@@ -1332,7 +1361,7 @@ const MyPageWithWithdrawal = () => {
                       checked={editForm.sms_consent}
                       onChange={(e) => setEditForm({...editForm, sms_consent: e.target.checked})}
                       disabled={!isEditing}
-                      className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 disabled:opacity-50"
+                      className="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 disabled:opacity-50"
                     />
                     <label htmlFor="sms_consent" className="ml-2 block text-sm text-gray-700">
                       {language === 'ja' ? 'SMS受信同意' : 'SMS 수신 동의'}
@@ -1345,7 +1374,7 @@ const MyPageWithWithdrawal = () => {
                       checked={editForm.email_consent}
                       onChange={(e) => setEditForm({...editForm, email_consent: e.target.checked})}
                       disabled={!isEditing}
-                      className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 disabled:opacity-50"
+                      className="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 disabled:opacity-50"
                     />
                     <label htmlFor="email_consent" className="ml-2 block text-sm text-gray-700">
                       {language === 'ja' ? 'メール受信同意' : '이메일 수신 동의'}
@@ -1673,20 +1702,20 @@ const MyPageWithWithdrawal = () => {
           )}
 
           {activeTab === 'withdrawals' && (
-            <div className="p-4 sm:p-6">
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">{t.withdrawalHistory}</h2>
+            <div className="p-6 lg:p-8">
+              <h2 className="text-xl font-bold text-slate-800 mb-6">{t.withdrawalHistory}</h2>
 
               {withdrawals.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <CreditCard className="mx-auto h-12 w-12 text-gray-400" />
-                  <p className="mt-4">{t.noData}</p>
+                <div className="text-center py-16 text-slate-400">
+                  <Wallet className="mx-auto h-12 w-12 text-slate-300 mb-4" />
+                  <p>{t.noData}</p>
                 </div>
               ) : (
                 <>
                   {/* Mobile card view */}
                   <div className="sm:hidden space-y-3">
                     {withdrawals.map((withdrawal) => (
-                      <div key={withdrawal.id} className="border border-gray-200 rounded-lg p-4">
+                      <div key={withdrawal.id} className="border border-slate-100 rounded-2xl p-4">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-sm font-medium text-gray-900">
                             {withdrawal.withdrawal_method === 'paypal' ? 'PayPal' :
@@ -1779,20 +1808,20 @@ const MyPageWithWithdrawal = () => {
           )}
 
           {activeTab === 'points' && (
-            <div className="p-4 sm:p-6">
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">{t.pointHistory}</h2>
+            <div className="p-6 lg:p-8">
+              <h2 className="text-xl font-bold text-slate-800 mb-6">{t.pointHistory}</h2>
 
               {pointTransactions.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <Download className="mx-auto h-12 w-12 text-gray-400" />
-                  <p className="mt-4">{t.noData}</p>
+                <div className="text-center py-16 text-slate-400">
+                  <TrendingUp className="mx-auto h-12 w-12 text-slate-300 mb-4" />
+                  <p>{t.noData}</p>
                 </div>
               ) : (
                 <>
                   {/* Mobile card view */}
                   <div className="sm:hidden space-y-3">
                     {pointTransactions.map((transaction) => (
-                      <div key={transaction.id} className="border border-gray-200 rounded-lg p-4">
+                      <div key={transaction.id} className="border border-slate-100 rounded-2xl p-4">
                         <div className="flex items-center justify-between mb-2">
                           <span className={`text-sm font-medium ${getTransactionTypeColor(transaction.transaction_type)}`}>
                             {getTransactionTypeText(transaction.transaction_type)}
@@ -1885,26 +1914,21 @@ const MyPageWithWithdrawal = () => {
           )}
 
           {activeTab === 'settings' && (
-            <div className="p-4 sm:p-6">
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">{t.accountSettings}</h2>
-              
+            <div className="p-6 lg:p-8">
+              <h2 className="text-xl font-bold text-slate-800 mb-6">{t.accountSettings}</h2>
+
               <div className="space-y-6">
-                {/* 계정 삭제 섹션 */}
-                <div className="border border-red-200 rounded-lg p-6 bg-red-50">
-                  <div className="flex items-start">
-                    <AlertTriangle className="h-6 w-6 text-red-600 mt-1" />
-                    <div className="ml-4 flex-1">
-                      <h3 className="text-lg font-medium text-red-900">{t.accountDeletion}</h3>
-                      <p className="mt-2 text-sm text-red-700">
-                        {t.deleteAccountWarning}
-                      </p>
-                      <p className="mt-2 text-sm text-red-700">
-                        {t.deleteAccountDescription}
-                      </p>
+                <div className="border border-red-200 rounded-2xl p-6 bg-red-50">
+                  <div className="flex items-start gap-4">
+                    <AlertTriangle className="h-6 w-6 text-red-500 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <h3 className="text-base font-semibold text-red-800">{t.accountDeletion}</h3>
+                      <p className="mt-2 text-sm text-red-600">{t.deleteAccountWarning}</p>
+                      <p className="mt-1 text-sm text-red-600">{t.deleteAccountDescription}</p>
                       <div className="mt-4">
                         <button
                           onClick={() => setShowWithdrawalModal(true)}
-                          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+                          className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-full transition-all"
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
                           {t.deleteAccount}
@@ -1916,22 +1940,380 @@ const MyPageWithWithdrawal = () => {
               </div>
             </div>
           )}
+          </div>
+        </main>
+      </div>
+
+      {/* ========== Mobile Layout ========== */}
+      <div className="md:hidden pb-24">
+        {/* Mobile Header */}
+        <div className="bg-white border-b border-slate-100 sticky top-0 z-40">
+          <div className="px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button onClick={() => window.location.href = '/'} className="p-1.5 text-slate-400 hover:text-slate-600">
+                <Home className="w-5 h-5" />
+              </button>
+              <h1 className="text-base font-bold text-slate-800">{t.title}</h1>
+            </div>
+            <button onClick={signOut} className="p-1.5 text-slate-400 hover:text-red-500">
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
-        {/* 출금 신청 모달 */}
-        {showWithdrawModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-[9999] px-4">
-            <div className="relative top-10 sm:top-20 mx-auto p-4 sm:p-5 border w-full max-w-sm sm:max-w-md shadow-lg rounded-lg bg-white mb-10">
-              <div className="mt-3">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">{t.withdrawRequestTitle}</h3>
-                  <button
-                    onClick={() => setShowWithdrawModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
+        {/* Mobile Profile Card (Instagram-style) */}
+        <div className="px-4 pt-5 pb-3">
+          <div className="bg-white rounded-[24px] shadow-lg shadow-slate-100/50 border border-slate-100/80 p-5">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-600/25 flex-shrink-0">
+                <span className="text-white text-xl font-bold">
+                  {(profile?.name || user?.email || '?')[0]?.toUpperCase()}
+                </span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base font-bold text-slate-800 truncate">{profile?.name || user?.email}</h2>
+                <p className="text-xs text-slate-400 truncate">{profile?.email || user?.email}</p>
+                <div className="mt-1">{getRoleBadge(profile?.user_role)}</div>
+              </div>
+            </div>
+            {/* Mobile Stats Row */}
+            <div className="grid grid-cols-3 gap-2 py-3 border-t border-slate-100">
+              <div className="text-center">
+                <div className="text-base font-bold text-slate-800">{applications.length}</div>
+                <div className="text-[10px] text-slate-400">{language === 'ja' ? '応募' : '신청'}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-base font-bold text-blue-600">{(profile?.points || 0).toLocaleString()}</div>
+                <div className="text-[10px] text-slate-400">{language === 'ja' ? 'ポイント' : '포인트'}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-base font-bold text-slate-800">{withdrawals.length}</div>
+                <div className="text-[10px] text-slate-400">{language === 'ja' ? '出金' : '출금'}</div>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowWithdrawModal(true)}
+              className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2.5 rounded-full transition-colors shadow-lg shadow-blue-600/20"
+            >
+              {t.withdrawRequest}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Alert Messages */}
+        <div className="px-4">
+          {error && error !== t.messages?.error && (
+            <div className="mb-3 bg-red-50 border border-red-200 rounded-2xl p-3">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-red-400 flex-shrink-0" />
+                <p className="text-xs text-red-800">{error}</p>
+              </div>
+            </div>
+          )}
+          {success && (
+            <div className="mb-3 bg-emerald-50 border border-emerald-200 rounded-2xl p-3">
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                <p className="text-xs text-emerald-800">{success}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile Tab Content */}
+        <div className="px-4 mt-2">
+          <div className="bg-white rounded-[24px] shadow-lg shadow-slate-100/50 border border-slate-100/80">
+          {activeTab === 'profile' && (
+            <div className="p-4 sm:p-6">
+              <div className="flex justify-between items-center mb-4 sm:mb-6">
+                <h2 className="text-lg sm:text-xl font-semibold text-slate-800">{t.personalInfo}</h2>
+                <button
+                  onClick={() => {
+                    if (isEditing) {
+                      handleProfileSave()
+                    } else {
+                      setIsEditing(true)
+                    }
+                  }}
+                  disabled={processing}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded-full hover:bg-blue-700 disabled:opacity-50 font-medium"
+                >
+                  {processing ? t.processing : (isEditing ? t.save : t.edit)}
+                </button>
+              </div>
+
+              {success && (
+                <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                  <p className="text-emerald-800 text-sm">{success}</p>
                 </div>
+              )}
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl">
+                  <p className="text-red-800 text-sm">{error}</p>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">{t.name}</label>
+                  {isEditing ? (
+                    <input type="text" value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                  ) : (
+                    <p className="text-sm text-slate-800 py-2">{profile?.name || (language === 'ja' ? '名前未設定' : '이름 없음')}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">{t.email}</label>
+                  <p className="text-sm text-slate-800 py-2">{profile?.email || user?.email}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">{t.phone}</label>
+                  {isEditing ? (
+                    <input type="tel" value={editForm.phone} onChange={(e) => setEditForm({...editForm, phone: e.target.value})} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="080-1234-5678" />
+                  ) : (
+                    <p className="text-sm text-slate-800 py-2">{profile?.phone || (language === 'ja' ? '未登録' : '등록되지 않음')}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">{t.skinType}</label>
+                  {isEditing ? (
+                    <select value={editForm.skin_type} onChange={(e) => setEditForm({...editForm, skin_type: e.target.value})} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                      <option value="">選択してください</option>
+                      <option value="乾燥肌">乾燥肌</option>
+                      <option value="脂性肌">脂性肌</option>
+                      <option value="混合肌">混合肌</option>
+                      <option value="敏感肌">敏感肌</option>
+                      <option value="普通肌">普通肌</option>
+                    </select>
+                  ) : (
+                    <p className="text-sm text-slate-800 py-2">{profile?.skin_type || '未設定'}</p>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">{t.age}</label>
+                    {isEditing ? (
+                      <input type="number" value={editForm.age || ''} onChange={(e) => setEditForm({...editForm, age: e.target.value})} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="25" min="1" max="100" />
+                    ) : (
+                      <p className="text-sm text-slate-800 py-2">{profile?.age || (language === 'ja' ? '未設定' : '미설정')}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">{t.region}</label>
+                    {isEditing ? (
+                      <input type="text" value={editForm.region || ''} onChange={(e) => setEditForm({...editForm, region: e.target.value})} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder={language === 'ja' ? '東京都' : '서울특별시'} />
+                    ) : (
+                      <p className="text-sm text-slate-800 py-2">{profile?.region || (language === 'ja' ? '未設定' : '미설정')}</p>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">{t.bio}</label>
+                  {isEditing ? (
+                    <textarea value={editForm.bio || ''} onChange={(e) => setEditForm({...editForm, bio: e.target.value})} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" rows="2" placeholder={language === 'ja' ? '自己紹介を入力してください...' : '자기소개를 입력하세요...'} />
+                  ) : (
+                    <p className="text-sm text-slate-800 py-2">{profile?.bio || (language === 'ja' ? '未設定' : '미설정')}</p>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">{t.joinDate}</label>
+                    <p className="text-sm text-slate-800 py-2">{profile?.created_at ? new Date(profile.created_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'ja-JP') : '-'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">{t.userRole}</label>
+                    <div className="py-2">{getRoleBadge(profile?.user_role)}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* SNS - Mobile */}
+              <div className="mt-6 pt-5 border-t border-slate-100">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">{language === 'ko' ? 'SNS 주소' : 'SNSアドレス'}</h3>
+                <div className="space-y-3">
+                  {[
+                    { label: 'Instagram', key: 'instagram_url', placeholder: 'https://instagram.com/username' },
+                    { label: 'TikTok', key: 'tiktok_url', placeholder: 'https://tiktok.com/@username' },
+                    { label: 'YouTube', key: 'youtube_url', placeholder: 'https://youtube.com/@username' },
+                    { label: language === 'ja' ? 'その他' : '기타', key: 'other_sns_url', placeholder: 'https://...' }
+                  ].map(sns => (
+                    <div key={sns.key}>
+                      <label className="block text-xs font-medium text-slate-500 mb-1">{sns.label}</label>
+                      {isEditing ? (
+                        <input type="url" value={editForm[sns.key]} onChange={(e) => setEditForm({...editForm, [sns.key]: e.target.value})} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder={sns.placeholder} />
+                      ) : (
+                        <p className="text-sm text-slate-800 py-1 truncate">
+                          {profile?.[sns.key] ? <a href={profile[sns.key]} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{profile[sns.key]}</a> : (language === 'ja' ? '未登録' : '등록되지 않음')}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Followers - Mobile */}
+              <div className="mt-5 pt-5 border-t border-slate-100">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">{language === 'ja' ? 'SNSフォロワー数' : 'SNS 팔로워 수'}</h3>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { label: 'Instagram', key: 'instagram_followers', display: profile?.instagram_followers },
+                    { label: 'TikTok', key: 'tiktok_followers', display: profile?.tiktok_followers },
+                    { label: 'YouTube', key: 'youtube_subscribers', display: profile?.youtube_subscribers }
+                  ].map(item => (
+                    <div key={item.key}>
+                      <label className="block text-[10px] font-medium text-slate-400 mb-1">{item.label}</label>
+                      {isEditing ? (
+                        <input type="number" value={editForm[item.key]} onChange={(e) => setEditForm({...editForm, [item.key]: e.target.value})} className="w-full px-2 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs" placeholder="0" min="0" />
+                      ) : (
+                        <p className="text-xs font-medium text-slate-700">{item.display ? item.display.toLocaleString() : (language === 'ja' ? '未設定' : '미설정')}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Marketing Consent - Mobile */}
+              <div className="mt-5 pt-5 border-t border-slate-100">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">{language === 'ja' ? 'マーケティング受信同意' : '마케팅 수신 동의'}</h3>
+                <div className="space-y-2.5">
+                  <label className="flex items-center gap-2">
+                    <input type="checkbox" checked={editForm.sms_consent} onChange={(e) => setEditForm({...editForm, sms_consent: e.target.checked})} disabled={!isEditing} className="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 disabled:opacity-50" />
+                    <span className="text-sm text-slate-700">{language === 'ja' ? 'SMS受信同意' : 'SMS 수신 동의'}</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input type="checkbox" checked={editForm.email_consent} onChange={(e) => setEditForm({...editForm, email_consent: e.target.checked})} disabled={!isEditing} className="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 disabled:opacity-50" />
+                    <span className="text-sm text-slate-700">{language === 'ja' ? 'メール受信同意' : '이메일 수신 동의'}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'applications' && (
+            <MyPageCampaignsTab applications={applications} user={user} />
+          )}
+
+          {activeTab === 'applications_old' && (
+            <div className="p-4 text-center text-slate-400 text-sm py-12">{t.noData}</div>
+          )}
+
+          {activeTab === 'withdrawals' && (
+            <div className="p-4">
+              <h2 className="text-base font-semibold text-slate-800 mb-4">{t.withdrawalHistory}</h2>
+              {withdrawals.length === 0 ? (
+                <div className="text-center py-10 text-slate-400">
+                  <Wallet className="mx-auto h-10 w-10 text-slate-300 mb-3" />
+                  <p className="text-sm">{t.noData}</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {withdrawals.map((w) => (
+                    <div key={w.id} className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-slate-700">
+                          {w.withdrawal_method === 'paypal' ? 'PayPal' : w.withdrawal_method === 'bank' ? (language === 'ko' ? '은행 송금' : '銀行振込') : w.withdrawal_method || 'PayPal'}
+                        </span>
+                        <span className={`px-2.5 py-0.5 text-[10px] font-semibold rounded-full ${w.status === 'completed' ? 'bg-emerald-100 text-emerald-700' : w.status === 'approved' ? 'bg-blue-100 text-blue-700' : w.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                          {w.status === 'completed' ? (language === 'ko' ? '완료' : '完了') : w.status === 'approved' ? (language === 'ko' ? '승인됨' : '承認済み') : w.status === 'rejected' ? (language === 'ko' ? '거절됨' : '拒否済み') : (language === 'ko' ? '대기중' : '待機中')}
+                        </span>
+                      </div>
+                      <p className="text-lg font-bold text-slate-800">¥{w.amount?.toLocaleString() || '0'}</p>
+                      <p className="text-[10px] text-slate-400 mt-1">{new Date(w.created_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'ja-JP')}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'points' && (
+            <div className="p-4">
+              <h2 className="text-base font-semibold text-slate-800 mb-4">{t.pointHistory}</h2>
+              {pointTransactions.length === 0 ? (
+                <div className="text-center py-10 text-slate-400">
+                  <TrendingUp className="mx-auto h-10 w-10 text-slate-300 mb-3" />
+                  <p className="text-sm">{t.noData}</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {pointTransactions.map((tx) => (
+                    <div key={tx.id} className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={`text-xs font-medium ${getTransactionTypeColor(tx.transaction_type)}`}>{getTransactionTypeText(tx.transaction_type)}</span>
+                        <span className={`text-base font-bold ${tx.amount > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                          {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()}P
+                        </span>
+                      </div>
+                      {tx.description && <p className="text-[10px] text-slate-500 line-clamp-1">{tx.description}</p>}
+                      <p className="text-[10px] text-slate-400 mt-1">{new Date(tx.created_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'ja-JP')}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <div className="p-4">
+              <h2 className="text-base font-semibold text-slate-800 mb-4">{t.accountSettings}</h2>
+              <div className="border border-red-200 rounded-2xl p-4 bg-red-50">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-red-800">{t.accountDeletion}</h3>
+                    <p className="mt-1 text-xs text-red-600">{t.deleteAccountWarning}</p>
+                    <button
+                      onClick={() => setShowWithdrawalModal(true)}
+                      className="mt-3 inline-flex items-center px-3 py-2 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-full"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                      {t.deleteAccount}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          </div>
+        </div>
+
+        {/* Mobile Bottom Navigation */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+          <nav className="flex items-center justify-around px-2 py-1.5 max-w-lg mx-auto">
+            {tabItems.map((tab) => {
+              const Icon = tab.icon
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex flex-col items-center gap-0.5 py-1.5 px-3 rounded-xl transition-all min-w-[56px] ${
+                    activeTab === tab.id
+                      ? 'text-blue-600'
+                      : 'text-slate-400'
+                  }`}
+                >
+                  <Icon className={`w-5 h-5 ${activeTab === tab.id ? 'text-blue-600' : ''}`} />
+                  <span className={`text-[9px] font-medium leading-tight ${activeTab === tab.id ? 'text-blue-600' : ''}`}>{tab.mobileLabel}</span>
+                </button>
+              )
+            })}
+          </nav>
+        </div>
+      </div>
+
+      {/* ========== Modals (shared between PC and Mobile) ========== */}
+
+      {/* 출금 신청 모달 */}
+      {showWithdrawModal && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm overflow-y-auto h-full w-full z-[9999] px-4">
+          <div className="relative top-10 sm:top-20 mx-auto p-5 sm:p-6 w-full max-w-sm sm:max-w-md shadow-2xl rounded-[24px] bg-white mb-10 border border-slate-100">
+            <div>
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-lg font-bold text-slate-800">{t.withdrawRequestTitle}</h3>
+                <button onClick={() => setShowWithdrawModal(false)} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
                 
                 {error && (
                   <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
@@ -2018,218 +2400,142 @@ const MyPageWithWithdrawal = () => {
                   </div>
                 </div>
                 
-                <div className="mt-6 flex justify-end space-x-3">
-                  <button
-                    onClick={() => setShowWithdrawModal(false)}
-                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
-                  >
-                    {t.cancel}
-                  </button>
-                  <button
-                    onClick={handleWithdrawSubmit}
-                    disabled={processing}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
-                  >
-                    {processing ? t.processing : t.submitWithdrawRequest}
-                  </button>
-                </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button onClick={() => setShowWithdrawModal(false)} className="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-full hover:bg-slate-200 text-sm font-medium transition-all">
+                  {t.cancel}
+                </button>
+                <button onClick={handleWithdrawSubmit} disabled={processing} className="px-5 py-2.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 text-sm font-medium transition-all shadow-lg shadow-blue-600/20">
+                  {processing ? t.processing : t.submitWithdrawRequest}
+                </button>
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* 회원 탈퇴 모달 */}
-        {showWithdrawalModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 px-4">
-            <div className="relative top-10 sm:top-20 mx-auto p-4 sm:p-5 border w-full max-w-sm sm:max-w-md shadow-lg rounded-lg bg-white mb-10">
-              <div className="mt-3">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">{t.accountDeletion}</h3>
-                  <button
-                    onClick={() => setShowWithdrawalModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <AlertTriangle className="w-5 h-5" />
-                  </button>
+      {/* 회원 탈퇴 모달 */}
+      {showWithdrawalModal && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 px-4">
+          <div className="relative top-10 sm:top-20 mx-auto p-5 sm:p-6 w-full max-w-sm sm:max-w-md shadow-2xl rounded-[24px] bg-white mb-10 border border-slate-100">
+            <div>
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-lg font-bold text-slate-800">{t.accountDeletion}</h3>
+                <button onClick={() => setShowWithdrawalModal(false)} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">{t.withdrawalReason} *</label>
+                  <select value={withdrawalReason} onChange={(e) => setWithdrawalReason(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 text-sm">
+                    <option value="">{language === 'ja' ? '理由を選択してください' : '사유를 선택하세요'}</option>
+                    <option value="service">{t.reasons.service}</option>
+                    <option value="privacy">{t.reasons.privacy}</option>
+                    <option value="unused">{t.reasons.unused}</option>
+                    <option value="other">{t.reasons.other}</option>
+                  </select>
                 </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t.withdrawalReason} *
-                    </label>
-                    <select
-                      value={withdrawalReason}
-                      onChange={(e) => setWithdrawalReason(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                    >
-                      <option value="">사유를 선택하세요</option>
-                      <option value="service">{t.reasons.service}</option>
-                      <option value="privacy">{t.reasons.privacy}</option>
-                      <option value="unused">{t.reasons.unused}</option>
-                      <option value="other">{t.reasons.other}</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t.withdrawalDetails}
-                    </label>
-                    <textarea
-                      value={withdrawalDetails}
-                      onChange={(e) => setWithdrawalDetails(e.target.value)}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                      placeholder="추가 설명이 있으시면 입력해주세요"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t.confirmDeletion} *
-                    </label>
-                    <p className="text-sm text-gray-600 mb-2">{t.confirmText}</p>
-                    <input
-                      type="text"
-                      value={confirmText}
-                      onChange={(e) => setConfirmText(e.target.value)}
-                      placeholder={t.confirmPlaceholder}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">{t.withdrawalDetails}</label>
+                  <textarea value={withdrawalDetails} onChange={(e) => setWithdrawalDetails(e.target.value)} rows={3} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 text-sm" placeholder={language === 'ja' ? '追加説明がある場合は入力してください' : '추가 설명이 있으시면 입력해주세요'} />
                 </div>
-                
-                <div className="mt-6 flex justify-end space-x-3">
-                  <button
-                    onClick={() => setShowWithdrawalModal(false)}
-                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
-                  >
-                    {t.cancel}
-                  </button>
-                  <button
-                    onClick={handleWithdrawalSubmit}
-                    disabled={processing}
-                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
-                  >
-                    {processing ? t.processing : t.submitWithdrawal}
-                  </button>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">{t.confirmDeletion} *</label>
+                  <p className="text-sm text-slate-500 mb-2">{t.confirmText}</p>
+                  <input type="text" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} placeholder={t.confirmPlaceholder} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 text-sm" />
                 </div>
+              </div>
+
+              <div className="mt-6 flex justify-end space-x-3">
+                <button onClick={() => setShowWithdrawalModal(false)} className="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-full hover:bg-slate-200 text-sm font-medium transition-all">
+                  {t.cancel}
+                </button>
+                <button onClick={handleWithdrawalSubmit} disabled={processing} className="px-5 py-2.5 bg-red-600 text-white rounded-full hover:bg-red-700 disabled:opacity-50 text-sm font-medium transition-all">
+                  {processing ? t.processing : t.submitWithdrawal}
+                </button>
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* SNS 업로드 및 포인트 신청 모달 */}
-        {showSnsUploadModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 px-4">
-            <div className="relative top-10 sm:top-20 mx-auto p-4 sm:p-5 border w-full max-w-sm sm:max-w-md shadow-lg rounded-lg bg-white mb-10">
-              <div className="mt-3">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">{t.pointRequestTitle}</h3>
-                  <button
-                    onClick={() => setShowSnsUploadModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-                
-                <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    {t.snsUploadDescription}
-                  </p>
-                  {selectedApplication && (
-                    <p className="text-sm text-blue-600 mt-2 font-medium">
-                      캠페인: {selectedApplication.campaign_title}
-                    </p>
-                  )}
-                </div>
-                
-                {error && (
-                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-                    <p className="text-sm text-red-800">{error}</p>
-                  </div>
+      {/* SNS 업로드 및 포인트 신청 모달 */}
+      {showSnsUploadModal && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 px-4">
+          <div className="relative top-10 sm:top-20 mx-auto p-5 sm:p-6 w-full max-w-sm sm:max-w-md shadow-2xl rounded-[24px] bg-white mb-10 border border-slate-100">
+            <div>
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-lg font-bold text-slate-800">{t.pointRequestTitle}</h3>
+                <button onClick={() => setShowSnsUploadModal(false)} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="mb-4 p-3 bg-blue-50 rounded-xl">
+                <p className="text-sm text-blue-800">{t.snsUploadDescription}</p>
+                {selectedApplication && (
+                  <p className="text-sm text-blue-600 mt-2 font-medium">{language === 'ja' ? 'キャンペーン' : '캠페인'}: {selectedApplication.campaign_title}</p>
                 )}
-                
-                {success && (
-                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
-                    <p className="text-sm text-green-800">{success}</p>
-                  </div>
-                )}
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t.snsUploadUrl} *
-                    </label>
-                    <input
-                      type="url"
-                      value={snsUploadForm.sns_upload_url}
-                      onChange={(e) => setSnsUploadForm({...snsUploadForm, sns_upload_url: e.target.value})}
-                      placeholder={language === 'ja' ? 'https://instagram.com/p/... または https://tiktok.com/@.../video/...' : 'https://instagram.com/p/... 또는 https://tiktok.com/@.../video/...'}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                      {language === 'ja' ? 'Instagram、TikTok、YouTubeなどのSNS投稿URLを入力してください' : 'Instagram, TikTok, YouTube 등의 SNS 게시물 URL을 입력해주세요'}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t.additionalNotes}
-                    </label>
-                    <textarea
-                      value={snsUploadForm.notes}
-                      onChange={(e) => setSnsUploadForm({...snsUploadForm, notes: e.target.value})}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder={language === 'ja' ? '追加情報があれば入力してください' : '추가 정보가 있으면 입력해주세요'}
-                    />
-                  </div>
+              </div>
+
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl">
+                  <p className="text-sm text-red-800">{error}</p>
                 </div>
-                
-                <div className="mt-6 flex justify-end space-x-3">
-                  <button
-                    onClick={() => setShowSnsUploadModal(false)}
-                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
-                  >
-                    {t.cancel}
-                  </button>
-                  <button
-                    onClick={handleSnsUploadSubmit}
-                    disabled={processing || !snsUploadForm.sns_upload_url || typeof snsUploadForm.sns_upload_url !== 'string' || !snsUploadForm.sns_upload_url.trim()}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {processing ? t.processing : t.submitPointRequest}
-                  </button>
+              )}
+              {success && (
+                <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                  <p className="text-sm text-emerald-800">{success}</p>
                 </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">{t.snsUploadUrl} *</label>
+                  <input type="url" value={snsUploadForm.sns_upload_url} onChange={(e) => setSnsUploadForm({...snsUploadForm, sns_upload_url: e.target.value})} placeholder={language === 'ja' ? 'https://instagram.com/p/...' : 'https://instagram.com/p/...'} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                  <p className="mt-1 text-xs text-slate-400">{language === 'ja' ? 'Instagram、TikTok、YouTubeなどのSNS投稿URLを入力してください' : 'Instagram, TikTok, YouTube 등의 SNS 게시물 URL을 입력해주세요'}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">{t.additionalNotes}</label>
+                  <textarea value={snsUploadForm.notes} onChange={(e) => setSnsUploadForm({...snsUploadForm, notes: e.target.value})} rows={3} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder={language === 'ja' ? '追加情報があれば入力してください' : '추가 정보가 있으면 입력해주세요'} />
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end space-x-3">
+                <button onClick={() => setShowSnsUploadModal(false)} className="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-full hover:bg-slate-200 text-sm font-medium transition-all">
+                  {t.cancel}
+                </button>
+                <button onClick={handleSnsUploadSubmit} disabled={processing || !snsUploadForm.sns_upload_url || typeof snsUploadForm.sns_upload_url !== 'string' || !snsUploadForm.sns_upload_url.trim()} className="px-5 py-2.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 text-sm font-medium transition-all shadow-lg shadow-blue-600/20">
+                  {processing ? t.processing : t.submitPointRequest}
+                </button>
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* 촬영 가이드 모달 */}
-        <ShootingGuideModal
-          isOpen={showGuideModal}
-          onClose={() => {
-            setShowGuideModal(false)
-            setSelectedGuideApplication(null)
-          }}
-          guide={selectedGuideApplication?.personalized_guide}
-          campaignTitle={selectedGuideApplication?.campaign_title}
-        />
+      {/* 촬영 가이드 모달 */}
+      <ShootingGuideModal
+        isOpen={showGuideModal}
+        onClose={() => {
+          setShowGuideModal(false)
+          setSelectedGuideApplication(null)
+        }}
+        guide={selectedGuideApplication?.personalized_guide}
+        campaignTitle={selectedGuideApplication?.campaign_title}
+      />
 
-        {/* 영상 업로드 모달 */}
-        <VideoUploadModal
-          isOpen={showVideoUploadModal}
-          onClose={() => {
-            setShowVideoUploadModal(false)
-            setSelectedGuideApplication(null)
-          }}
-          application={selectedGuideApplication}
-          onSuccess={loadUserData}
-        />
-      </div>
+      {/* 영상 업로드 모달 */}
+      <VideoUploadModal
+        isOpen={showVideoUploadModal}
+        onClose={() => {
+          setShowVideoUploadModal(false)
+          setSelectedGuideApplication(null)
+        }}
+        application={selectedGuideApplication}
+        onSuccess={loadUserData}
+      />
     </div>
   )
 }
