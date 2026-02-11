@@ -55,7 +55,7 @@ const MyPageWithWithdrawal = () => {
   const [withdrawals, setWithdrawals] = useState([])
   const [pointTransactions, setPointTransactions] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('profile')
+  const [activeTab, setActiveTab] = useState('dashboard')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   
   // 회원 탈퇴 관련 상태
@@ -872,12 +872,33 @@ const MyPageWithWithdrawal = () => {
 
   // Tab configuration for navigation
   const tabItems = [
-    { id: 'profile', label: t.profile, icon: User, mobileLabel: language === 'ja' ? 'プロフィール' : '프로필' },
+    { id: 'dashboard', label: language === 'ja' ? 'ダッシュボード' : '대시보드', icon: Layers, mobileLabel: language === 'ja' ? 'ホーム' : '홈' },
     { id: 'applications', label: t.applications, icon: Award, mobileLabel: language === 'ja' ? 'キャンペーン' : '캠페인' },
-    { id: 'withdrawals', label: t.withdrawals, icon: Wallet, mobileLabel: language === 'ja' ? '出金' : '출금' },
+    { id: 'profile', label: t.profile, icon: User, mobileLabel: language === 'ja' ? 'プロフィール' : '프로필' },
     { id: 'points', label: t.points, icon: TrendingUp, mobileLabel: language === 'ja' ? 'ポイント' : '포인트' },
     { id: 'settings', label: t.accountSettings, icon: Settings, mobileLabel: language === 'ja' ? '設定' : '설정' }
   ]
+
+  // Dashboard helper: get SNS connection status
+  const getSnsConnections = () => [
+    { name: 'Instagram', url: profile?.instagram_url, followers: profile?.instagram_followers, color: 'from-pink-500 to-purple-500' },
+    { name: 'TikTok', url: profile?.tiktok_url, followers: profile?.tiktok_followers, color: 'from-slate-800 to-slate-900' },
+    { name: 'YouTube', url: profile?.youtube_url, followers: profile?.youtube_subscribers, color: 'from-red-500 to-red-600' }
+  ]
+
+  // Dashboard helper: calculate performance
+  const getPerformance = () => {
+    const total = applications.length
+    const approved = applications.filter(a => ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed'].includes(a.status)).length
+    const completed = applications.filter(a => a.status === 'completed' || a.submission_status === 'submitted').length
+    return {
+      successRate: total > 0 ? Math.round((approved / total) * 100) : 0,
+      completionRate: approved > 0 ? Math.round((completed / approved) * 100) : 0,
+      total,
+      approved,
+      completed
+    }
+  }
 
   if (loading) {
     return (
@@ -1018,7 +1039,243 @@ const MyPageWithWithdrawal = () => {
           )}
 
           {/* Tab Content */}
-          <div className="bg-white rounded-[24px] shadow-xl shadow-slate-200/40 border border-slate-100/80">
+          {activeTab === 'dashboard' && (
+            <div className="space-y-6">
+              {/* Profile Header Card */}
+              <div className="bg-white rounded-[24px] shadow-xl shadow-slate-200/40 border border-slate-100/80 p-6 lg:p-8">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-5">
+                    <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-600/25 flex-shrink-0">
+                      <span className="text-white text-2xl font-bold">{(profile?.name || user?.email || '?')[0]?.toUpperCase()}</span>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2.5 mb-1">
+                        <h2 className="text-xl font-bold text-slate-800">{profile?.name || user?.email}</h2>
+                        {getRoleBadge(profile?.user_role)}
+                      </div>
+                      <p className="text-sm text-slate-400">{profile?.email || user?.email}</p>
+                      {profile?.instagram_url && (
+                        <p className="text-xs text-slate-400 mt-0.5">@{profile.instagram_url.split('/').pop() || 'instagram'}</p>
+                      )}
+                      <div className="flex gap-2 mt-3">
+                        <button onClick={() => setActiveTab('profile')} className="px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-full hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20">
+                          {language === 'ja' ? 'プロフィール編集' : '프로필 편집'}
+                        </button>
+                        <button onClick={() => setActiveTab('settings')} className="px-4 py-2 bg-white text-slate-600 text-xs font-semibold rounded-full border border-slate-200 hover:bg-slate-50 transition-all">
+                          {language === 'ja' ? 'アカウント設定' : '계정 설정'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="hidden lg:flex gap-4">
+                    <div className="text-center px-5 py-3 bg-slate-50 rounded-2xl border border-slate-100">
+                      <div className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">{language === 'ja' ? 'ランク' : '등급'}</div>
+                      <div className="text-lg font-bold text-slate-800 mt-0.5">{(profile?.user_role || 'user').toUpperCase()}</div>
+                    </div>
+                    <div className="text-center px-5 py-3 bg-slate-50 rounded-2xl border border-slate-100">
+                      <div className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">{language === 'ja' ? '登録' : '가입'}</div>
+                      <div className="text-lg font-bold text-slate-800 mt-0.5">{profile?.created_at ? new Date(profile.created_at).getFullYear() : '-'}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left Column */}
+                <div className="lg:col-span-2 space-y-6">
+                  {/* Points Balance Card */}
+                  <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 rounded-[24px] p-6 lg:p-8 text-white relative overflow-hidden shadow-xl">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+                    <div className="relative">
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="text-blue-300 text-xs font-semibold uppercase tracking-wider">{language === 'ja' ? '保有ポイント' : '보유 포인트'}</span>
+                        <span className="bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full text-[10px] font-semibold flex items-center gap-1">
+                          <TrendingUp className="w-3 h-3" />
+                          1P = ¥1
+                        </span>
+                      </div>
+                      <div className="text-4xl lg:text-5xl font-bold mb-6 tracking-tight">
+                        ¥ {(profile?.points || 0).toLocaleString()}<span className="text-lg text-slate-400">.00</span>
+                      </div>
+                      <div className="flex gap-3">
+                        <button onClick={() => setShowWithdrawModal(true)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-3 rounded-full transition-all shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2">
+                          <Wallet className="w-4 h-4" />
+                          {t.withdrawRequest}
+                        </button>
+                        <button onClick={() => setActiveTab('points')} className="flex-1 bg-white/10 hover:bg-white/15 backdrop-blur-sm text-white text-sm font-semibold py-3 rounded-full transition-all border border-white/10 flex items-center justify-center gap-2">
+                          <TrendingUp className="w-4 h-4" />
+                          {language === 'ja' ? '収益履歴' : '수익 내역'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Personal Information Card */}
+                  <div className="bg-white rounded-[24px] shadow-xl shadow-slate-200/40 border border-slate-100/80 p-6 lg:p-8">
+                    <div className="flex items-center justify-between mb-5">
+                      <h3 className="text-base font-bold text-slate-800">{t.personalInfo}</h3>
+                      <button onClick={() => { setActiveTab('profile'); setIsEditing(true); }} className="text-blue-600 hover:text-blue-700 text-xs font-semibold transition-colors">
+                        {language === 'ja' ? '情報を更新' : '정보 수정'}
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                      <div>
+                        <div className="text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-1">{t.name}</div>
+                        <div className="text-sm font-medium text-slate-800">{profile?.name || '-'}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-1">{t.email}</div>
+                        <div className="text-sm font-medium text-slate-800 truncate">{profile?.email || user?.email}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-1">{t.phone}</div>
+                        <div className="text-sm font-medium text-slate-800">{profile?.phone || (language === 'ja' ? '未登録' : '미등록')}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-1">{language === 'ja' ? '地域' : '지역'}</div>
+                        <div className="text-sm font-medium text-slate-800">{profile?.region || (language === 'ja' ? '未設定' : '미설정')}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-1">{t.skinType}</div>
+                        <div className="text-sm font-medium text-slate-800">{profile?.skin_type || (language === 'ja' ? '未設定' : '미설정')}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-1">{language === 'ja' ? '自己紹介' : '자기소개'}</div>
+                        <div className="text-sm font-medium text-slate-800 line-clamp-2">{profile?.bio || (language === 'ja' ? '未設定' : '미설정')}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Active Campaigns Card */}
+                  <div className="bg-white rounded-[24px] shadow-xl shadow-slate-200/40 border border-slate-100/80 p-6 lg:p-8">
+                    <div className="flex items-center justify-between mb-5">
+                      <h3 className="text-base font-bold text-slate-800">{language === 'ja' ? '参加中のキャンペーン' : '참여중인 캠페인'}</h3>
+                      <button onClick={() => setActiveTab('applications')} className="text-blue-600 hover:text-blue-700 text-xs font-semibold transition-colors">
+                        {language === 'ja' ? 'すべて表示' : '전체 보기'}
+                      </button>
+                    </div>
+                    {applications.filter(a => ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'pending'].includes(a.status)).length === 0 ? (
+                      <div className="text-center py-8 text-slate-400">
+                        <Award className="w-10 h-10 mx-auto mb-2 text-slate-300" />
+                        <p className="text-sm">{language === 'ja' ? '参加中のキャンペーンはありません' : '참여중인 캠페인이 없습니다'}</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {applications.filter(a => ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'pending'].includes(a.status)).slice(0, 5).map((app) => (
+                          <div key={app.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100/80 transition-all">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span className="text-blue-600 text-xs font-bold">K</span>
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-sm font-medium text-slate-800 truncate">{app.campaign_title || (language === 'ja' ? 'キャンペーン' : '캠페인')}</div>
+                                <div className="text-[10px] text-slate-400 uppercase tracking-wider">
+                                  {app.status === 'pending' ? (language === 'ja' ? '審査中' : '심사중') :
+                                   app.status === 'approved' || app.status === 'selected' ? (language === 'ja' ? '進行中' : '진행중') :
+                                   app.status === 'filming' ? (language === 'ja' ? '撮影中' : '촬영중') :
+                                   app.status === 'video_submitted' ? (language === 'ja' ? '動画提出済み' : '영상 제출') :
+                                   app.status === 'sns_submitted' ? (language === 'ja' ? 'SNS投稿済み' : 'SNS 제출') :
+                                   app.status}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-bold text-slate-800">¥{(app.campaign_reward || 0).toLocaleString()}</span>
+                              <ChevronRight className="w-4 h-4 text-slate-300" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <div className="space-y-6">
+                  {/* Connected Accounts */}
+                  <div className="bg-white rounded-[24px] shadow-xl shadow-slate-200/40 border border-slate-100/80 p-6">
+                    <h3 className="text-base font-bold text-slate-800 mb-4">{language === 'ja' ? '連携アカウント' : '연결된 계정'}</h3>
+                    <div className="space-y-3">
+                      {getSnsConnections().map((sns) => (
+                        <div key={sns.name} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-9 h-9 bg-gradient-to-br ${sns.color} rounded-full flex items-center justify-center`}>
+                              <span className="text-white text-[10px] font-bold">{sns.name[0]}</span>
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-slate-700">{sns.name}</div>
+                              {sns.followers ? (
+                                <div className="text-[10px] text-slate-400">{sns.followers.toLocaleString()} {language === 'ja' ? 'フォロワー' : '팔로워'}</div>
+                              ) : (
+                                <div className="text-[10px] text-slate-400">{sns.url ? (language === 'ja' ? '連携済み' : '연결됨') : ''}</div>
+                              )}
+                            </div>
+                          </div>
+                          {sns.url ? (
+                            <span className="px-2.5 py-1 text-[10px] font-semibold rounded-full bg-emerald-100 text-emerald-600">ACTIVE</span>
+                          ) : (
+                            <button onClick={() => { setActiveTab('profile'); setIsEditing(true); }} className="px-2.5 py-1 text-[10px] font-semibold rounded-full bg-slate-200 text-slate-500 hover:bg-slate-300 transition-all">LINK</button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Performance */}
+                  <div className="bg-white rounded-[24px] shadow-xl shadow-slate-200/40 border border-slate-100/80 p-6">
+                    <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-blue-600" />
+                      {language === 'ja' ? 'パフォーマンス' : '실적'}
+                    </h3>
+                    {(() => {
+                      const perf = getPerformance()
+                      return (
+                        <div className="space-y-4">
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-xs text-slate-500">{language === 'ja' ? 'キャンペーン採択率' : '캠페인 채택률'}</span>
+                              <span className="text-sm font-bold text-blue-600">{perf.successRate}%</span>
+                            </div>
+                            <div className="w-full bg-slate-100 rounded-full h-2">
+                              <div className="bg-blue-600 h-2 rounded-full transition-all" style={{width: `${Math.min(perf.successRate, 100)}%`}} />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-xs text-slate-500">{language === 'ja' ? '完了率' : '완료율'}</span>
+                              <span className="text-sm font-bold text-emerald-600">{perf.completionRate}%</span>
+                            </div>
+                            <div className="w-full bg-slate-100 rounded-full h-2">
+                              <div className="bg-emerald-500 h-2 rounded-full transition-all" style={{width: `${Math.min(perf.completionRate, 100)}%`}} />
+                            </div>
+                          </div>
+                          <div className="mt-4 p-3 bg-blue-50 rounded-2xl border border-blue-100">
+                            <p className="text-xs text-blue-700 italic leading-relaxed">
+                              {perf.total > 0
+                                ? (language === 'ja' ? `${perf.approved}件のキャンペーンに参加中です。素晴らしい活躍です！` : `${perf.approved}개의 캠페인에 참여중입니다. 훌륭한 활약이에요!`)
+                                : (language === 'ja' ? 'キャンペーンに応募して収益化を開始しましょう！' : '캠페인에 응모하여 수익화를 시작하세요!')}
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    })()}
+                  </div>
+
+                  {/* Need Help */}
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-[24px] border border-blue-200/50 p-6 text-center">
+                    <h3 className="text-base font-bold text-slate-800 mb-1">{language === 'ja' ? 'サポート' : '도움이 필요하세요?'}</h3>
+                    <p className="text-xs text-slate-500 mb-4">{language === 'ja' ? '専任のサポートマネージャーにお問い合わせください' : '전담 매니저에게 문의하세요'}</p>
+                    <a href="mailto:howpapa@howpapa.co.kr" className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-blue-600 text-xs font-semibold rounded-full border border-blue-200 hover:bg-blue-50 transition-all shadow-sm">
+                      <Mail className="w-3.5 h-3.5" />
+                      {language === 'ja' ? 'サポートに連絡' : '지원 문의'}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className={`bg-white rounded-[24px] shadow-xl shadow-slate-200/40 border border-slate-100/80 ${activeTab === 'dashboard' ? 'hidden' : ''}`}>
           {activeTab === 'profile' && (
             <div className="p-6 lg:p-8">
               <div className="flex justify-between items-center mb-6">
@@ -1970,8 +2227,8 @@ const MyPageWithWithdrawal = () => {
 
       {/* ========== Mobile Layout ========== */}
       <div className="md:hidden pb-24">
-        {/* Mobile Profile Card (Instagram-style) */}
-        <div className="px-4 pt-5 pb-3">
+        {/* Mobile Profile Card (Instagram-style) - hidden on dashboard */}
+        <div className={`px-4 pt-5 pb-3 ${activeTab === 'dashboard' ? 'hidden' : ''}`}>
           <div className="bg-white rounded-[24px] shadow-lg shadow-slate-100/50 border border-slate-100/80 p-5">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-600/25 flex-shrink-0">
@@ -2031,7 +2288,132 @@ const MyPageWithWithdrawal = () => {
 
         {/* Mobile Tab Content */}
         <div className="px-4 mt-2">
-          <div className="bg-white rounded-[24px] shadow-lg shadow-slate-100/50 border border-slate-100/80">
+          {/* Mobile Dashboard */}
+          {activeTab === 'dashboard' && (
+            <div className="space-y-4">
+              {/* Points Balance Card - Mobile */}
+              <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 rounded-[24px] p-5 text-white relative overflow-hidden shadow-xl">
+                <div className="absolute top-0 right-0 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-blue-300 text-[10px] font-semibold uppercase tracking-wider">{language === 'ja' ? '保有ポイント' : '보유 포인트'}</span>
+                    <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full text-[9px] font-semibold">1P = ¥1</span>
+                  </div>
+                  <div className="text-3xl font-bold mb-4 tracking-tight">
+                    ¥ {(profile?.points || 0).toLocaleString()}<span className="text-sm text-slate-400">.00</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => setShowWithdrawModal(true)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2.5 rounded-full transition-all shadow-lg shadow-blue-600/30 flex items-center justify-center gap-1.5">
+                      <Wallet className="w-3.5 h-3.5" />
+                      {t.withdrawRequest}
+                    </button>
+                    <button onClick={() => setActiveTab('points')} className="flex-1 bg-white/10 hover:bg-white/15 text-white text-xs font-semibold py-2.5 rounded-full transition-all border border-white/10 flex items-center justify-center gap-1.5">
+                      <TrendingUp className="w-3.5 h-3.5" />
+                      {language === 'ja' ? '収益履歴' : '수익 내역'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Connected Accounts - Mobile */}
+              <div className="bg-white rounded-[24px] shadow-lg shadow-slate-100/50 border border-slate-100/80 p-4">
+                <h3 className="text-sm font-bold text-slate-800 mb-3">{language === 'ja' ? '連携アカウント' : '연결된 계정'}</h3>
+                <div className="space-y-2">
+                  {getSnsConnections().map((sns) => (
+                    <div key={sns.name} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-8 h-8 bg-gradient-to-br ${sns.color} rounded-full flex items-center justify-center`}>
+                          <span className="text-white text-[9px] font-bold">{sns.name[0]}</span>
+                        </div>
+                        <span className="text-xs font-medium text-slate-700">{sns.name}</span>
+                      </div>
+                      {sns.url ? (
+                        <span className="px-2 py-0.5 text-[9px] font-semibold rounded-full bg-emerald-100 text-emerald-600">ACTIVE</span>
+                      ) : (
+                        <button onClick={() => { setActiveTab('profile'); setIsEditing(true); }} className="px-2 py-0.5 text-[9px] font-semibold rounded-full bg-slate-200 text-slate-500">LINK</button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Performance - Mobile */}
+              <div className="bg-white rounded-[24px] shadow-lg shadow-slate-100/50 border border-slate-100/80 p-4">
+                <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-1.5">
+                  <TrendingUp className="w-3.5 h-3.5 text-blue-600" />
+                  {language === 'ja' ? 'パフォーマンス' : '실적'}
+                </h3>
+                {(() => {
+                  const perf = getPerformance()
+                  return (
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-[10px] text-slate-500">{language === 'ja' ? 'キャンペーン採択率' : '캠페인 채택률'}</span>
+                          <span className="text-xs font-bold text-blue-600">{perf.successRate}%</span>
+                        </div>
+                        <div className="w-full bg-slate-100 rounded-full h-1.5">
+                          <div className="bg-blue-600 h-1.5 rounded-full" style={{width: `${Math.min(perf.successRate, 100)}%`}} />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-[10px] text-slate-500">{language === 'ja' ? '完了率' : '완료율'}</span>
+                          <span className="text-xs font-bold text-emerald-600">{perf.completionRate}%</span>
+                        </div>
+                        <div className="w-full bg-slate-100 rounded-full h-1.5">
+                          <div className="bg-emerald-500 h-1.5 rounded-full" style={{width: `${Math.min(perf.completionRate, 100)}%`}} />
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })()}
+              </div>
+
+              {/* Active Campaigns - Mobile */}
+              <div className="bg-white rounded-[24px] shadow-lg shadow-slate-100/50 border border-slate-100/80 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-slate-800">{language === 'ja' ? '参加中のキャンペーン' : '참여중인 캠페인'}</h3>
+                  <button onClick={() => setActiveTab('applications')} className="text-blue-600 text-[10px] font-semibold">{language === 'ja' ? 'すべて表示' : '전체 보기'}</button>
+                </div>
+                {applications.filter(a => ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'pending'].includes(a.status)).length === 0 ? (
+                  <div className="text-center py-6 text-slate-400">
+                    <Award className="w-8 h-8 mx-auto mb-1.5 text-slate-300" />
+                    <p className="text-xs">{language === 'ja' ? 'キャンペーンなし' : '캠페인 없음'}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {applications.filter(a => ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'pending'].includes(a.status)).slice(0, 4).map((app) => (
+                      <div key={app.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-blue-600 text-[9px] font-bold">K</span>
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-medium text-slate-800 truncate">{app.campaign_title || 'Campaign'}</div>
+                            <div className="text-[9px] text-slate-400 uppercase">{app.status === 'pending' ? (language === 'ja' ? '審査中' : '심사중') : (language === 'ja' ? '進行中' : '진행중')}</div>
+                          </div>
+                        </div>
+                        <span className="text-xs font-bold text-slate-800">¥{(app.campaign_reward || 0).toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Support - Mobile */}
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-[24px] border border-blue-200/50 p-4 text-center">
+                <h3 className="text-sm font-bold text-slate-800 mb-0.5">{language === 'ja' ? 'サポート' : '도움이 필요하세요?'}</h3>
+                <p className="text-[10px] text-slate-500 mb-3">{language === 'ja' ? '専任のサポートマネージャーにお問い合わせください' : '전담 매니저에게 문의하세요'}</p>
+                <a href="mailto:howpapa@howpapa.co.kr" className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-blue-600 text-[10px] font-semibold rounded-full border border-blue-200 shadow-sm">
+                  <Mail className="w-3 h-3" />
+                  {language === 'ja' ? 'サポートに連絡' : '지원 문의'}
+                </a>
+              </div>
+            </div>
+          )}
+
+          <div className={`bg-white rounded-[24px] shadow-lg shadow-slate-100/50 border border-slate-100/80 ${activeTab === 'dashboard' ? 'hidden' : ''}`}>
           {activeTab === 'profile' && (
             <div className="p-4 sm:p-6">
               <div className="flex justify-between items-center mb-4 sm:mb-6">
