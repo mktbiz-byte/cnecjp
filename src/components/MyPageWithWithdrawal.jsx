@@ -104,6 +104,7 @@ const MyPageWithWithdrawal = () => {
     age: '',
     region: '',
     skin_type: '',
+    profile_image: '',
 
     instagram_url: '',
     tiktok_url: '',
@@ -112,7 +113,7 @@ const MyPageWithWithdrawal = () => {
     instagram_followers: '',
     tiktok_followers: '',
     youtube_subscribers: '',
-    
+
     sms_consent: true,
     email_consent: true
   })
@@ -330,6 +331,7 @@ const MyPageWithWithdrawal = () => {
           age: profileData.age || '',
           region: profileData.region || '',
           skin_type: profileData.skin_type || '',
+          profile_image: profileData.profile_image || '',
 
           instagram_url: profileData.instagram_url || '',
           tiktok_url: profileData.tiktok_url || '',
@@ -338,7 +340,7 @@ const MyPageWithWithdrawal = () => {
           instagram_followers: profileData.instagram_followers || '',
           tiktok_followers: profileData.tiktok_followers || '',
           youtube_subscribers: profileData.youtube_subscribers || '',
-          
+
           sms_consent: profileData.sms_consent !== undefined ? profileData.sms_consent : true,
           email_consent: profileData.email_consent !== undefined ? profileData.email_consent : true
         })
@@ -547,6 +549,9 @@ const MyPageWithWithdrawal = () => {
         }
       }
       
+      // 프로필 사진
+      if (editForm.profile_image !== undefined) updateData.profile_image = editForm.profile_image || null
+
       // 마케팅 수신 동의
       if (editForm.sms_consent !== undefined) updateData.sms_consent = editForm.sms_consent
       if (editForm.email_consent !== undefined) updateData.email_consent = editForm.email_consent
@@ -580,6 +585,73 @@ const MyPageWithWithdrawal = () => {
     } catch (error) {
       console.error('프로필 업데이트 오류:', error)
       setError(error.message || (language === 'ja' ? 'プロフィールの更新に失敗しました。' : '프로필 업데이트에 실패했습니다.'))
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  // 프로필 사진 업로드 핸들러
+  const handleProfileImageUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // 파일 유효성 검사
+    if (!file.type.startsWith('image/')) {
+      setError(language === 'ja' ? '画像ファイルを選択してください' : '이미지 파일을 선택해주세요')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError(language === 'ja' ? 'ファイルサイズは5MB以下にしてください' : '파일 크기는 5MB 이하로 해주세요')
+      return
+    }
+
+    try {
+      setProcessing(true)
+      setError('')
+
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`
+      const filePath = `profiles/${fileName}`
+
+      // Supabase Storage에 업로드
+      const { error: uploadError } = await supabase.storage
+        .from('profile-images')
+        .upload(filePath, file, { cacheControl: '3600', upsert: true })
+
+      if (uploadError) {
+        // 버킷이 없으면 campaign-images 버킷으로 폴백
+        const { error: fallbackError } = await supabase.storage
+          .from('campaign-images')
+          .upload(`profiles/${fileName}`, file, { cacheControl: '3600', upsert: true })
+
+        if (fallbackError) throw fallbackError
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('campaign-images')
+          .getPublicUrl(`profiles/${fileName}`)
+
+        // DB 업데이트
+        await supabase.from('user_profiles').update({ profile_image: publicUrl, updated_at: new Date().toISOString() }).eq('user_id', user.id)
+        setProfile(prev => ({ ...prev, profile_image: publicUrl }))
+        setEditForm(prev => ({ ...prev, profile_image: publicUrl }))
+        setSuccess(language === 'ja' ? 'プロフィール写真を更新しました' : '프로필 사진이 업데이트되었습니다')
+        setTimeout(() => setSuccess(''), 3000)
+        return
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-images')
+        .getPublicUrl(filePath)
+
+      // DB 업데이트
+      await supabase.from('user_profiles').update({ profile_image: publicUrl, updated_at: new Date().toISOString() }).eq('user_id', user.id)
+      setProfile(prev => ({ ...prev, profile_image: publicUrl }))
+      setEditForm(prev => ({ ...prev, profile_image: publicUrl }))
+      setSuccess(language === 'ja' ? 'プロフィール写真を更新しました' : '프로필 사진이 업데이트되었습니다')
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (err) {
+      console.error('Profile image upload error:', err)
+      setError(language === 'ja' ? '写真のアップロードに失敗しました' : '사진 업로드에 실패했습니다')
     } finally {
       setProcessing(false)
     }
@@ -1028,11 +1100,15 @@ const MyPageWithWithdrawal = () => {
             {/* Instagram-style Profile Card */}
             <div className="bg-white rounded-[24px] shadow-xl shadow-slate-200/40 border border-slate-100/80 p-6">
               <div className="text-center mb-5">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-600/25">
-                  <span className="text-white text-2xl font-bold">
-                    {(profile?.name || user?.email || '?')[0]?.toUpperCase()}
-                  </span>
-                </div>
+                {profile?.profile_image ? (
+                  <img src={profile.profile_image} alt="Profile" className="w-20 h-20 rounded-full object-cover mx-auto mb-4 shadow-lg border-2 border-white" />
+                ) : (
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-600/25">
+                    <span className="text-white text-2xl font-bold">
+                      {(profile?.name || user?.email || '?')[0]?.toUpperCase()}
+                    </span>
+                  </div>
+                )}
                 <h2 className="text-lg font-bold text-slate-800">{profile?.name || user?.email}</h2>
                 <p className="text-xs text-slate-400 mt-0.5">{profile?.email || user?.email}</p>
                 <div className="mt-2">{getRoleBadge(profile?.user_role)}</div>
@@ -1114,9 +1190,13 @@ const MyPageWithWithdrawal = () => {
               <div className="bg-white rounded-[24px] shadow-xl shadow-slate-200/40 border border-slate-100/80 p-6 lg:p-8">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-5">
-                    <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-600/25 flex-shrink-0">
-                      <span className="text-white text-2xl font-bold">{(profile?.name || user?.email || '?')[0]?.toUpperCase()}</span>
-                    </div>
+                    {profile?.profile_image ? (
+                      <img src={profile.profile_image} alt="Profile" className="w-20 h-20 rounded-full object-cover shadow-lg border-2 border-white flex-shrink-0" />
+                    ) : (
+                      <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-600/25 flex-shrink-0">
+                        <span className="text-white text-2xl font-bold">{(profile?.name || user?.email || '?')[0]?.toUpperCase()}</span>
+                      </div>
+                    )}
                     <div>
                       <div className="flex items-center gap-2.5 mb-1">
                         <h2 className="text-xl font-bold text-slate-800">{profile?.name || user?.email}</h2>
@@ -1266,26 +1346,37 @@ const MyPageWithWithdrawal = () => {
                     <h3 className="text-base font-bold text-slate-800 mb-4">{language === 'ja' ? '連携アカウント' : '연결된 계정'}</h3>
                     <div className="space-y-3">
                       {getSnsConnections().map((sns) => (
-                        <div key={sns.name} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-9 h-9 bg-gradient-to-br ${sns.color} rounded-full flex items-center justify-center`}>
-                              <span className="text-white text-[10px] font-bold">{sns.name[0]}</span>
+                        sns.url ? (
+                          <a key={sns.name} href={sns.url.startsWith('http') ? sns.url : `https://${sns.url}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 transition-all cursor-pointer group">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-9 h-9 bg-gradient-to-br ${sns.color} rounded-full flex items-center justify-center`}>
+                                <span className="text-white text-[10px] font-bold">{sns.name[0]}</span>
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium text-slate-700 group-hover:text-blue-600 transition-colors">{sns.name}</div>
+                                {sns.followers ? (
+                                  <div className="text-[10px] text-slate-400">{sns.followers.toLocaleString()} {language === 'ja' ? 'フォロワー' : '팔로워'}</div>
+                                ) : (
+                                  <div className="text-[10px] text-slate-400">{language === 'ja' ? '連携済み' : '연결됨'}</div>
+                                )}
+                              </div>
                             </div>
-                            <div>
-                              <div className="text-sm font-medium text-slate-700">{sns.name}</div>
-                              {sns.followers ? (
-                                <div className="text-[10px] text-slate-400">{sns.followers.toLocaleString()} {language === 'ja' ? 'フォロワー' : '팔로워'}</div>
-                              ) : (
-                                <div className="text-[10px] text-slate-400">{sns.url ? (language === 'ja' ? '連携済み' : '연결됨') : ''}</div>
-                              )}
+                            <span className="px-2.5 py-1 text-[10px] font-semibold rounded-full bg-emerald-100 text-emerald-600 group-hover:bg-emerald-200 transition-all">ACTIVE ↗</span>
+                          </a>
+                        ) : (
+                          <div key={sns.name} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-9 h-9 bg-gradient-to-br ${sns.color} rounded-full flex items-center justify-center`}>
+                                <span className="text-white text-[10px] font-bold">{sns.name[0]}</span>
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium text-slate-700">{sns.name}</div>
+                                <div className="text-[10px] text-slate-400"></div>
+                              </div>
                             </div>
-                          </div>
-                          {sns.url ? (
-                            <span className="px-2.5 py-1 text-[10px] font-semibold rounded-full bg-emerald-100 text-emerald-600">ACTIVE</span>
-                          ) : (
                             <button onClick={() => { setActiveTab('profile'); setIsEditing(true); }} className="px-2.5 py-1 text-[10px] font-semibold rounded-full bg-slate-200 text-slate-500 hover:bg-slate-300 transition-all">LINK</button>
-                          )}
-                        </div>
+                          </div>
+                        )
                       ))}
                     </div>
                   </div>
@@ -1380,7 +1471,33 @@ const MyPageWithWithdrawal = () => {
                   <p className="text-red-800 text-sm">{error}</p>
                 </div>
               )}
-              
+
+              {/* プロフィール写真 */}
+              <div className="mb-6 flex items-center gap-5">
+                <div className="relative group">
+                  {(profile?.profile_image || editForm.profile_image) ? (
+                    <img src={profile?.profile_image || editForm.profile_image} alt="Profile" className="w-24 h-24 rounded-full object-cover shadow-lg border-2 border-white" />
+                  ) : (
+                    <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+                      <span className="text-white text-3xl font-bold">{(profile?.name || user?.email || '?')[0]?.toUpperCase()}</span>
+                    </div>
+                  )}
+                  <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                    <Camera className="w-6 h-6 text-white" />
+                    <input type="file" accept="image/*" onChange={handleProfileImageUpload} className="hidden" />
+                  </label>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-700">{language === 'ja' ? 'プロフィール写真' : '프로필 사진'}</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">{language === 'ja' ? 'クリックして変更（5MB以下）' : '클릭하여 변경 (5MB 이하)'}</p>
+                  <label className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-blue-50 text-blue-600 text-xs font-medium rounded-full cursor-pointer hover:bg-blue-100 transition-colors">
+                    <Upload className="w-3 h-3" />
+                    {language === 'ja' ? '写真を変更' : '사진 변경'}
+                    <input type="file" accept="image/*" onChange={handleProfileImageUpload} className="hidden" />
+                  </label>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
@@ -2306,11 +2423,15 @@ const MyPageWithWithdrawal = () => {
         <div className={`px-4 pt-5 pb-3 ${activeTab === 'dashboard' ? 'hidden' : ''}`}>
           <div className="bg-white rounded-[24px] shadow-lg shadow-slate-100/50 border border-slate-100/80 p-5">
             <div className="flex items-center gap-4 mb-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-600/25 flex-shrink-0">
-                <span className="text-white text-xl font-bold">
-                  {(profile?.name || user?.email || '?')[0]?.toUpperCase()}
-                </span>
-              </div>
+              {profile?.profile_image ? (
+                <img src={profile.profile_image} alt="Profile" className="w-16 h-16 rounded-full object-cover shadow-lg border-2 border-white flex-shrink-0" />
+              ) : (
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-600/25 flex-shrink-0">
+                  <span className="text-white text-xl font-bold">
+                    {(profile?.name || user?.email || '?')[0]?.toUpperCase()}
+                  </span>
+                </div>
+              )}
               <div className="min-w-0 flex-1">
                 <h2 className="text-base font-bold text-slate-800 truncate">{profile?.name || user?.email}</h2>
                 <p className="text-xs text-slate-400 truncate">{profile?.email || user?.email}</p>
@@ -2395,19 +2516,27 @@ const MyPageWithWithdrawal = () => {
                 <h3 className="text-sm font-bold text-slate-800 mb-3">{language === 'ja' ? '連携アカウント' : '연결된 계정'}</h3>
                 <div className="space-y-2">
                   {getSnsConnections().map((sns) => (
-                    <div key={sns.name} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50">
-                      <div className="flex items-center gap-2.5">
-                        <div className={`w-8 h-8 bg-gradient-to-br ${sns.color} rounded-full flex items-center justify-center`}>
-                          <span className="text-white text-[9px] font-bold">{sns.name[0]}</span>
+                    sns.url ? (
+                      <a key={sns.name} href={sns.url.startsWith('http') ? sns.url : `https://${sns.url}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 transition-all group">
+                        <div className="flex items-center gap-2.5">
+                          <div className={`w-8 h-8 bg-gradient-to-br ${sns.color} rounded-full flex items-center justify-center`}>
+                            <span className="text-white text-[9px] font-bold">{sns.name[0]}</span>
+                          </div>
+                          <span className="text-xs font-medium text-slate-700 group-hover:text-blue-600 transition-colors">{sns.name}</span>
                         </div>
-                        <span className="text-xs font-medium text-slate-700">{sns.name}</span>
-                      </div>
-                      {sns.url ? (
-                        <span className="px-2 py-0.5 text-[9px] font-semibold rounded-full bg-emerald-100 text-emerald-600">ACTIVE</span>
-                      ) : (
+                        <span className="px-2 py-0.5 text-[9px] font-semibold rounded-full bg-emerald-100 text-emerald-600 group-hover:bg-emerald-200 transition-all">ACTIVE ↗</span>
+                      </a>
+                    ) : (
+                      <div key={sns.name} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50">
+                        <div className="flex items-center gap-2.5">
+                          <div className={`w-8 h-8 bg-gradient-to-br ${sns.color} rounded-full flex items-center justify-center`}>
+                            <span className="text-white text-[9px] font-bold">{sns.name[0]}</span>
+                          </div>
+                          <span className="text-xs font-medium text-slate-700">{sns.name}</span>
+                        </div>
                         <button onClick={() => { setActiveTab('profile'); setIsEditing(true); }} className="px-2 py-0.5 text-[9px] font-semibold rounded-full bg-slate-200 text-slate-500">LINK</button>
-                      )}
-                    </div>
+                      </div>
+                    )
                   ))}
                 </div>
               </div>
@@ -2524,6 +2653,31 @@ const MyPageWithWithdrawal = () => {
                   <p className="text-red-800 text-sm">{error}</p>
                 </div>
               )}
+
+              {/* プロフィール写真 - Mobile */}
+              <div className="mb-5 flex items-center gap-4">
+                <div className="relative group">
+                  {(profile?.profile_image || editForm.profile_image) ? (
+                    <img src={profile?.profile_image || editForm.profile_image} alt="Profile" className="w-20 h-20 rounded-full object-cover shadow-lg border-2 border-white" />
+                  ) : (
+                    <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+                      <span className="text-white text-2xl font-bold">{(profile?.name || user?.email || '?')[0].toUpperCase()}</span>
+                    </div>
+                  )}
+                  <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                    <Camera className="w-5 h-5 text-white" />
+                    <input type="file" accept="image/*" onChange={handleProfileImageUpload} className="hidden" />
+                  </label>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-700">{language === 'ja' ? 'プロフィール写真' : '프로필 사진'}</h3>
+                  <label className="mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 text-[10px] font-semibold rounded-full cursor-pointer hover:bg-blue-100 transition-all">
+                    <Upload className="w-3 h-3" />
+                    {language === 'ja' ? '写真を変更' : '사진 변경'}
+                    <input type="file" accept="image/*" onChange={handleProfileImageUpload} className="hidden" />
+                  </label>
+                </div>
+              </div>
 
               <div className="space-y-4">
                 <div>
