@@ -841,23 +841,42 @@ const MyPageWithWithdrawal = () => {
     try {
       setInquirySubmitting(true)
       setError('')
-      const { error: insertError } = await supabase
-        .from('support_inquiries')
-        .insert({
-          user_id: user.id,
-          user_email: profile?.email || user?.email,
-          user_name: profile?.name || '',
-          category: inquiryForm.category,
-          subject: inquiryForm.subject,
-          message: inquiryForm.message,
-          status: 'pending'
-        })
-      if (insertError) {
-        // 테이블이 없으면 mailto 폴백
-        const mailSubject = encodeURIComponent(`[CNEC問い合わせ] ${inquiryForm.category}: ${inquiryForm.subject}`)
-        const mailBody = encodeURIComponent(`差出人: ${profile?.name || ''} (${profile?.email || user?.email})\nカテゴリ: ${inquiryForm.category}\n件名: ${inquiryForm.subject}\n\n${inquiryForm.message}`)
-        window.open(`mailto:mkt@cnecbiz.com?subject=${mailSubject}&body=${mailBody}`, '_self')
+
+      // mailto로 메일 클라이언트 열기
+      const mailSubject = encodeURIComponent(`[CNEC問い合わせ] ${inquiryForm.category}: ${inquiryForm.subject}`)
+      const mailBody = encodeURIComponent(
+        `差出人: ${profile?.name || ''} (${profile?.email || user?.email})\n` +
+        `カテゴリ: ${inquiryForm.category}\n` +
+        `件名: ${inquiryForm.subject}\n\n` +
+        `${inquiryForm.message}`
+      )
+      const mailtoLink = `mailto:mkt@cnecbiz.com?subject=${mailSubject}&body=${mailBody}`
+
+      // 앵커 태그로 mailto 실행 (가장 안정적)
+      const a = document.createElement('a')
+      a.href = mailtoLink
+      a.style.display = 'none'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+
+      // Supabase에도 저장 시도 (DB 백업용)
+      try {
+        await supabase
+          .from('support_inquiries')
+          .insert({
+            user_id: user.id,
+            user_email: profile?.email || user?.email,
+            user_name: profile?.name || '',
+            category: inquiryForm.category,
+            subject: inquiryForm.subject,
+            message: inquiryForm.message,
+            status: 'pending'
+          })
+      } catch (dbErr) {
+        console.log('DB backup skipped:', dbErr.message)
       }
+
       setInquirySuccess(true)
       setInquiryForm({ category: '', subject: '', message: '' })
       setTimeout(() => {
@@ -866,10 +885,8 @@ const MyPageWithWithdrawal = () => {
       }, 2500)
     } catch (err) {
       console.error('Inquiry submit error:', err)
-      // 에러 시 mailto 폴백
-      const mailSubject = encodeURIComponent(`[CNEC問い合わせ] ${inquiryForm.category}: ${inquiryForm.subject}`)
-      const mailBody = encodeURIComponent(`差出人: ${profile?.name || ''} (${profile?.email || user?.email})\nカテゴリ: ${inquiryForm.category}\n件名: ${inquiryForm.subject}\n\n${inquiryForm.message}`)
-      window.open(`mailto:mkt@cnecbiz.com?subject=${mailSubject}&body=${mailBody}`, '_self')
+      // 최종 폴백
+      window.location.href = `mailto:mkt@cnecbiz.com?subject=${encodeURIComponent(`[CNEC] ${inquiryForm.subject}`)}&body=${encodeURIComponent(inquiryForm.message)}`
       setShowInquiryModal(false)
     } finally {
       setInquirySubmitting(false)
@@ -3017,12 +3034,6 @@ const MyPageWithWithdrawal = () => {
                     <label className="block text-xs font-medium text-slate-500 mb-1.5">{language === 'ja' ? 'お問い合わせ内容' : '문의 내용'} *</label>
                     <textarea value={inquiryForm.message} onChange={(e) => setInquiryForm({...inquiryForm, message: e.target.value})} rows={5} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none" placeholder={language === 'ja' ? '詳細を入力してください...' : '상세 내용을 입력하세요...'} />
                   </div>
-                </div>
-
-                <div className="mt-4 p-3 bg-slate-50 rounded-xl">
-                  <p className="text-[10px] text-slate-400">
-                    {language === 'ja' ? `送信先: mkt@cnecbiz.com｜登録メール: ${profile?.email || user?.email}` : `수신: mkt@cnecbiz.com｜등록 이메일: ${profile?.email || user?.email}`}
-                  </p>
                 </div>
 
                 <div className="mt-5 flex gap-3">
