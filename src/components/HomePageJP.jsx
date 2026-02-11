@@ -172,14 +172,17 @@ const HomePageJP = () => {
 
   const getCampaignsByType = (type) => {
     const valid = filterValidCampaigns(campaigns)
-    if (type === 'planned') {
-      return valid.filter(c => !c.campaign_type || c.campaign_type === 'planned' || c.campaign_type === '企画型' || c.campaign_type === '기획형')
+    if (type === 'all') {
+      return valid
     }
-    if (type === 'mega_sale') {
-      return valid.filter(c => c.campaign_type === 'mega_sale' || c.campaign_type === 'メガ割り' || c.campaign_type === '메가와리')
+    if (type === 'regular') {
+      return valid.filter(c => !c.campaign_type || c.campaign_type === 'regular' || c.campaign_type === 'oliveyoung')
     }
-    if (type === 'challenge') {
-      return valid.filter(c => c.campaign_type === 'challenge' || c.campaign_type === '4週チャレンジ' || c.campaign_type === '4주 챌린지')
+    if (type === 'megawari') {
+      return valid.filter(c => c.campaign_type === 'megawari')
+    }
+    if (type === '4week_challenge') {
+      return valid.filter(c => c.campaign_type === '4week_challenge')
     }
     return valid
   }
@@ -482,29 +485,35 @@ const HomePageJP = () => {
               </div>
             </div>
           ) : (
-            <Tabs defaultValue="planned" className="w-full">
+            <Tabs defaultValue="all" className="w-full">
               <div className="flex justify-center mb-10">
                 <TabsList className="bg-slate-100 rounded-full p-1.5 h-auto inline-flex">
-                  <TabsTrigger value="planned" className="rounded-full px-5 sm:px-7 py-2.5 text-xs sm:text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md text-slate-400 transition-all">
+                  <TabsTrigger value="all" className="rounded-full px-5 sm:px-7 py-2.5 text-xs sm:text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md text-slate-400 transition-all">
+                    全体
+                  </TabsTrigger>
+                  <TabsTrigger value="regular" className="rounded-full px-5 sm:px-7 py-2.5 text-xs sm:text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md text-slate-400 transition-all">
                     企画型
                   </TabsTrigger>
-                  <TabsTrigger value="mega_sale" className="rounded-full px-5 sm:px-7 py-2.5 text-xs sm:text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md text-slate-400 transition-all">
+                  <TabsTrigger value="megawari" className="rounded-full px-5 sm:px-7 py-2.5 text-xs sm:text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md text-slate-400 transition-all">
                     メガ割り
                   </TabsTrigger>
-                  <TabsTrigger value="challenge" className="rounded-full px-5 sm:px-7 py-2.5 text-xs sm:text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md text-slate-400 transition-all">
+                  <TabsTrigger value="4week_challenge" className="rounded-full px-5 sm:px-7 py-2.5 text-xs sm:text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md text-slate-400 transition-all">
                     4週チャレンジ
                   </TabsTrigger>
                 </TabsList>
               </div>
 
-              <TabsContent value="planned">
-                {renderCampaignGrid(getCampaignsByType('planned'))}
+              <TabsContent value="all">
+                {renderCampaignGrid(getCampaignsByType('all'))}
               </TabsContent>
-              <TabsContent value="mega_sale">
-                {renderCampaignGrid(getCampaignsByType('mega_sale'))}
+              <TabsContent value="regular">
+                {renderCampaignGrid(getCampaignsByType('regular'))}
               </TabsContent>
-              <TabsContent value="challenge">
-                {renderCampaignGrid(getCampaignsByType('challenge'))}
+              <TabsContent value="megawari">
+                {renderCampaignGrid(getCampaignsByType('megawari'))}
+              </TabsContent>
+              <TabsContent value="4week_challenge">
+                {renderCampaignGrid(getCampaignsByType('4week_challenge'))}
               </TabsContent>
             </Tabs>
           )}
