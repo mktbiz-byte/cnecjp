@@ -8,7 +8,7 @@ import {
   CreditCard, Download, Settings, LogOut,
   AlertTriangle, Trash2, Shield, Eye, EyeOff, X,
   Camera, Upload, Film, BookOpen, Layers,
-  Home, Wallet, ChevronRight, Star, TrendingUp, Menu
+  Home, Wallet, ChevronRight, Star, TrendingUp, Menu, MessageSquare, Send
 } from 'lucide-react'
 import ShootingGuideModal from './ShootingGuideModal'
 import ExternalGuideViewer from './ExternalGuideViewer'
@@ -57,7 +57,13 @@ const MyPageWithWithdrawal = () => {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('dashboard')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  
+
+  // 문의하기 모달 상태
+  const [showInquiryModal, setShowInquiryModal] = useState(false)
+  const [inquiryForm, setInquiryForm] = useState({ category: '', subject: '', message: '' })
+  const [inquirySubmitting, setInquirySubmitting] = useState(false)
+  const [inquirySuccess, setInquirySuccess] = useState(false)
+
   // 회원 탈퇴 관련 상태
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false)
   const [withdrawalReason, setWithdrawalReason] = useState('')
@@ -826,6 +832,52 @@ const MyPageWithWithdrawal = () => {
     }
   }
 
+  // 문의하기 제출
+  const handleInquirySubmit = async () => {
+    if (!inquiryForm.category || !inquiryForm.subject || !inquiryForm.message) {
+      setError(language === 'ja' ? 'すべての項目を入力してください' : '모든 항목을 입력해주세요')
+      return
+    }
+    try {
+      setInquirySubmitting(true)
+      setError('')
+      const { error: insertError } = await supabase
+        .from('support_inquiries')
+        .insert({
+          user_id: user.id,
+          user_email: profile?.email || user?.email,
+          user_name: profile?.name || '',
+          category: inquiryForm.category,
+          subject: inquiryForm.subject,
+          message: inquiryForm.message,
+          status: 'pending'
+        })
+      if (insertError) {
+        // 테이블이 없으면 mailto 폴백
+        const mailSubject = encodeURIComponent(`[CNEC問い合わせ] ${inquiryForm.category}: ${inquiryForm.subject}`)
+        const mailBody = encodeURIComponent(`差出人: ${profile?.name || ''} (${profile?.email || user?.email})\nカテゴリ: ${inquiryForm.category}\n件名: ${inquiryForm.subject}\n\n${inquiryForm.message}`)
+        window.open(`mailto:mkt@cnecbiz.com?subject=${mailSubject}&body=${mailBody}`, '_self')
+      }
+      setInquirySuccess(true)
+      setInquiryForm({ category: '', subject: '', message: '' })
+      setTimeout(() => {
+        setShowInquiryModal(false)
+        setInquirySuccess(false)
+      }, 2500)
+    } catch (err) {
+      console.error('Inquiry submit error:', err)
+      // 에러 시 mailto 폴백
+      const mailSubject = encodeURIComponent(`[CNEC問い合わせ] ${inquiryForm.category}: ${inquiryForm.subject}`)
+      const mailBody = encodeURIComponent(`差出人: ${profile?.name || ''} (${profile?.email || user?.email})\nカテゴリ: ${inquiryForm.category}\n件名: ${inquiryForm.subject}\n\n${inquiryForm.message}`)
+      window.open(`mailto:mkt@cnecbiz.com?subject=${mailSubject}&body=${mailBody}`, '_self')
+      setShowInquiryModal(false)
+    } finally {
+      setInquirySubmitting(false)
+    }
+  }
+
+  const LINE_SUPPORT_URL = 'https://line.me/R/ti/p/@cnec'
+
   const getRoleBadge = (role) => {
     const badges = {
       user: 'bg-gray-100 text-gray-800',
@@ -1262,13 +1314,19 @@ const MyPageWithWithdrawal = () => {
                   </div>
 
                   {/* Need Help */}
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-[24px] border border-blue-200/50 p-6 text-center">
-                    <h3 className="text-base font-bold text-slate-800 mb-1">{language === 'ja' ? 'サポート' : '도움이 필요하세요?'}</h3>
-                    <p className="text-xs text-slate-500 mb-4">{language === 'ja' ? '専任のサポートマネージャーにお問い合わせください' : '전담 매니저에게 문의하세요'}</p>
-                    <a href="mailto:howpapa@howpapa.co.kr" className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-blue-600 text-xs font-semibold rounded-full border border-blue-200 hover:bg-blue-50 transition-all shadow-sm">
-                      <Mail className="w-3.5 h-3.5" />
-                      {language === 'ja' ? 'サポートに連絡' : '지원 문의'}
-                    </a>
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-[24px] border border-blue-200/50 p-6">
+                    <h3 className="text-base font-bold text-slate-800 mb-1 text-center">{language === 'ja' ? 'サポート' : '도움이 필요하세요?'}</h3>
+                    <p className="text-xs text-slate-500 mb-4 text-center">{language === 'ja' ? 'LINEまたはお問い合わせフォームでご連絡ください' : 'LINE 또는 문의 폼으로 연락하세요'}</p>
+                    <div className="space-y-2.5">
+                      <a href={LINE_SUPPORT_URL} target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-2 px-5 py-2.5 bg-[#06C755] text-white text-xs font-semibold rounded-full hover:bg-[#05b34d] transition-all shadow-sm">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" /></svg>
+                        LINE {language === 'ja' ? 'で問い合わせ' : '문의'}
+                      </a>
+                      <button onClick={() => { setShowInquiryModal(true); setInquirySuccess(false); setInquiryForm({ category: '', subject: '', message: '' }); }} className="w-full flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-blue-600 text-xs font-semibold rounded-full border border-blue-200 hover:bg-blue-50 transition-all shadow-sm">
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        {language === 'ja' ? 'お問い合わせフォーム' : '문의하기'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2402,13 +2460,19 @@ const MyPageWithWithdrawal = () => {
               </div>
 
               {/* Support - Mobile */}
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-[24px] border border-blue-200/50 p-4 text-center">
-                <h3 className="text-sm font-bold text-slate-800 mb-0.5">{language === 'ja' ? 'サポート' : '도움이 필요하세요?'}</h3>
-                <p className="text-[10px] text-slate-500 mb-3">{language === 'ja' ? '専任のサポートマネージャーにお問い合わせください' : '전담 매니저에게 문의하세요'}</p>
-                <a href="mailto:howpapa@howpapa.co.kr" className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-blue-600 text-[10px] font-semibold rounded-full border border-blue-200 shadow-sm">
-                  <Mail className="w-3 h-3" />
-                  {language === 'ja' ? 'サポートに連絡' : '지원 문의'}
-                </a>
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-[24px] border border-blue-200/50 p-4">
+                <h3 className="text-sm font-bold text-slate-800 mb-0.5 text-center">{language === 'ja' ? 'サポート' : '도움이 필요하세요?'}</h3>
+                <p className="text-[10px] text-slate-500 mb-3 text-center">{language === 'ja' ? 'LINEまたはお問い合わせフォームでご連絡ください' : 'LINE 또는 문의 폼으로 연락하세요'}</p>
+                <div className="flex gap-2">
+                  <a href={LINE_SUPPORT_URL} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-[#06C755] text-white text-[10px] font-semibold rounded-full">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" /></svg>
+                    LINE
+                  </a>
+                  <button onClick={() => { setShowInquiryModal(true); setInquirySuccess(false); setInquiryForm({ category: '', subject: '', message: '' }); }} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-white text-blue-600 text-[10px] font-semibold rounded-full border border-blue-200 shadow-sm">
+                    <MessageSquare className="w-3 h-3" />
+                    {language === 'ja' ? '問い合わせ' : '문의하기'}
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -2902,6 +2966,84 @@ const MyPageWithWithdrawal = () => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 문의하기 모달 */}
+      {showInquiryModal && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm overflow-y-auto h-full w-full z-[9999] px-4">
+          <div className="relative top-10 sm:top-20 mx-auto p-5 sm:p-6 w-full max-w-sm sm:max-w-md shadow-2xl rounded-[24px] bg-white mb-10 border border-slate-100">
+            {inquirySuccess ? (
+              <div className="text-center py-10">
+                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Send className="w-7 h-7 text-emerald-600" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-800 mb-2">{language === 'ja' ? '送信完了' : '전송 완료'}</h3>
+                <p className="text-sm text-slate-500">{language === 'ja' ? 'お問い合わせを受け付けました。担当者が確認後ご連絡いたします。' : '문의가 접수되었습니다. 담당자 확인 후 연락드리겠습니다.'}</p>
+              </div>
+            ) : (
+              <div>
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="text-lg font-bold text-slate-800">{language === 'ja' ? 'お問い合わせ' : '문의하기'}</h3>
+                  <button onClick={() => setShowInquiryModal(false)} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all">
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl">
+                    <p className="text-sm text-red-800">{error}</p>
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1.5">{language === 'ja' ? 'カテゴリ' : '카테고리'} *</label>
+                    <select value={inquiryForm.category} onChange={(e) => setInquiryForm({...inquiryForm, category: e.target.value})} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                      <option value="">{language === 'ja' ? '選択してください' : '선택하세요'}</option>
+                      <option value="campaign">{language === 'ja' ? 'キャンペーンについて' : '캠페인 관련'}</option>
+                      <option value="payment">{language === 'ja' ? '出金・ポイントについて' : '출금/포인트 관련'}</option>
+                      <option value="account">{language === 'ja' ? 'アカウントについて' : '계정 관련'}</option>
+                      <option value="technical">{language === 'ja' ? '技術的な問題' : '기술적 문제'}</option>
+                      <option value="other">{language === 'ja' ? 'その他' : '기타'}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1.5">{language === 'ja' ? '件名' : '제목'} *</label>
+                    <input type="text" value={inquiryForm.subject} onChange={(e) => setInquiryForm({...inquiryForm, subject: e.target.value})} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder={language === 'ja' ? 'お問い合わせ件名を入力' : '문의 제목을 입력하세요'} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1.5">{language === 'ja' ? 'お問い合わせ内容' : '문의 내용'} *</label>
+                    <textarea value={inquiryForm.message} onChange={(e) => setInquiryForm({...inquiryForm, message: e.target.value})} rows={5} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none" placeholder={language === 'ja' ? '詳細を入力してください...' : '상세 내용을 입력하세요...'} />
+                  </div>
+                </div>
+
+                <div className="mt-4 p-3 bg-slate-50 rounded-xl">
+                  <p className="text-[10px] text-slate-400">
+                    {language === 'ja' ? `送信先: mkt@cnecbiz.com｜登録メール: ${profile?.email || user?.email}` : `수신: mkt@cnecbiz.com｜등록 이메일: ${profile?.email || user?.email}`}
+                  </p>
+                </div>
+
+                <div className="mt-5 flex gap-3">
+                  <button onClick={() => setShowInquiryModal(false)} className="flex-1 px-5 py-2.5 bg-slate-100 text-slate-600 rounded-full hover:bg-slate-200 text-sm font-medium transition-all">
+                    {t.cancel}
+                  </button>
+                  <button onClick={handleInquirySubmit} disabled={inquirySubmitting || !inquiryForm.category || !inquiryForm.subject || !inquiryForm.message} className="flex-1 px-5 py-2.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 text-sm font-medium transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+                    <Send className="w-3.5 h-3.5" />
+                    {inquirySubmitting ? (language === 'ja' ? '送信中...' : '전송중...') : (language === 'ja' ? '送信する' : '전송')}
+                  </button>
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-slate-100 text-center">
+                  <p className="text-[10px] text-slate-400 mb-2">{language === 'ja' ? 'または、LINEで直接お問い合わせ' : '또는 LINE으로 직접 문의'}</p>
+                  <a href={LINE_SUPPORT_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#06C755] text-white text-xs font-semibold rounded-full hover:bg-[#05b34d] transition-all">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" /></svg>
+                    LINE {language === 'ja' ? 'で問い合わせ' : '문의'}
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
