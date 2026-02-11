@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import { database, supabase } from '../lib/supabase'
@@ -7,7 +8,7 @@ import {
   CreditCard, Download, Settings, LogOut,
   AlertTriangle, Trash2, Shield, Eye, EyeOff, X,
   Camera, Upload, Film, BookOpen, Layers,
-  Home, Wallet, ChevronRight, Star, TrendingUp
+  Home, Wallet, ChevronRight, Star, TrendingUp, Menu
 } from 'lucide-react'
 import ShootingGuideModal from './ShootingGuideModal'
 import ExternalGuideViewer from './ExternalGuideViewer'
@@ -55,6 +56,7 @@ const MyPageWithWithdrawal = () => {
   const [pointTransactions, setPointTransactions] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('profile')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   
   // 회원 탈퇴 관련 상태
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false)
@@ -890,11 +892,49 @@ const MyPageWithWithdrawal = () => {
 
   return (
     <div className="min-h-screen bg-slate-50/50">
+      {/* ========== Shared Header Navigation ========== */}
+      <header className="bg-white/80 backdrop-blur-xl sticky top-0 z-50 border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <Link to="/" className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-blue-600 rounded-[12px] flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-600/25">C</div>
+              <div>
+                <h1 className="text-lg font-bold text-slate-800 tracking-tight">CNEC Japan</h1>
+                <p className="text-[10px] sm:text-xs text-slate-400 tracking-wide">K-Beauty Creator Network</p>
+              </div>
+            </Link>
+
+            <nav className="hidden md:flex items-center space-x-2">
+              <Link to="/" className="text-slate-500 hover:text-blue-600 font-medium px-4 py-2 rounded-full hover:bg-blue-50 transition-all text-sm">ホーム</Link>
+              <Link to="/mypage" className="text-blue-600 bg-blue-50 font-medium px-4 py-2 rounded-full text-sm">マイページ</Link>
+              <button onClick={signOut} className="text-slate-500 hover:text-blue-600 font-medium px-4 py-2 rounded-full hover:bg-blue-50 transition-all text-sm">ログアウト</button>
+            </nav>
+
+            <button
+              className="md:hidden p-2.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
+
+          {mobileMenuOpen && (
+            <div className="md:hidden mt-4 pb-4 border-t border-slate-100">
+              <div className="flex flex-col space-y-1 pt-4">
+                <Link to="/" className="text-slate-600 hover:text-blue-600 font-medium py-3 px-4 rounded-2xl hover:bg-blue-50 transition-all">ホーム</Link>
+                <Link to="/mypage" className="text-blue-600 bg-blue-50 font-medium py-3 px-4 rounded-2xl">マイページ</Link>
+                <button onClick={signOut} className="text-slate-600 hover:text-blue-600 font-medium py-3 px-4 rounded-2xl hover:bg-blue-50 transition-all text-left">ログアウト</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </header>
+
       {/* ========== PC Layout: Sidebar + Main ========== */}
       <div className="hidden md:flex max-w-7xl mx-auto px-6 lg:px-8 py-8 gap-8">
         {/* --- PC Sidebar --- */}
         <aside className="w-72 flex-shrink-0">
-          <div className="sticky top-8 space-y-5">
+          <div className="sticky top-24 space-y-5">
             {/* Instagram-style Profile Card */}
             <div className="bg-white rounded-[24px] shadow-xl shadow-slate-200/40 border border-slate-100/80 p-6">
               <div className="text-center mb-5">
@@ -953,23 +993,7 @@ const MyPageWithWithdrawal = () => {
               })}
             </div>
 
-            {/* Sidebar Actions */}
-            <div className="bg-white rounded-[24px] shadow-lg shadow-slate-100/50 border border-slate-100/80 p-4 space-y-2">
-              <button
-                onClick={() => window.location.href = '/'}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-xl transition-all"
-              >
-                <Home className="w-4 h-4" />
-                <span>{t.goHome}</span>
-              </button>
-              <button
-                onClick={signOut}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>{t.logout}</span>
-              </button>
-            </div>
+            {/* Sidebar is now lighter - nav actions moved to header */}
           </div>
         </aside>
 
@@ -1946,21 +1970,6 @@ const MyPageWithWithdrawal = () => {
 
       {/* ========== Mobile Layout ========== */}
       <div className="md:hidden pb-24">
-        {/* Mobile Header */}
-        <div className="bg-white border-b border-slate-100 sticky top-0 z-40">
-          <div className="px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button onClick={() => window.location.href = '/'} className="p-1.5 text-slate-400 hover:text-slate-600">
-                <Home className="w-5 h-5" />
-              </button>
-              <h1 className="text-base font-bold text-slate-800">{t.title}</h1>
-            </div>
-            <button onClick={signOut} className="p-1.5 text-slate-400 hover:text-red-500">
-              <LogOut className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
         {/* Mobile Profile Card (Instagram-style) */}
         <div className="px-4 pt-5 pb-3">
           <div className="bg-white rounded-[24px] shadow-lg shadow-slate-100/50 border border-slate-100/80 p-5">
