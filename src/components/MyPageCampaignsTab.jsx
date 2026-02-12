@@ -1122,6 +1122,71 @@ const StepCard = ({
     return match ? parseInt(match[1]) : (submission?.video_file_url ? 1 : 0)
   }
 
+  // 최신 영상 URL 계산 - video_versions, submission, application 중 최신
+  const getLatestVideo = () => {
+    const versions = Array.isArray(submission?.video_versions) ? submission.video_versions : []
+    // video_versions에서 최신
+    if (versions.length > 0) {
+      const sorted = [...versions].sort((a, b) => {
+        // 버전 번호가 있으면 그걸로, 없으면 uploaded_at으로
+        if (a.version && b.version) return b.version - a.version
+        if (a.uploaded_at && b.uploaded_at) return new Date(b.uploaded_at) - new Date(a.uploaded_at)
+        return 0
+      })
+      const latestVersion = sorted[0]
+
+      // application에 더 최신 데이터가 있는지 비교
+      const appVideoUrl = campaignType === '4week_challenge'
+        ? application?.[`week${stepNumber}_url`]
+        : application?.video_file_url
+      const appUpdated = application?.updated_at ? new Date(application.updated_at).getTime() : 0
+      const verUpdated = latestVersion.uploaded_at ? new Date(latestVersion.uploaded_at).getTime() : 0
+
+      if (appVideoUrl && appVideoUrl !== latestVersion.file_url && appUpdated > verUpdated) {
+        return {
+          url: appVideoUrl,
+          name: application?.video_file_name || 'admin_upload',
+          uploadedAt: application?.video_uploaded_at || application?.updated_at,
+          version: (latestVersion.version || 0) + 1,
+          source: 'admin'
+        }
+      }
+
+      return {
+        url: latestVersion.file_url,
+        name: latestVersion.file_name,
+        uploadedAt: latestVersion.uploaded_at,
+        version: latestVersion.version || 1,
+        source: 'version_history'
+      }
+    }
+
+    // video_versions가 없으면 submission vs application 비교
+    const subUrl = submission?.video_file_url
+    const appVideoUrl = campaignType === '4week_challenge'
+      ? application?.[`week${stepNumber}_url`]
+      : application?.video_file_url
+    const subUpdated = submission?.updated_at ? new Date(submission.updated_at).getTime() : 0
+    const appUpdated = application?.updated_at ? new Date(application.updated_at).getTime() : 0
+
+    // 둘 다 있으면 최신 사용
+    if (subUrl && appVideoUrl && subUrl !== appVideoUrl) {
+      if (appUpdated > subUpdated) {
+        return { url: appVideoUrl, name: application?.video_file_name, uploadedAt: application?.video_uploaded_at || application?.updated_at, version: 1, source: 'admin' }
+      }
+      return { url: subUrl, name: submission?.video_file_name, uploadedAt: submission?.video_uploaded_at, version: 1, source: 'creator' }
+    }
+
+    const url = subUrl || appVideoUrl
+    if (url) {
+      return { url, name: submission?.video_file_name || application?.video_file_name, uploadedAt: submission?.video_uploaded_at || application?.video_uploaded_at, version: 1, source: 'creator' }
+    }
+
+    return null
+  }
+
+  const latestVideo = getLatestVideo()
+
   // 수정 요청 확인
   const hasRevisionRequests = submission?.revision_requests?.length > 0 || application?.revision_requests?.length > 0
 
@@ -1386,6 +1451,21 @@ const StepCard = ({
                     </span>
                   )}
                 </div>
+                {/* 영상 업로드 상태 인디케이터 */}
+                {latestVideo && (
+                  <div className="flex items-center mt-1 text-xs text-gray-500">
+                    <Film className="w-3 h-3 mr-1" />
+                    <span>v{latestVideo.version}</span>
+                    {latestVideo.source === 'admin' && (
+                      <span className="ml-1 text-purple-600">({language === 'ja' ? '管理者' : '관리자'})</span>
+                    )}
+                    {latestVideo.uploadedAt && (
+                      <span className="ml-1.5 text-gray-400">
+                        {new Date(latestVideo.uploadedAt).toLocaleDateString(language === 'ja' ? 'ja-JP' : 'ko-KR', { month: 'short', day: 'numeric' })}
+                      </span>
+                    )}
+                  </div>
+                )}
 
                 {/* 마감일 표시 */}
                 <DeadlineDisplay
@@ -1463,6 +1543,59 @@ const StepCard = ({
                 })
               })()}
             </div>
+
+            {/* 현재 영상 미리보기 - 업로드된 영상이 있을 때 항상 표시 */}
+            {latestVideo && (
+              <div className="mb-4 bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <div className="p-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Play className="w-4 h-4 mr-2 text-blue-600" />
+                    <span className="text-sm font-medium text-gray-700">
+                      {language === 'ja' ? '提出済み動画' : '제출된 영상'}
+                      <span className="ml-2 text-xs text-gray-400">v{latestVideo.version}</span>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {latestVideo.source === 'admin' && (
+                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                        {language === 'ja' ? '管理者' : '관리자'}
+                      </span>
+                    )}
+                    {latestVideo.uploadedAt && (
+                      <span className="text-xs text-gray-400">
+                        {new Date(latestVideo.uploadedAt).toLocaleString(language === 'ja' ? 'ja-JP' : 'ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="p-3">
+                  {/* 영상 재생기 */}
+                  <video
+                    src={latestVideo.url}
+                    controls
+                    preload="metadata"
+                    className="w-full rounded-lg bg-black max-h-[300px]"
+                    style={{ aspectRatio: '16/9', objectFit: 'contain' }}
+                  >
+                    {language === 'ja' ? 'お使いのブラウザは動画再生に対応していません。' : '브라우저가 영상 재생을 지원하지 않습니다.'}
+                  </video>
+                  <div className="mt-2 flex items-center justify-between">
+                    <p className="text-xs text-gray-500 truncate flex-1">
+                      {latestVideo.name || (language === 'ja' ? 'アップロード済み動画' : '업로드된 영상')}
+                    </p>
+                    <a
+                      href={latestVideo.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 hover:underline flex items-center ml-2 flex-shrink-0"
+                    >
+                      <ExternalLink className="w-3 h-3 mr-1" />
+                      {language === 'ja' ? '新しいタブで開く' : '새 탭에서 열기'}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Step 1: 영상 업로드 */}
             {currentStep === 1 && (
@@ -1805,34 +1938,73 @@ const StepCard = ({
             )}
 
             {/* 영상 재업로드 섹션 - 영상 업로드 완료 후 어느 단계에서든 항상 표시 */}
-            {currentStep >= 2 && submission?.video_file_url && (
+            {currentStep >= 2 && (submission?.video_file_url || latestVideo) && (
               <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 {/* 전체 버전 히스토리 */}
                 <div className="mb-3">
-                  <p className="text-xs font-medium text-gray-600 mb-2">{language === 'ja' ? '提出済み動画:' : '제출된 영상:'}</p>
+                  <p className="text-xs font-medium text-gray-600 mb-2">{language === 'ja' ? '動画履歴:' : '영상 히스토리:'}</p>
                   <div className="space-y-1.5">
-                    {(Array.isArray(submission?.video_versions) && submission.video_versions.length > 0
-                      ? [...submission.video_versions].sort((a, b) => (b.version || 0) - (a.version || 0))
-                      : [{ version: getVideoVersion() || 1, file_url: submission.video_file_url, file_name: submission.video_file_name, uploaded_at: submission.video_uploaded_at }]
-                    ).map((ver, idx) => (
-                      <div key={idx} className={`p-2.5 bg-white rounded-lg border ${idx === 0 ? 'border-blue-300 ring-1 ring-blue-100' : 'border-gray-200'}`}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-700 truncate">
-                              v{ver.version} - {ver.file_name || (language === 'ja' ? 'アップロード済み' : '업로드됨')}
-                            </p>
-                            {ver.uploaded_at && (
-                              <p className="text-xs text-gray-400 mt-0.5">
-                                {new Date(ver.uploaded_at).toLocaleString(language === 'ja' ? 'ja-JP' : 'ko-KR')}
-                              </p>
-                            )}
+                    {(() => {
+                      // 전체 버전 목록 구성
+                      const versions = Array.isArray(submission?.video_versions) && submission.video_versions.length > 0
+                        ? [...submission.video_versions]
+                        : submission?.video_file_url
+                          ? [{ version: getVideoVersion() || 1, file_url: submission.video_file_url, file_name: submission.video_file_name, uploaded_at: submission.video_uploaded_at }]
+                          : []
+
+                      // latestVideo가 admin 소스이고 버전 목록에 없으면 추가
+                      if (latestVideo?.source === 'admin') {
+                        const exists = versions.some(v => v.file_url === latestVideo.url)
+                        if (!exists) {
+                          versions.push({
+                            version: latestVideo.version,
+                            file_url: latestVideo.url,
+                            file_name: latestVideo.name || (language === 'ja' ? '管理者アップロード' : '관리자 업로드'),
+                            uploaded_at: latestVideo.uploadedAt,
+                            _source: 'admin'
+                          })
+                        }
+                      }
+
+                      return versions
+                        .sort((a, b) => {
+                          if (a.uploaded_at && b.uploaded_at) return new Date(b.uploaded_at) - new Date(a.uploaded_at)
+                          return (b.version || 0) - (a.version || 0)
+                        })
+                        .map((ver, idx) => (
+                          <div key={idx} className={`p-2.5 bg-white rounded-lg border ${idx === 0 ? 'border-blue-300 ring-1 ring-blue-100' : 'border-gray-200'}`}>
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <p className="text-sm font-medium text-gray-700 truncate">
+                                    v{ver.version} - {ver.file_name || (language === 'ja' ? 'アップロード済み' : '업로드됨')}
+                                  </p>
+                                  {ver._source === 'admin' && (
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-700 flex-shrink-0">
+                                      {language === 'ja' ? '管理者' : '관리자'}
+                                    </span>
+                                  )}
+                                </div>
+                                {ver.uploaded_at && (
+                                  <p className="text-xs text-gray-400 mt-0.5">
+                                    {new Date(ver.uploaded_at).toLocaleString(language === 'ja' ? 'ja-JP' : 'ko-KR')}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                                {ver.file_url && (
+                                  <a href={ver.file_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </a>
+                                )}
+                                <span className={`px-2 py-1 rounded text-xs font-medium ${idx === 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
+                                  {idx === 0 ? (language === 'ja' ? '最新' : '최신') : `v${ver.version}`}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                          <span className={`px-2 py-1 rounded text-xs font-medium flex-shrink-0 ml-2 ${idx === 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
-                            v{ver.version}{idx === 0 ? (language === 'ja' ? ' 最新' : ' 최신') : ''}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                        ))
+                    })()}
                   </div>
                 </div>
 
@@ -2114,6 +2286,56 @@ const CampaignCard = ({ application, campaign, submissions, mainChannel, onUpdat
       {/* 스텝 목록 */}
       {expanded && (
         <div className="p-4 pt-0 space-y-3">
+          {/* 스텝/주차별 영상 상태 요약 (2스텝 이상일 때) */}
+          {totalSteps > 1 && (
+            <div className="bg-white bg-opacity-70 rounded-lg p-3 border border-gray-200">
+              <p className="text-xs font-medium text-gray-500 mb-2">
+                {language === 'ja'
+                  ? (campaignType === '4week_challenge' ? '📋 週別動画ステータス' : '📋 ステップ別動画ステータス')
+                  : (campaignType === '4week_challenge' ? '📋 주차별 영상 상태' : '📋 스텝별 영상 상태')}
+              </p>
+              <div className={`grid gap-2 ${totalSteps <= 4 ? `grid-cols-${totalSteps}` : 'grid-cols-4'}`}>
+                {Array.from({ length: totalSteps }, (_, i) => i + 1).map(step => {
+                  const sub = submissions?.find(s => s.step_number === step)
+                  const ws = sub?.workflow_status || 'guide_pending'
+                  const hasVideo = !!sub?.video_file_url
+                  const stepLbl = campaignType === '4week_challenge' ? `W${step}` : `${step}`
+                  return (
+                    <div key={step} className={`text-center p-2 rounded-lg border ${
+                      ws === 'points_paid' ? 'bg-green-50 border-green-200' :
+                      ws === 'sns_submitted' ? 'bg-indigo-50 border-indigo-200' :
+                      hasVideo ? 'bg-cyan-50 border-cyan-200' :
+                      'bg-gray-50 border-gray-200'
+                    }`}>
+                      <p className="text-xs font-bold text-gray-600">{stepLbl}</p>
+                      <div className="mt-1">
+                        {ws === 'points_paid' ? (
+                          <CheckCircle className="w-4 h-4 mx-auto text-green-500" />
+                        ) : hasVideo ? (
+                          <Film className="w-4 h-4 mx-auto text-cyan-500" />
+                        ) : (
+                          <Upload className="w-4 h-4 mx-auto text-gray-300" />
+                        )}
+                      </div>
+                      <p className={`text-[10px] mt-0.5 ${
+                        ws === 'points_paid' ? 'text-green-600' :
+                        ws === 'sns_submitted' ? 'text-indigo-600' :
+                        hasVideo ? 'text-cyan-600' :
+                        'text-gray-400'
+                      }`}>
+                        {ws === 'points_paid' ? (language === 'ja' ? '完了' : '완료') :
+                         ws === 'sns_submitted' ? 'SNS' :
+                         (ws === 'revision_required' || ws === 'revision_requested') ? (language === 'ja' ? '修正' : '수정') :
+                         hasVideo ? (language === 'ja' ? '提出済' : '제출') :
+                         (language === 'ja' ? '未提出' : '미제출')}
+                      </p>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           {Array.from({ length: totalSteps }, (_, i) => i + 1).map((stepNumber) => {
             const submission = submissions?.find(s => s.step_number === stepNumber) || {
               id: `temp-${stepNumber}`,
