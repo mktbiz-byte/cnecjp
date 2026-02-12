@@ -12,7 +12,7 @@ import {
   Instagram, Youtube, Hash, Twitter, ExternalLink,
   Star, Award, Calendar, DollarSign, Eye, ArrowRight,
   CheckCircle, Clock, MapPin, Phone, Mail, User, Zap,
-  Menu, X, TrendingUp, Wallet, FileText
+  Menu, X, TrendingUp, Wallet, FileText, AlertCircle, Sparkles
 } from 'lucide-react'
 import LineRegistrationBanner from './LineRegistrationBanner'
 
@@ -31,6 +31,9 @@ const HomePageJP = () => {
   const [selectedCampaign, setSelectedCampaign] = useState(null)
   const [detailModal, setDetailModal] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [userProfile, setUserProfile] = useState(null)
+  const [profileBannerDismissed, setProfileBannerDismissed] = useState(false)
+  const [showProfileRequiredModal, setShowProfileRequiredModal] = useState(false)
 
   useEffect(() => {
     loadPageData()
@@ -39,16 +42,33 @@ const HomePageJP = () => {
   const loadPageData = async () => {
     try {
       setLoading(true)
-      await Promise.all([
-        loadCampaigns(),
-        loadStats()
-      ])
+      const tasks = [loadCampaigns(), loadStats()]
+      if (user) tasks.push(loadUserProfile())
+      await Promise.all(tasks)
     } catch (error) {
       console.error('Page data load error:', error)
     } finally {
       setLoading(false)
     }
   }
+
+  const loadUserProfile = async () => {
+    try {
+      const profileData = await database.userProfiles.get(user.id)
+      setUserProfile(profileData)
+      // バナー表示状態の復元（セッション中は非表示にできる）
+      const dismissed = sessionStorage.getItem('profile_banner_dismissed')
+      if (dismissed === 'true') setProfileBannerDismissed(true)
+    } catch (err) {
+      console.error('Load user profile error:', err)
+    }
+  }
+
+  // プロフィール必須項目チェック（ニックネーム・電話番号・名前が最低限必要）
+  const isProfileComplete = userProfile &&
+    userProfile.nickname?.trim() &&
+    userProfile.phone?.trim() &&
+    userProfile.name?.trim()
 
   const loadCampaigns = async () => {
     try {
@@ -98,6 +118,11 @@ const HomePageJP = () => {
   const handleApply = (campaignId) => {
     if (!user) {
       navigate('/login')
+      return
+    }
+    // プロフィール未設定の場合は応募不可
+    if (!isProfileComplete) {
+      setShowProfileRequiredModal(true)
       return
     }
     navigate(`/campaign-application?campaign_id=${campaignId}`)
@@ -325,6 +350,56 @@ const HomePageJP = () => {
           )}
         </div>
       </header>
+
+      {/* ========== プロフィール未設定バナー ========== */}
+      {user && !isProfileComplete && !profileBannerDismissed && (
+        <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border-b border-amber-200/60">
+          <div className="max-w-7xl mx-auto px-5 sm:px-8 py-4 sm:py-5">
+            <div className="flex items-start sm:items-center gap-4">
+              <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-amber-100 rounded-2xl flex items-center justify-center">
+                <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm sm:text-base font-bold text-slate-800 mb-1">
+                  プロフィールを設定して、キャンペーンに応募しましょう！
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+                  プロフィールを完成させると<span className="text-amber-700 font-semibold">キャンペーンへの応募が可能</span>になり、
+                  <span className="text-amber-700 font-semibold">企業からの採用率がアップ</span>します。
+                  ニックネーム・電話番号・名前を入力するだけで応募スタートできます。
+                </p>
+                <div className="flex flex-wrap items-center gap-2 mt-3">
+                  <Link
+                    to="/profile-beauty"
+                    className="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm font-semibold px-4 sm:px-5 py-2 sm:py-2.5 rounded-full transition-all shadow-lg shadow-amber-500/20"
+                  >
+                    <User className="w-3.5 h-3.5" />
+                    プロフィールを設定する
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setProfileBannerDismissed(true)
+                      sessionStorage.setItem('profile_banner_dismissed', 'true')
+                    }}
+                    className="text-xs text-slate-400 hover:text-slate-600 px-3 py-2 transition-colors"
+                  >
+                    後で設定する
+                  </button>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setProfileBannerDismissed(true)
+                  sessionStorage.setItem('profile_banner_dismissed', 'true')
+                }}
+                className="flex-shrink-0 text-slate-300 hover:text-slate-500 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ========== Hero Section ========== */}
       <section className="relative py-12 sm:py-20 md:py-32 overflow-hidden">
@@ -805,6 +880,75 @@ const HomePageJP = () => {
           </div>
         </div>
       </footer>
+
+      {/* ========== プロフィール必須モーダル ========== */}
+      <Dialog open={showProfileRequiredModal} onOpenChange={setShowProfileRequiredModal}>
+        <DialogContent className="sm:max-w-md mx-4 rounded-[24px] p-0 overflow-hidden">
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 sm:p-8">
+            <DialogHeader className="mb-0">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-8 h-8 text-blue-600" />
+              </div>
+              <DialogTitle className="text-xl font-bold text-slate-800 text-center">
+                プロフィール設定が必要です
+              </DialogTitle>
+              <DialogDescription className="text-sm text-slate-500 text-center mt-2">
+                キャンペーンに応募するには、まずプロフィールを設定してください。
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="mt-6 space-y-3">
+              <div className="bg-white rounded-2xl p-4 border border-slate-100">
+                <h4 className="text-sm font-bold text-slate-700 mb-3">プロフィール設定のメリット</h4>
+                <ul className="space-y-2.5">
+                  <li className="flex items-start gap-2.5">
+                    <CheckCircle className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-600">キャンペーンへの<b>応募が可能</b>になります</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <CheckCircle className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-600">企業からの<b>採用率が大幅アップ</b></span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <CheckCircle className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-600"><b>ニックネーム</b>で表示されるため実名は安心保護</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <CheckCircle className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-600">ビューティープロフィールで<b>ぴったりのキャンペーン</b>をマッチング</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="bg-amber-50 rounded-2xl p-3 border border-amber-100">
+                <p className="text-xs text-amber-700 flex items-start gap-2">
+                  <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                  最低限<b>ニックネーム・電話番号・名前</b>の入力が必要です。所要時間: 約1分
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-col gap-2.5">
+              <Button
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-full shadow-lg shadow-blue-600/25"
+                onClick={() => {
+                  setShowProfileRequiredModal(false)
+                  navigate('/profile-beauty')
+                }}
+              >
+                <User className="w-4 h-4 mr-2" />
+                今すぐプロフィールを設定
+              </Button>
+              <button
+                className="text-sm text-slate-400 hover:text-slate-600 py-2 transition-colors"
+                onClick={() => setShowProfileRequiredModal(false)}
+              >
+                後で設定する
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* LINE Registration Floating Banner */}
       <LineRegistrationBanner />
