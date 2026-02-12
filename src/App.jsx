@@ -19,6 +19,7 @@ import PayPalWithdrawal from './components/PayPalWithdrawal';
 import JapanWithdrawalRequest from './components/JapanWithdrawalRequest';
 import ProfileManagement from './components/ProfileManagement';
 import ProfileSettings from './components/ProfileSettings';
+import ProfileSettingsBeauty from './components/ProfileSettingsBeauty';
 import AuthCallbackSafe from './components/AuthCallbackSafe';
 
 // 관리자 컴포넌트
@@ -84,6 +85,7 @@ const AppContent = () => {
         <Route path="/paypal-withdrawal" element={<PayPalWithdrawal />} />
         <Route path="/company-report/:campaignId" element={<CompanyReportNew />} />
         <Route path="/profile-settings" element={<ProfileSettings />} />
+        <Route path="/profile-beauty" element={<ProfileSettingsBeauty />} />
         
         {/* 관리자 페이지 - 보안을 위해 /admin/ 경로 제거 */}
         <Route path="/secret-admin-login" element={<SecretAdminLogin />} />
