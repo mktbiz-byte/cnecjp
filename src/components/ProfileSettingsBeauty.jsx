@@ -298,9 +298,20 @@ const ProfileSettingsBeauty = () => {
         .from('user_profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
-      if (fetchErr && fetchErr.code !== 'PGRST116') throw fetchErr
+      if (fetchErr) {
+        // RLS infinite recursion エラーの場合、明示的にユーザーに通知
+        if (fetchErr.message?.includes('infinite recursion')) {
+          console.error('RLS infinite recursion detected. Run sql/002_fix_rls_infinite_recursion.sql')
+          setError('データベース設定にエラーがあります。管理者に「002_fix_rls_infinite_recursion.sql」の実行を依頼してください。')
+        } else {
+          console.error('Profile load error:', fetchErr)
+        }
+        // エラーでもページは表示（空のフォームで）
+        setProfile(prev => ({ ...prev, email: user.email || '' }))
+        return
+      }
 
       if (data) {
         setProfile(prev => ({
@@ -308,6 +319,7 @@ const ProfileSettingsBeauty = () => {
           ...data,
           email: data.email || user.email || '',
           nickname: data.nickname || '',
+          // JSONB配列フィールドのデフォルト値保証
           skin_concerns: data.skin_concerns || [],
           hair_concerns: data.hair_concerns || [],
           diet_concerns: data.diet_concerns || [],
@@ -326,6 +338,7 @@ const ProfileSettingsBeauty = () => {
       }
     } catch (err) {
       console.error('Profile load error:', err)
+      setProfile(prev => ({ ...prev, email: user.email || '' }))
     } finally {
       setLoading(false)
     }
@@ -345,28 +358,39 @@ const ProfileSettingsBeauty = () => {
         return
       }
 
-      // 保存データ構築（既存カラムのみ更新、未知カラムは無視）
-      const saveData = {
+      // 電話番号必須チェック（LINE連携のため）
+      if (!profile.phone?.trim()) {
+        setError('電話番号を入力してください。LINE連携に必要です。')
+        setSaving(false)
+        return
+      }
+
+      // 保存データ構築
+      // Phase 1: 既存の基本カラム（マイグレーション不要）
+      const coreData = {
         user_id: user.id,
-        // 基本
-        nickname: profile.nickname?.trim() || null,
         name: profile.name?.trim() || null,
         email: profile.email?.trim() || user.email,
         phone: profile.phone?.trim() || null,
         age: profile.age ? parseInt(profile.age) : null,
-        gender: profile.gender || null,
         bio: profile.bio?.trim() || null,
         profile_image: profile.profile_image || null,
-        // SNS
+        skin_type: profile.skin_type || null,
         instagram_url: profile.instagram_url?.trim() || null,
         youtube_url: profile.youtube_url?.trim() || null,
         tiktok_url: profile.tiktok_url?.trim() || null,
+        updated_at: new Date().toISOString(),
+      }
+
+      // Phase 2: 拡張カラム（マイグレーション後に利用可能）
+      const extendedData = {
+        nickname: profile.nickname?.trim() || null,
+        gender: profile.gender || null,
         blog_url: profile.blog_url?.trim() || null,
         instagram_followers: profile.instagram_followers ? parseInt(profile.instagram_followers) : null,
         tiktok_followers: profile.tiktok_followers ? parseInt(profile.tiktok_followers) : null,
         youtube_subscribers: profile.youtube_subscribers ? parseInt(profile.youtube_subscribers) : null,
         // 外見
-        skin_type: profile.skin_type || null,
         skin_shade: profile.skin_shade || null,
         personal_color: profile.personal_color || null,
         hair_type: profile.hair_type || null,
@@ -418,34 +442,69 @@ const ProfileSettingsBeauty = () => {
         region: 'japan',
         country: 'JP',
         profile_completed: calculateCompletion() >= 80,
-        updated_at: new Date().toISOString(),
       }
+
+      // 全フィールドで保存試行
+      const fullData = { ...coreData, ...extendedData }
 
       // Upsert
       const { data: existing } = await supabase
         .from('user_profiles')
         .select('id')
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
+
+      let saveError = null
 
       if (existing) {
         const { error: upErr } = await supabase
           .from('user_profiles')
-          .update(saveData)
+          .update(fullData)
           .eq('user_id', user.id)
-        if (upErr) throw upErr
+        saveError = upErr
       } else {
         const { error: insErr } = await supabase
           .from('user_profiles')
-          .insert([saveData])
-        if (insErr) throw insErr
+          .insert([fullData])
+        saveError = insErr
+      }
+
+      // 全フィールド保存に失敗した場合、基本フィールドのみで再試行
+      if (saveError) {
+        console.warn('Full save failed, trying core fields only:', saveError.message)
+        let coreError = null
+
+        if (existing) {
+          const { error: upErr } = await supabase
+            .from('user_profiles')
+            .update(coreData)
+            .eq('user_id', user.id)
+          coreError = upErr
+        } else {
+          const { error: insErr } = await supabase
+            .from('user_profiles')
+            .insert([coreData])
+          coreError = insErr
+        }
+
+        if (coreError) {
+          throw coreError
+        }
+
+        setSuccess('基本情報を保存しました。ビューティープロフィールの保存にはSQLマイグレーションの実行が必要です。')
+        setTimeout(() => setSuccess(''), 6000)
+        return
       }
 
       setSuccess('プロフィールを保存しました！')
       setTimeout(() => setSuccess(''), 4000)
     } catch (err) {
       console.error('Save error:', err)
-      setError(`保存に失敗しました: ${err.message}`)
+      if (err.message?.includes('infinite recursion')) {
+        setError('データベースのRLSポリシーにエラーがあります。管理者にお問い合わせください。（SQL修正: 002_fix_rls_infinite_recursion.sql）')
+      } else {
+        setError(`保存に失敗しました: ${err.message}`)
+      }
     } finally {
       setSaving(false)
     }
@@ -501,29 +560,59 @@ const ProfileSettingsBeauty = () => {
     if (file.size > 5 * 1024 * 1024) { setError('ファイルサイズは5MB以下にしてください'); return }
     try {
       setSaving(true)
+      setError('')
       const ext = file.name.split('.').pop()
-      const name = `${user.id}-${Date.now()}.${ext}`
-      const path = `profiles/${name}`
+      const fileName = `${user.id}-${Date.now()}.${ext}`
+      const path = `profiles/${fileName}`
       let publicUrl = ''
 
       const { error: upErr } = await supabase.storage.from('profile-images').upload(path, file, { cacheControl: '3600', upsert: true })
       if (upErr) {
         // fallback to campaign-images bucket
-        const { error: fbErr } = await supabase.storage.from('campaign-images').upload(`profiles/${name}`, file, { cacheControl: '3600', upsert: true })
+        const { error: fbErr } = await supabase.storage.from('campaign-images').upload(`profiles/${fileName}`, file, { cacheControl: '3600', upsert: true })
         if (fbErr) throw fbErr
-        const { data: { publicUrl: u } } = supabase.storage.from('campaign-images').getPublicUrl(`profiles/${name}`)
+        const { data: { publicUrl: u } } = supabase.storage.from('campaign-images').getPublicUrl(`profiles/${fileName}`)
         publicUrl = u
       } else {
         const { data: { publicUrl: u } } = supabase.storage.from('profile-images').getPublicUrl(path)
         publicUrl = u
       }
 
-      await supabase.from('user_profiles').update({ profile_image: publicUrl, updated_at: new Date().toISOString() }).eq('user_id', user.id)
+      // Upsert: プロフィール行がない場合は新規作成
+      const { data: existing } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (existing) {
+        const { error: dbErr } = await supabase
+          .from('user_profiles')
+          .update({ profile_image: publicUrl, updated_at: new Date().toISOString() })
+          .eq('user_id', user.id)
+        if (dbErr) throw dbErr
+      } else {
+        const { error: dbErr } = await supabase
+          .from('user_profiles')
+          .insert([{
+            user_id: user.id,
+            email: user.email,
+            profile_image: publicUrl,
+            updated_at: new Date().toISOString(),
+          }])
+        if (dbErr) throw dbErr
+      }
+
       setProfile(prev => ({ ...prev, profile_image: publicUrl }))
       setSuccess('プロフィール写真を更新しました')
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
-      setError('写真のアップロードに失敗しました')
+      console.error('Image upload error:', err)
+      if (err.message?.includes('infinite recursion')) {
+        setError('データベースのRLSポリシーにエラーがあります。管理者にお問い合わせください。')
+      } else {
+        setError('写真のアップロードに失敗しました: ' + (err.message || ''))
+      }
     } finally {
       setSaving(false)
     }
@@ -719,9 +808,9 @@ const ProfileSettingsBeauty = () => {
                 </div>
               </div>
 
-              {/* 電話番号 */}
+              {/* 電話番号（必須） */}
               <div>
-                <SectionLabel label="電話番号" hint="キャンペーン選定後のみ企業に提供されます。" />
+                <SectionLabel label="電話番号（必須）" hint="キャンペーン選定後のみ企業に提供されます。" />
                 <input
                   type="tel"
                   value={profile.phone}
@@ -729,6 +818,14 @@ const ProfileSettingsBeauty = () => {
                   placeholder="080-1234-5678"
                   className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 />
+                <div className="mt-2 bg-green-50 border border-green-200 rounded-xl p-3 flex items-start gap-2">
+                  <Info className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-xs text-green-700">
+                    <p className="font-semibold mb-1">LINEの登録をお願いします</p>
+                    <p>キャンペーンの連絡はLINEで行います。電話番号でLINEアカウントを登録してください。</p>
+                    <p className="mt-1 text-green-600">企業との迅速なやり取りのために、LINEでの連絡が基本となります。</p>
+                  </div>
+                </div>
               </div>
 
               {/* 自己紹介 */}

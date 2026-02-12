@@ -242,45 +242,52 @@ END $$;
 
 
 -- ────────────────────────────────────────────
--- 10. 管理者用の全件読み取りポリシー
+-- 10. SECURITY DEFINER関数（管理者チェック用）
+--     ⚠️ 重要: user_profilesテーブルのRLSポリシー内で
+--     同じテーブルをSELECTすると無限ループが発生するため、
+--     SECURITY DEFINER関数でRLSをバイパスして管理者チェックを行う。
+-- ────────────────────────────────────────────
+
+CREATE OR REPLACE FUNCTION public.is_admin_or_manager()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM user_profiles
+    WHERE user_id = auth.uid()
+    AND user_role IN ('admin', 'manager')
+  );
+$$;
+
+
+-- ────────────────────────────────────────────
+-- 11. 管理者用の全件読み取りポリシー
+--     SECURITY DEFINER関数を使用（再帰なし）
 -- ────────────────────────────────────────────
 
 -- 管理者は全ユーザーのプロフィールを読める
 DO $$
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE tablename = 'user_profiles' AND policyname = 'Admins can view all profiles'
-  ) THEN
-    CREATE POLICY "Admins can view all profiles"
-      ON user_profiles FOR SELECT
-      USING (
-        EXISTS (
-          SELECT 1 FROM user_profiles up
-          WHERE up.user_id = auth.uid()
-          AND up.user_role IN ('admin', 'manager')
-        )
-      );
-  END IF;
+  -- 既存の問題あるポリシーを削除（無限ループ対策）
+  DROP POLICY IF EXISTS "Admins can view all profiles" ON user_profiles;
+
+  CREATE POLICY "Admins can view all profiles"
+    ON user_profiles FOR SELECT
+    USING (public.is_admin_or_manager());
 END $$;
 
 -- 管理者は全ユーザーのプロフィールを更新できる
 DO $$
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE tablename = 'user_profiles' AND policyname = 'Admins can update all profiles'
-  ) THEN
-    CREATE POLICY "Admins can update all profiles"
-      ON user_profiles FOR UPDATE
-      USING (
-        EXISTS (
-          SELECT 1 FROM user_profiles up
-          WHERE up.user_id = auth.uid()
-          AND up.user_role IN ('admin', 'manager')
-        )
-      );
-  END IF;
+  -- 既存の問題あるポリシーを削除（無限ループ対策）
+  DROP POLICY IF EXISTS "Admins can update all profiles" ON user_profiles;
+
+  CREATE POLICY "Admins can update all profiles"
+    ON user_profiles FOR UPDATE
+    USING (public.is_admin_or_manager());
 END $$;
 
 
