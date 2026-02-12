@@ -952,8 +952,10 @@ const StepCard = ({
     const isRealId = submissionId && !submissionId.startsWith('temp-') && !submissionId.startsWith('app-')
 
     if (submissionTable === 'campaign_submissions') {
+      // video_versions はDBカラムに存在しないため除外
+      const { video_versions: _vv, ...dbData } = data
       if (isRealId && !isNew) {
-        const { error } = await supabase.from('campaign_submissions').update(data).eq('id', submissionId)
+        const { error } = await supabase.from('campaign_submissions').update(dbData).eq('id', submissionId)
         if (error) throw error
       } else {
         // INSERT し、新しい ID を取得して後続処理で使えるようにする
@@ -963,7 +965,7 @@ const StepCard = ({
           campaign_id: application.campaign_id,
           step_number: stepNumber,
           step_label: getStepLabel(),
-          ...data
+          ...dbData
         }).select('id').single()
         if (error) throw error
         // 新しいIDを返却（onUpdate後に利用可能）
