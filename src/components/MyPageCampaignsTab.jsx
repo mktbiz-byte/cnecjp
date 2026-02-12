@@ -269,7 +269,7 @@ const buildSubmissionsFromApplication = (app, campaign) => {
       clean_video_file_url: app.clean_video_file_url || app.clean_video_url,
       sns_url: snsUrl,
       ad_code: app.ad_code || partnershipCode,
-      revision_requests: [],
+      revision_requests: app.revision_requests || [],
       video_versions: videoUrl ? [{ version: 1, file_url: videoUrl, file_name: app.video_file_name, uploaded_at: app.video_uploaded_at }] : [],
       _source: 'applications',
       _original: app
@@ -956,15 +956,20 @@ const StepCard = ({
         const { error } = await supabase.from('campaign_submissions').update(data).eq('id', submissionId)
         if (error) throw error
       } else {
-        const { error } = await supabase.from('campaign_submissions').insert({
+        // INSERT し、新しい ID を取得して後続処理で使えるようにする
+        const { data: inserted, error } = await supabase.from('campaign_submissions').insert({
           application_id: application.id,
           user_id: application.user_id,
           campaign_id: application.campaign_id,
           step_number: stepNumber,
           step_label: getStepLabel(),
           ...data
-        })
+        }).select('id').single()
         if (error) throw error
+        // 新しいIDを返却（onUpdate後に利用可能）
+        if (inserted?.id) {
+          submission._newId = inserted.id
+        }
       }
     } else if (submissionTable === 'video_submissions') {
       // video_submissions テーブルへのマッピング
@@ -990,14 +995,17 @@ const StepCard = ({
         const { error } = await supabase.from('video_submissions').update(vsData).eq('id', submissionId)
         if (error) throw error
       } else {
-        const { error } = await supabase.from('video_submissions').insert({
+        const { data: inserted, error } = await supabase.from('video_submissions').insert({
           application_id: application.id,
           user_id: application.user_id,
           campaign_id: application.campaign_id,
           ...vsData,
           submitted_at: new Date().toISOString()
-        })
+        }).select('id').single()
         if (error) throw error
+        if (inserted?.id) {
+          submission._newId = inserted.id
+        }
       }
     }
 
@@ -1238,7 +1246,11 @@ const StepCard = ({
         return dot >= 0 ? name.substring(dot) : ''
       }
       const nextVersion = getVideoVersion() + 1
-      const videoPath = `${userId}/${application.campaign_id}/${submission?.id || 'new'}/${timestamp}_v${nextVersion}_main${getExt(videoFile.name)}`
+      // 안정적인 storage path: temp/app- ID 대신 application.id + step_number 사용
+      const submissionId = submission?.id
+      const isRealId = submissionId && !submissionId.startsWith('temp-') && !submissionId.startsWith('app-')
+      const storageFolderId = isRealId ? submissionId : `${application.id}_step${stepNumber}`
+      const videoPath = `${userId}/${application.campaign_id}/${storageFolderId}/${timestamp}_v${nextVersion}_main${getExt(videoFile.name)}`
 
       const { error: uploadError } = await supabase.storage
         .from('campaign-videos')
@@ -1253,7 +1265,7 @@ const StepCard = ({
 
       let cleanVideoUrl = null
       if (cleanVideoFile) {
-        const cleanVideoPath = `${userId}/${application.campaign_id}/${submission?.id || 'new'}/${timestamp}_clean${getExt(cleanVideoFile.name)}`
+        const cleanVideoPath = `${userId}/${application.campaign_id}/${storageFolderId}/${timestamp}_clean${getExt(cleanVideoFile.name)}`
         const { error: cleanError } = await supabase.storage
           .from('campaign-videos')
           .upload(cleanVideoPath, cleanVideoFile, { cacheControl: '3600', upsert: false })
@@ -1301,7 +1313,16 @@ const StepCard = ({
       onUpdate?.()
     } catch (error) {
       console.error('Upload error:', error)
-      alert(language === 'ja' ? 'アップロードに失敗しました' : '업로드에 실패했습니다')
+      const errMsg = error?.message || ''
+      if (errMsg.includes('Payload too large') || errMsg.includes('413')) {
+        alert(language === 'ja' ? 'ファイルが大きすぎます。2GB以下のファイルを選択してください。' : '파일이 너무 큽니다. 2GB 이하 파일을 선택해주세요.')
+      } else if (errMsg.includes('storage') || errMsg.includes('bucket')) {
+        alert(language === 'ja' ? 'ストレージエラーが発生しました。しばらくしてから再度お試しください。' : '스토리지 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
+      } else if (errMsg.includes('duplicate') || errMsg.includes('already exists')) {
+        alert(language === 'ja' ? 'すでに同じファイルがアップロードされています。ページを更新してください。' : '이미 같은 파일이 업로드되어 있습니다. 페이지를 새로고침해주세요.')
+      } else {
+        alert(language === 'ja' ? `アップロードに失敗しました: ${errMsg || '不明なエラー'}` : `업로드에 실패했습니다: ${errMsg || '알 수 없는 오류'}`)
+      }
     } finally {
       setUploading(false)
       setUploadProgress(0)
@@ -1326,7 +1347,10 @@ const StepCard = ({
         const timestamp = Date.now()
         const userId = application.user_id
         const getExt = (name) => { const dot = name.lastIndexOf('.'); return dot >= 0 ? name.substring(dot) : '' }
-        const cleanPath = `${userId}/${application.campaign_id}/${submission?.id || 'new'}/${timestamp}_clean${getExt(cleanVideoFile.name)}`
+        const subId = submission?.id
+        const isReal = subId && !subId.startsWith('temp-') && !subId.startsWith('app-')
+        const folderId = isReal ? subId : `${application.id}_step${stepNumber}`
+        const cleanPath = `${userId}/${application.campaign_id}/${folderId}/${timestamp}_clean${getExt(cleanVideoFile.name)}`
         const { error: cleanUploadError } = await supabase.storage
           .from('campaign-videos')
           .upload(cleanPath, cleanVideoFile, { cacheControl: '3600', upsert: false })
@@ -2640,14 +2664,44 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
                     }
                   }
 
+                  // 修正リクエストのマージ
+                  // applications に revision_requests があり、submission にない場合、マージ
+                  const appRevisions = app.revision_requests
+                  if (Array.isArray(appRevisions) && appRevisions.length > 0) {
+                    const existingRevisions = (merged[app.id]?.[idx] || sub).revision_requests || []
+                    if (existingRevisions.length === 0 || appRevisions.length > existingRevisions.length) {
+                      if (!merged[app.id][idx]?._merged_from_app) {
+                        merged[app.id] = [...subs]
+                      }
+                      merged[app.id][idx] = {
+                        ...(merged[app.id][idx] || sub),
+                        revision_requests: appRevisions,
+                        _merged_from_app: true
+                      }
+                    }
+                  }
+                  // revision_notes も同様
+                  if (app.revision_notes && !(merged[app.id]?.[idx] || sub).revision_notes) {
+                    if (!merged[app.id][idx]?._merged_from_app) {
+                      merged[app.id] = [...subs]
+                    }
+                    merged[app.id][idx] = {
+                      ...(merged[app.id][idx] || sub),
+                      revision_notes: app.revision_notes,
+                      _merged_from_app: true
+                    }
+                  }
+
                   // ワークフローステータスのマージ
                   // applications のステータスがより進んでいれば更新
                   if (merged[app.id][idx]?._merged_from_app) {
                     const appStatus = app.status
-                    let newWorkflow = sub.workflow_status
+                    let newWorkflow = (merged[app.id][idx] || sub).workflow_status
                     if (appStatus === 'completed') newWorkflow = 'points_paid'
-                    else if (appStatus === 'sns_submitted' && ['guide_pending', 'video_uploaded', 'revision_required'].includes(sub.workflow_status)) newWorkflow = 'sns_submitted'
-                    else if (appStatus === 'video_submitted' && sub.workflow_status === 'guide_pending') newWorkflow = 'video_uploaded'
+                    else if (appStatus === 'sns_submitted' && ['guide_pending', 'video_uploaded', 'revision_required'].includes(newWorkflow)) newWorkflow = 'sns_submitted'
+                    else if (appStatus === 'video_submitted' && newWorkflow === 'guide_pending') newWorkflow = 'video_uploaded'
+                    // applications で revision_requested ステータスの場合
+                    else if (['revision_requested', 'revision_required'].includes(appStatus)) newWorkflow = 'revision_required'
                     merged[app.id][idx] = { ...merged[app.id][idx], workflow_status: newWorkflow }
                   }
                 }
