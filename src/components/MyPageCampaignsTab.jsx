@@ -2332,6 +2332,109 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
           detectedTable = 'applications'
         }
 
+        // ── Phase 4: applications データとマージ ──
+        // 管理者が外部サイトから applications テーブルを直接更新した場合、
+        // video_submissions / campaign_submissions より新しいデータがある可能性がある。
+        // applications の updated_at が新しければ、そのデータで上書きする。
+        if (submissionsLoaded && detectedTable !== 'applications') {
+          setSubmissions(prev => {
+            const merged = { ...prev }
+            applications.forEach(app => {
+              const subs = merged[app.id]
+              if (!subs || subs.length === 0) return
+
+              // applications の方が新しいか確認
+              const appUpdated = app.updated_at ? new Date(app.updated_at).getTime() : 0
+
+              subs.forEach((sub, idx) => {
+                const subUpdated = sub.updated_at ? new Date(sub.updated_at).getTime() : 0
+
+                // applications が新しい場合のみマージ
+                if (appUpdated > subUpdated) {
+                  const campaignType = campaignsMap?.[app.campaign_id]?.campaign_type || 'regular'
+                  const stepNum = sub.step_number || 1
+
+                  // 動画URL: applications の方が新しければ上書き
+                  const appVideoUrl = campaignType === '4week_challenge'
+                    ? app[`week${stepNum}_url`]
+                    : app.video_file_url
+                  if (appVideoUrl && appVideoUrl !== sub.video_file_url) {
+                    merged[app.id] = [...subs]
+                    merged[app.id][idx] = {
+                      ...sub,
+                      video_file_url: appVideoUrl,
+                      video_file_name: app.video_file_name || sub.video_file_name,
+                      video_file_size: app.video_file_size || sub.video_file_size,
+                      video_uploaded_at: app.video_uploaded_at || sub.video_uploaded_at,
+                      video_versions: [
+                        ...(sub.video_versions || []),
+                        ...(appVideoUrl !== sub.video_file_url ? [{
+                          version: (sub.video_versions?.length || 0) + 1,
+                          file_url: appVideoUrl,
+                          file_name: app.video_file_name || 'admin_upload',
+                          uploaded_at: app.video_uploaded_at || app.updated_at
+                        }] : [])
+                      ],
+                      _merged_from_app: true
+                    }
+                  }
+
+                  // クリーンビデオURL
+                  const appCleanUrl = app.clean_video_file_url || app.clean_video_url
+                  if (appCleanUrl && appCleanUrl !== sub.clean_video_file_url) {
+                    if (!merged[app.id][idx]?._merged_from_app) {
+                      merged[app.id] = [...subs]
+                    }
+                    merged[app.id][idx] = {
+                      ...(merged[app.id][idx] || sub),
+                      clean_video_file_url: appCleanUrl,
+                      _merged_from_app: true
+                    }
+                  }
+
+                  // SNS URL
+                  const appSnsUrl = app.sns_upload_url
+                  if (appSnsUrl && appSnsUrl !== sub.sns_url) {
+                    if (!merged[app.id][idx]?._merged_from_app) {
+                      merged[app.id] = [...subs]
+                    }
+                    merged[app.id][idx] = {
+                      ...(merged[app.id][idx] || sub),
+                      sns_url: appSnsUrl,
+                      _merged_from_app: true
+                    }
+                  }
+
+                  // パートナーシップコード
+                  const appCode = app.partnership_code || app.ad_code
+                  if (appCode && appCode !== sub.ad_code) {
+                    if (!merged[app.id][idx]?._merged_from_app) {
+                      merged[app.id] = [...subs]
+                    }
+                    merged[app.id][idx] = {
+                      ...(merged[app.id][idx] || sub),
+                      ad_code: appCode,
+                      _merged_from_app: true
+                    }
+                  }
+
+                  // ワークフローステータスのマージ
+                  // applications のステータスがより進んでいれば更新
+                  if (merged[app.id][idx]?._merged_from_app) {
+                    const appStatus = app.status
+                    let newWorkflow = sub.workflow_status
+                    if (appStatus === 'completed') newWorkflow = 'points_paid'
+                    else if (appStatus === 'sns_submitted' && ['guide_pending', 'video_uploaded', 'revision_required'].includes(sub.workflow_status)) newWorkflow = 'sns_submitted'
+                    else if (appStatus === 'video_submitted' && sub.workflow_status === 'guide_pending') newWorkflow = 'video_uploaded'
+                    merged[app.id][idx] = { ...merged[app.id][idx], workflow_status: newWorkflow }
+                  }
+                }
+              })
+            })
+            return merged
+          })
+        }
+
         setSubmissionTable(detectedTable)
       }
     } catch (error) {
