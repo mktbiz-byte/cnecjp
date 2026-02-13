@@ -83,6 +83,9 @@ const HolidayNoticePopup = () => {
               <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
                 動画アップロード・チャンネル・キャンペーン機能はスケジュール通り進行
               </p>
+              <p className="text-xs sm:text-sm text-emerald-700 font-medium mt-1.5">
+                キャンペーンの応募・運営は自動対応されます。選定済みのクリエイターの方は、キャンペーンスケジュールに沿って活動をお願いいたします。
+              </p>
             </div>
           </div>
 
