@@ -98,6 +98,7 @@ const MyPageWithWithdrawal = () => {
   // 프로필 편집 관련 상태
   const [isEditing, setIsEditing] = useState(false)
   const [editForm, setEditForm] = useState({
+    nickname: '',
     name: '',
     phone: '',
     bio: '',
@@ -324,9 +325,9 @@ const MyPageWithWithdrawal = () => {
       // 편집 폼 초기화 (실제 테이블 구조에 맞게)
       if (profileData) {
         setEditForm({
+          nickname: profileData.nickname || '',
           name: profileData.name || '',
           phone: profileData.phone || '',
-          // address: profileData.address || '', // 데이터베이스 스키마 적용 후 활성화
           bio: profileData.bio || '',
           age: profileData.age || '',
           region: profileData.region || '',
@@ -497,10 +498,9 @@ const MyPageWithWithdrawal = () => {
       const updateData = {}
       
       // 기본 정보 필드들 (안전하게 추가)
+      if (editForm.nickname !== undefined) updateData.nickname = editForm.nickname?.trim() || null
       if (editForm.name !== undefined) updateData.name = editForm.name?.trim() || null
       if (editForm.phone !== undefined) updateData.phone = editForm.phone?.trim() || null
-      // address 필드는 데이터베이스 스키마 적용 후 활성화
-      // if (editForm.address !== undefined) updateData.address = editForm.address?.trim() || null
       if (editForm.bio !== undefined) updateData.bio = editForm.bio?.trim() || null
       if (editForm.region !== undefined) updateData.region = editForm.region?.trim() || null
       if (editForm.skin_type !== undefined) updateData.skin_type = editForm.skin_type?.trim() || null
@@ -1109,7 +1109,7 @@ const MyPageWithWithdrawal = () => {
                     </span>
                   </div>
                 )}
-                <h2 className="text-lg font-bold text-slate-800">{profile?.name || user?.email}</h2>
+                <h2 className="text-lg font-bold text-slate-800">{profile?.nickname || profile?.name || user?.email}</h2>
                 <p className="text-xs text-slate-400 mt-0.5">{profile?.email || user?.email}</p>
                 <div className="mt-2">{getRoleBadge(profile?.user_role)}</div>
               </div>
@@ -1199,7 +1199,7 @@ const MyPageWithWithdrawal = () => {
                     )}
                     <div>
                       <div className="flex items-center gap-2.5 mb-1">
-                        <h2 className="text-xl font-bold text-slate-800">{profile?.name || user?.email}</h2>
+                        <h2 className="text-xl font-bold text-slate-800">{profile?.nickname || profile?.name || user?.email}</h2>
                         {getRoleBadge(profile?.user_role)}
                       </div>
                       <p className="text-sm text-slate-400">{profile?.email || user?.email}</p>
@@ -1207,11 +1207,11 @@ const MyPageWithWithdrawal = () => {
                         <p className="text-xs text-slate-400 mt-0.5">@{profile.instagram_url.split('/').pop() || 'instagram'}</p>
                       )}
                       <div className="flex gap-2 mt-3">
-                        <button onClick={() => setActiveTab('profile')} className="px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-full hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20">
-                          {language === 'ja' ? 'プロフィール編集' : '프로필 편집'}
-                        </button>
-                        <button onClick={() => setActiveTab('settings')} className="px-4 py-2 bg-white text-slate-600 text-xs font-semibold rounded-full border border-slate-200 hover:bg-slate-50 transition-all">
-                          {language === 'ja' ? 'アカウント設定' : '계정 설정'}
+                        <Link to="/profile-beauty" className="px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-full hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20">
+                          {language === 'ja' ? 'ビューティープロフィール' : '뷰티 프로필'}
+                        </Link>
+                        <button onClick={() => setActiveTab('profile')} className="px-4 py-2 bg-white text-slate-600 text-xs font-semibold rounded-full border border-slate-200 hover:bg-slate-50 transition-all">
+                          {language === 'ja' ? '基本プロフィール' : '기본 프로필'}
                         </button>
                       </div>
                     </div>
@@ -1498,10 +1498,45 @@ const MyPageWithWithdrawal = () => {
                 </div>
               </div>
 
+              {/* ビューティープロフィールへのリンク */}
+              <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-700">{language === 'ja' ? 'ビューティープロフィールを充実させましょう' : '뷰티 프로필을 완성해보세요'}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{language === 'ja' ? '肌タイプ、コンテンツスタイル、コラボ希望など詳細情報を入力するとキャンペーン採用率がアップします' : '피부 타입, 콘텐츠 스타일, 협업 희망 등 상세 정보를 입력하면 캠페인 채택률이 올라갑니다'}</p>
+                  </div>
+                  <Link to="/profile-beauty" className="px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-full hover:bg-blue-700 transition-all whitespace-nowrap shadow-lg shadow-blue-600/20">
+                    {language === 'ja' ? '設定する' : '설정하기'}
+                  </Link>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
+                  {/* ニックネーム */}
                   <div>
-                    <label className="block text-xs font-medium text-slate-500">{t.name}</label>
+                    <label className="block text-xs font-medium text-slate-500">
+                      {language === 'ja' ? 'ニックネーム' : '닉네임'}
+                      <span className="text-xs text-blue-500 ml-1">({language === 'ja' ? '企業に表示' : '기업에 표시'})</span>
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editForm.nickname}
+                        onChange={(e) => setEditForm({...editForm, nickname: e.target.value})}
+                        className="mt-1 w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        placeholder={language === 'ja' ? '例: みーちゃん' : '예: 뷰티러버'}
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm text-slate-800">{profile?.nickname || (language === 'ja' ? '未設定' : '미설정')}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500">
+                      {t.name}
+                      <span className="text-xs text-slate-400 ml-1">({language === 'ja' ? '選定後のみ公開' : '선정 후에만 공개'})</span>
+                    </label>
                     {isEditing ? (
                       <input
                         type="text"
@@ -1513,7 +1548,7 @@ const MyPageWithWithdrawal = () => {
                       <p className="mt-1 text-sm text-slate-800">{profile?.name || (language === 'ja' ? '名前未設定' : '이름 없음')}</p>
                     )}
                   </div>
-                  
+
                   <div>
                     <label className="block text-xs font-medium text-slate-500">{t.email}</label>
                     <p className="mt-1 text-sm text-slate-800">{profile?.email || user?.email}</p>
@@ -1537,26 +1572,16 @@ const MyPageWithWithdrawal = () => {
                     )}
                   </div>
                   
-                  {/* 주소 필드는 데이터베이스 스키마 적용 후 활성화 */}
-                  {/* 
-                  <div>
-                    <label className="block text-xs font-medium text-slate-500">
-                      {t.address}
-                      <span className="text-xs text-gray-500 ml-1">({language === 'ja' ? '任意' : '선택사항'})</span>
-                    </label>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editForm.address || ''}
-                        onChange={(e) => setEditForm({...editForm, address: e.target.value})}
-                        className="mt-1 w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                        placeholder={language === 'ja' ? '東京都渋谷区...' : '서울특별시 강남구...'}
-                      />
-                    ) : (
-                      <p className="mt-1 text-sm text-slate-800">{profile?.address || (language === 'ja' ? '未登録' : '등록되지 않음')}</p>
-                    )}
-                  </div>
-                  */}
+                  {/* プライバシー通知 */}
+                  {isEditing && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 col-span-full">
+                      <p className="text-xs text-blue-700">
+                        {language === 'ja'
+                          ? '💡 企業にはニックネームのみが表示されます。実名・住所・連絡先は選定後に該当企業のみに提供されます。'
+                          : '💡 기업에는 닉네임만 표시됩니다. 실명·주소·연락처는 선정 후 해당 기업에만 제공됩니다.'}
+                      </p>
+                    </div>
+                  )}
                   
                   <div>
                     <label className="block text-xs font-medium text-slate-500">{t.skinType}</label>
@@ -2433,7 +2458,7 @@ const MyPageWithWithdrawal = () => {
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <h2 className="text-base font-bold text-slate-800 truncate">{profile?.name || user?.email}</h2>
+                <h2 className="text-base font-bold text-slate-800 truncate">{profile?.nickname || profile?.name || user?.email}</h2>
                 <p className="text-xs text-slate-400 truncate">{profile?.email || user?.email}</p>
                 <div className="mt-1">{getRoleBadge(profile?.user_role)}</div>
               </div>

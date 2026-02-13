@@ -176,6 +176,108 @@ const WORKFLOW_STEPS = [
   { id: 'complete', labelKo: '포인트 지급', labelJa: 'ポイント支給', icon: Award }
 ]
 
+// ── video_submissions ↔ campaign_submissions ステータスマッピング ──
+const mapVideoSubStatusToWorkflow = (status) => {
+  const map = {
+    'submitted': 'video_uploaded',
+    'approved': 'sns_pending',
+    'revision_requested': 'revision_required',
+    'resubmitted': 'video_uploaded',
+    'completed': 'points_paid'
+  }
+  return map[status] || 'guide_pending'
+}
+
+const mapWorkflowToVideoSubStatus = (workflowStatus) => {
+  const map = {
+    'guide_pending': 'submitted',
+    'guide_confirmed': 'submitted',
+    'video_uploaded': 'submitted',
+    'revision_required': 'revision_requested',
+    'revision_requested': 'revision_requested',
+    'sns_pending': 'approved',
+    'sns_submitted': 'completed',
+    'review_pending': 'completed',
+    'points_paid': 'completed',
+    'completed': 'completed'
+  }
+  return map[workflowStatus] || 'submitted'
+}
+
+// video_submissions レコードを campaign_submissions フォーマットに変換
+const mapVideoSubToSubmission = (vs) => ({
+  id: vs.id,
+  application_id: vs.application_id,
+  user_id: vs.user_id,
+  campaign_id: vs.campaign_id,
+  step_number: vs.week_number || vs.video_number || 1,
+  step_label: vs.week_number ? `Week ${vs.week_number}` : null,
+  workflow_status: mapVideoSubStatusToWorkflow(vs.status),
+  video_file_url: vs.video_file_url,
+  video_file_name: vs.video_file_name,
+  video_file_size: vs.video_file_size,
+  video_uploaded_at: vs.video_uploaded_at,
+  clean_video_file_url: vs.clean_video_url || vs.clean_video_file_url,
+  sns_url: vs.sns_upload_url || vs.sns_url,
+  ad_code: vs.ad_code || vs.partnership_code,
+  revision_requests: vs.revision_requests || [],
+  revision_notes: vs.revision_notes,
+  video_versions: vs.version ? [{ version: vs.version, file_url: vs.video_file_url, file_name: vs.video_file_name, uploaded_at: vs.video_uploaded_at }] : [],
+  points_amount: vs.points_amount || 0,
+  points_paid_at: vs.points_paid_at,
+  created_at: vs.created_at,
+  updated_at: vs.updated_at,
+  _source: 'video_submissions',
+  _original: vs
+})
+
+// applications データからサブミッション風オブジェクトを構築
+const buildSubmissionsFromApplication = (app, campaign) => {
+  const campaignType = campaign?.campaign_type || 'regular'
+  const typeInfo = CAMPAIGN_TYPES[campaignType] || CAMPAIGN_TYPES.regular
+  const totalSteps = campaign?.total_steps || typeInfo.steps
+
+  const submissions = []
+  for (let step = 1; step <= totalSteps; step++) {
+    // 4week_challenge: week1_url ~ week4_url
+    const videoUrl = campaignType === '4week_challenge'
+      ? app[`week${step}_url`]
+      : (step === 1 ? app.video_file_url : null)
+    const partnershipCode = campaignType === '4week_challenge'
+      ? app[`week${step}_partnership_code`]
+      : app.partnership_code
+    const snsUrl = app.sns_upload_url
+
+    let workflowStatus = 'guide_pending'
+    if (app.status === 'completed') workflowStatus = 'points_paid'
+    else if (snsUrl && videoUrl) workflowStatus = 'sns_submitted'
+    else if (videoUrl) workflowStatus = 'video_uploaded'
+    else if (['selected', 'filming', 'approved'].includes(app.status)) workflowStatus = 'guide_pending'
+
+    submissions.push({
+      id: `app-${app.id}-step-${step}`,
+      application_id: app.id,
+      user_id: app.user_id,
+      campaign_id: app.campaign_id,
+      step_number: step,
+      step_label: campaignType === '4week_challenge' ? `Week ${step}` : null,
+      workflow_status: workflowStatus,
+      video_file_url: videoUrl,
+      video_file_name: app.video_file_name,
+      video_file_size: app.video_file_size,
+      video_uploaded_at: app.video_uploaded_at,
+      clean_video_file_url: app.clean_video_file_url || app.clean_video_url,
+      sns_url: snsUrl,
+      ad_code: app.ad_code || partnershipCode,
+      revision_requests: app.revision_requests || [],
+      video_versions: videoUrl ? [{ version: 1, file_url: videoUrl, file_name: app.video_file_name, uploaded_at: app.video_uploaded_at }] : [],
+      _source: 'applications',
+      _original: app
+    })
+  }
+  return submissions
+}
+
 // 마감일 표시 컴포넌트
 const DeadlineDisplay = ({ videoDeadline, snsDeadline, language }) => {
   const now = new Date()
@@ -816,7 +918,8 @@ const StepCard = ({
   onUpdate,
   language,
   hasVideoUpload = true,
-  hasSnsUpload = true
+  hasSnsUpload = true,
+  submissionTable = 'campaign_submissions'
 }) => {
   const [expanded, setExpanded] = useState(true)
   const [uploading, setUploading] = useState(false)
@@ -841,6 +944,109 @@ const StepCard = ({
 
   const typeInfo = CAMPAIGN_TYPES[campaignType] || CAMPAIGN_TYPES.regular
   const status = submission?.workflow_status || 'guide_pending'
+
+  // ── デュアルテーブル保存ヘルパー ──
+  // campaign_submissions / video_submissions / applications を使い分ける
+  const saveSubmission = async (data, isNew = false) => {
+    const submissionId = submission?.id
+    const isRealId = submissionId && !submissionId.startsWith('temp-') && !submissionId.startsWith('app-')
+
+    if (submissionTable === 'campaign_submissions') {
+      // video_versions はDBカラムに存在しないため除外
+      const { video_versions: _vv, ...dbData } = data
+      if (isRealId && !isNew) {
+        const { error } = await supabase.from('campaign_submissions').update(dbData).eq('id', submissionId)
+        if (error) throw error
+      } else {
+        // INSERT し、新しい ID を取得して後続処理で使えるようにする
+        const { data: inserted, error } = await supabase.from('campaign_submissions').insert({
+          application_id: application.id,
+          user_id: application.user_id,
+          campaign_id: application.campaign_id,
+          step_number: stepNumber,
+          step_label: getStepLabel(),
+          ...dbData
+        }).select('id').single()
+        if (error) throw error
+        // 新しいIDを返却（onUpdate後に利用可能）
+        if (inserted?.id) {
+          submission._newId = inserted.id
+        }
+      }
+    } else if (submissionTable === 'video_submissions') {
+      // video_submissions テーブルへのマッピング
+      const vsData = {
+        video_number: stepNumber,
+        week_number: campaignType === '4week_challenge' ? stepNumber : null,
+        version: (data.video_versions?.length || 0) + 1,
+        video_file_url: data.video_file_url,
+        video_file_name: data.video_file_name,
+        video_file_size: data.video_file_size,
+        video_uploaded_at: data.video_uploaded_at,
+        clean_video_url: data.clean_video_file_url,
+        sns_upload_url: data.sns_url,
+        ad_code: data.ad_code,
+        partnership_code: data.ad_code,
+        status: mapWorkflowToVideoSubStatus(data.workflow_status),
+        updated_at: new Date().toISOString()
+      }
+      // Remove undefined values
+      Object.keys(vsData).forEach(k => vsData[k] === undefined && delete vsData[k])
+
+      if (isRealId && !isNew) {
+        const { error } = await supabase.from('video_submissions').update(vsData).eq('id', submissionId)
+        if (error) throw error
+      } else {
+        const { data: inserted, error } = await supabase.from('video_submissions').insert({
+          application_id: application.id,
+          user_id: application.user_id,
+          campaign_id: application.campaign_id,
+          ...vsData,
+          submitted_at: new Date().toISOString()
+        }).select('id').single()
+        if (error) throw error
+        if (inserted?.id) {
+          submission._newId = inserted.id
+        }
+      }
+    }
+
+    // ── 常に applications テーブルも同期 ──
+    try {
+      const appUpdate = { updated_at: new Date().toISOString() }
+      if (data.video_file_url) {
+        if (campaignType === '4week_challenge') {
+          appUpdate[`week${stepNumber}_url`] = data.video_file_url
+        } else {
+          appUpdate.video_file_url = data.video_file_url
+          if (data.video_file_name) appUpdate.video_file_name = data.video_file_name
+          if (data.video_file_size) appUpdate.video_file_size = data.video_file_size
+          if (data.video_uploaded_at) appUpdate.video_uploaded_at = data.video_uploaded_at
+        }
+      }
+      if (data.clean_video_file_url) {
+        appUpdate.clean_video_file_url = data.clean_video_file_url
+      }
+      if (data.sns_url) {
+        appUpdate.sns_upload_url = data.sns_url
+      }
+      if (data.ad_code) {
+        appUpdate.partnership_code = data.ad_code
+        appUpdate.ad_code = data.ad_code
+        if (campaignType === '4week_challenge') {
+          appUpdate[`week${stepNumber}_partnership_code`] = data.ad_code
+        }
+      }
+      if (data.workflow_status === 'video_uploaded') {
+        appUpdate.status = 'video_submitted'
+      } else if (data.workflow_status === 'sns_submitted') {
+        appUpdate.submission_status = 'sns_submitted'
+      }
+      await supabase.from('applications').update(appUpdate).eq('id', application.id)
+    } catch (syncErr) {
+      console.warn('Applications sync warning:', syncErr.message)
+    }
+  }
 
   // 스텝별 마감일 가져오기
   const getStepDeadlines = () => {
@@ -926,6 +1132,71 @@ const StepCard = ({
     return match ? parseInt(match[1]) : (submission?.video_file_url ? 1 : 0)
   }
 
+  // 최신 영상 URL 계산 - video_versions, submission, application 중 최신
+  const getLatestVideo = () => {
+    const versions = Array.isArray(submission?.video_versions) ? submission.video_versions : []
+    // video_versions에서 최신
+    if (versions.length > 0) {
+      const sorted = [...versions].sort((a, b) => {
+        // 버전 번호가 있으면 그걸로, 없으면 uploaded_at으로
+        if (a.version && b.version) return b.version - a.version
+        if (a.uploaded_at && b.uploaded_at) return new Date(b.uploaded_at) - new Date(a.uploaded_at)
+        return 0
+      })
+      const latestVersion = sorted[0]
+
+      // application에 더 최신 데이터가 있는지 비교
+      const appVideoUrl = campaignType === '4week_challenge'
+        ? application?.[`week${stepNumber}_url`]
+        : application?.video_file_url
+      const appUpdated = application?.updated_at ? new Date(application.updated_at).getTime() : 0
+      const verUpdated = latestVersion.uploaded_at ? new Date(latestVersion.uploaded_at).getTime() : 0
+
+      if (appVideoUrl && appVideoUrl !== latestVersion.file_url && appUpdated > verUpdated) {
+        return {
+          url: appVideoUrl,
+          name: application?.video_file_name || 'admin_upload',
+          uploadedAt: application?.video_uploaded_at || application?.updated_at,
+          version: (latestVersion.version || 0) + 1,
+          source: 'admin'
+        }
+      }
+
+      return {
+        url: latestVersion.file_url,
+        name: latestVersion.file_name,
+        uploadedAt: latestVersion.uploaded_at,
+        version: latestVersion.version || 1,
+        source: 'version_history'
+      }
+    }
+
+    // video_versions가 없으면 submission vs application 비교
+    const subUrl = submission?.video_file_url
+    const appVideoUrl = campaignType === '4week_challenge'
+      ? application?.[`week${stepNumber}_url`]
+      : application?.video_file_url
+    const subUpdated = submission?.updated_at ? new Date(submission.updated_at).getTime() : 0
+    const appUpdated = application?.updated_at ? new Date(application.updated_at).getTime() : 0
+
+    // 둘 다 있으면 최신 사용
+    if (subUrl && appVideoUrl && subUrl !== appVideoUrl) {
+      if (appUpdated > subUpdated) {
+        return { url: appVideoUrl, name: application?.video_file_name, uploadedAt: application?.video_uploaded_at || application?.updated_at, version: 1, source: 'admin' }
+      }
+      return { url: subUrl, name: submission?.video_file_name, uploadedAt: submission?.video_uploaded_at, version: 1, source: 'creator' }
+    }
+
+    const url = subUrl || appVideoUrl
+    if (url) {
+      return { url, name: submission?.video_file_name || application?.video_file_name, uploadedAt: submission?.video_uploaded_at || application?.video_uploaded_at, version: 1, source: 'creator' }
+    }
+
+    return null
+  }
+
+  const latestVideo = getLatestVideo()
+
   // 수정 요청 확인
   const hasRevisionRequests = submission?.revision_requests?.length > 0 || application?.revision_requests?.length > 0
 
@@ -933,30 +1204,12 @@ const StepCard = ({
   const handleGuideConfirm = async () => {
     setSubmitting(true)
     try {
-      if (!submission?.id || submission.id.startsWith('temp-')) {
-        const { error } = await supabase
-          .from('campaign_submissions')
-          .insert({
-            application_id: application.id,
-            user_id: application.user_id,
-            campaign_id: application.campaign_id,
-            step_number: stepNumber,
-            step_label: getStepLabel(),
-            workflow_status: 'guide_confirmed',
-            video_deadline: videoDeadline,
-            sns_deadline: snsDeadline
-          })
-        if (error) throw error
-      } else {
-        const { error } = await supabase
-          .from('campaign_submissions')
-          .update({
-            workflow_status: 'guide_confirmed',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', submission.id)
-        if (error) throw error
-      }
+      await saveSubmission({
+        workflow_status: 'guide_confirmed',
+        video_deadline: videoDeadline,
+        sns_deadline: snsDeadline,
+        updated_at: new Date().toISOString()
+      }, true)
       onUpdate?.()
     } catch (error) {
       console.error('Guide confirm error:', error)
@@ -994,9 +1247,12 @@ const StepCard = ({
         const dot = name.lastIndexOf('.')
         return dot >= 0 ? name.substring(dot) : ''
       }
-      // 버전 자동 증가 (v1, v2, v3...)
       const nextVersion = getVideoVersion() + 1
-      const videoPath = `${userId}/${application.campaign_id}/${submission?.id || 'new'}/${timestamp}_v${nextVersion}_main${getExt(videoFile.name)}`
+      // 안정적인 storage path: temp/app- ID 대신 application.id + step_number 사용
+      const submissionId = submission?.id
+      const isRealId = submissionId && !submissionId.startsWith('temp-') && !submissionId.startsWith('app-')
+      const storageFolderId = isRealId ? submissionId : `${application.id}_step${stepNumber}`
+      const videoPath = `${userId}/${application.campaign_id}/${storageFolderId}/${timestamp}_v${nextVersion}_main${getExt(videoFile.name)}`
 
       const { error: uploadError } = await supabase.storage
         .from('campaign-videos')
@@ -1010,15 +1266,12 @@ const StepCard = ({
         .getPublicUrl(videoPath)
 
       let cleanVideoUrl = null
-      let cleanVideoPath = null
-
       if (cleanVideoFile) {
-        cleanVideoPath = `${userId}/${application.campaign_id}/${submission?.id || 'new'}/${timestamp}_clean${getExt(cleanVideoFile.name)}`
+        const cleanVideoPath = `${userId}/${application.campaign_id}/${storageFolderId}/${timestamp}_clean${getExt(cleanVideoFile.name)}`
         const { error: cleanError } = await supabase.storage
           .from('campaign-videos')
           .upload(cleanVideoPath, cleanVideoFile, { cacheControl: '3600', upsert: false })
         if (cleanError) throw cleanError
-
         const { data: { publicUrl } } = supabase.storage
           .from('campaign-videos')
           .getPublicUrl(cleanVideoPath)
@@ -1027,7 +1280,6 @@ const StepCard = ({
 
       setUploadProgress(80)
 
-      // 버전 히스토리에 새 버전 추가 (기존 버전 보존)
       const existingVersions = Array.isArray(submission?.video_versions) ? submission.video_versions : []
       const newVersionEntry = {
         version: nextVersion,
@@ -1039,79 +1291,23 @@ const StepCard = ({
       }
       const updatedVersions = [...existingVersions, newVersionEntry]
 
-      // 재업로드 시 현재 워크플로우 상태 보존 (SNS 제출 등 이후 단계에서 재업로드해도 상태 리셋 안함)
-      // 단, guide_confirmed 이전이거나 첫 업로드면 video_uploaded로 설정
       const preserveStatus = ['sns_pending', 'sns_submitted', 'review_pending'].includes(status)
       const newStatus = preserveStatus ? status : 'video_uploaded'
 
-      const updateData = {
+      await saveSubmission({
         workflow_status: newStatus,
         video_file_path: videoPath,
         video_file_url: videoUrl,
         video_file_name: videoFile.name,
         video_file_size: videoFile.size,
         video_uploaded_at: new Date().toISOString(),
-        clean_video_file_path: cleanVideoPath,
         clean_video_file_url: cleanVideoUrl,
         clean_video_file_name: cleanVideoFile?.name,
-        clean_video_uploaded_at: cleanVideoFile ? new Date().toISOString() : null,
+        video_versions: updatedVersions,
+        video_deadline: videoDeadline,
+        sns_deadline: snsDeadline,
         updated_at: new Date().toISOString()
-      }
-
-      // video_versions 컬럼이 DB에 있으면 포함, 없으면 제외
-      const updateDataWithVersions = { ...updateData, video_versions: updatedVersions }
-
-      if (!submission?.id || submission.id.startsWith('temp-')) {
-        const { error } = await supabase
-          .from('campaign_submissions')
-          .insert({
-            application_id: application.id,
-            user_id: application.user_id,
-            campaign_id: application.campaign_id,
-            step_number: stepNumber,
-            step_label: getStepLabel(),
-            video_deadline: videoDeadline,
-            sns_deadline: snsDeadline,
-            ...updateDataWithVersions
-          })
-        if (error) {
-          // video_versions 컬럼이 없으면 해당 필드 제외하고 재시도
-          if (error.message?.includes('video_versions') || error.code === 'PGRST204') {
-            const { error: retryError } = await supabase
-              .from('campaign_submissions')
-              .insert({
-                application_id: application.id,
-                user_id: application.user_id,
-                campaign_id: application.campaign_id,
-                step_number: stepNumber,
-                step_label: getStepLabel(),
-                video_deadline: videoDeadline,
-                sns_deadline: snsDeadline,
-                ...updateData
-              })
-            if (retryError) throw retryError
-          } else {
-            throw error
-          }
-        }
-      } else {
-        const { error } = await supabase
-          .from('campaign_submissions')
-          .update(updateDataWithVersions)
-          .eq('id', submission.id)
-        if (error) {
-          // video_versions 컬럼이 없으면 해당 필드 제외하고 재시도
-          if (error.message?.includes('video_versions') || error.code === 'PGRST204') {
-            const { error: retryError } = await supabase
-              .from('campaign_submissions')
-              .update(updateData)
-              .eq('id', submission.id)
-            if (retryError) throw retryError
-          } else {
-            throw error
-          }
-        }
-      }
+      })
 
       setUploadProgress(100)
       setVideoFile(null)
@@ -1119,7 +1315,16 @@ const StepCard = ({
       onUpdate?.()
     } catch (error) {
       console.error('Upload error:', error)
-      alert(language === 'ja' ? 'アップロードに失敗しました' : '업로드에 실패했습니다')
+      const errMsg = error?.message || ''
+      if (errMsg.includes('Payload too large') || errMsg.includes('413')) {
+        alert(language === 'ja' ? 'ファイルが大きすぎます。2GB以下のファイルを選択してください。' : '파일이 너무 큽니다. 2GB 이하 파일을 선택해주세요.')
+      } else if (errMsg.includes('storage') || errMsg.includes('bucket')) {
+        alert(language === 'ja' ? 'ストレージエラーが発生しました。しばらくしてから再度お試しください。' : '스토리지 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
+      } else if (errMsg.includes('duplicate') || errMsg.includes('already exists')) {
+        alert(language === 'ja' ? 'すでに同じファイルがアップロードされています。ページを更新してください。' : '이미 같은 파일이 업로드되어 있습니다. 페이지를 새로고침해주세요.')
+      } else {
+        alert(language === 'ja' ? `アップロードに失敗しました: ${errMsg || '不明なエラー'}` : `업로드에 실패했습니다: ${errMsg || '알 수 없는 오류'}`)
+      }
     } finally {
       setUploading(false)
       setUploadProgress(0)
@@ -1132,8 +1337,6 @@ const StepCard = ({
       alert(language === 'ja' ? 'SNS投稿URLを入力してください' : 'SNS 게시물 URL을 입력해주세요')
       return
     }
-
-    // 클린본 필수인데 없는 경우
     if (campaign?.requires_clean_video && !cleanVideoFile && !submission?.clean_video_file_url) {
       alert(language === 'ja' ? 'クリーン動画ファイルを選択してください' : '클린본 파일을 선택해주세요')
       return
@@ -1141,69 +1344,34 @@ const StepCard = ({
 
     setSubmitting(true)
     try {
-      // 클린본 파일이 있으면 Supabase Storage에 업로드
       let uploadedCleanUrl = submission?.clean_video_file_url || null
       if (cleanVideoFile) {
         const timestamp = Date.now()
         const userId = application.user_id
-        const getExt = (name) => {
-          const dot = name.lastIndexOf('.')
-          return dot >= 0 ? name.substring(dot) : ''
-        }
-        const cleanPath = `${userId}/${application.campaign_id}/${submission?.id || 'new'}/${timestamp}_clean${getExt(cleanVideoFile.name)}`
+        const getExt = (name) => { const dot = name.lastIndexOf('.'); return dot >= 0 ? name.substring(dot) : '' }
+        const subId = submission?.id
+        const isReal = subId && !subId.startsWith('temp-') && !subId.startsWith('app-')
+        const folderId = isReal ? subId : `${application.id}_step${stepNumber}`
+        const cleanPath = `${userId}/${application.campaign_id}/${folderId}/${timestamp}_clean${getExt(cleanVideoFile.name)}`
         const { error: cleanUploadError } = await supabase.storage
           .from('campaign-videos')
           .upload(cleanPath, cleanVideoFile, { cacheControl: '3600', upsert: false })
         if (cleanUploadError) throw cleanUploadError
-
         const { data: { publicUrl } } = supabase.storage
           .from('campaign-videos')
           .getPublicUrl(cleanPath)
         uploadedCleanUrl = publicUrl
       }
 
-      // SNS + 클린본 + 광고코드 제출 → sns_submitted
-      const updateData = {
+      await saveSubmission({
         workflow_status: 'sns_submitted',
         sns_url: snsUrl,
         sns_submitted_at: new Date().toISOString(),
         clean_video_file_url: uploadedCleanUrl,
         clean_video_file_name: cleanVideoFile?.name || null,
-        clean_video_uploaded_at: cleanVideoFile ? new Date().toISOString() : null,
         ad_code: partnershipCode || null,
         updated_at: new Date().toISOString()
-      }
-
-      if (!submission?.id || submission.id.startsWith('temp-')) {
-        const { error } = await supabase
-          .from('campaign_submissions')
-          .insert({
-            application_id: application.id,
-            user_id: application.user_id,
-            campaign_id: application.campaign_id,
-            step_number: stepNumber,
-            step_label: getStepLabel(),
-            ...updateData
-          })
-        if (error) throw error
-      } else {
-        const { error } = await supabase
-          .from('campaign_submissions')
-          .update(updateData)
-          .eq('id', submission.id)
-        if (error) throw error
-      }
-
-      // applications 테이블에도 상태 기록 (status는 변경하지 않음 - approved/selected 유지)
-      if (application?.id) {
-        await supabase
-          .from('applications')
-          .update({
-            submission_status: 'sns_submitted',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', application.id)
-      }
+      })
 
       onUpdate?.()
       alert(language === 'ja' ? 'SNS・クリーン動画・広告コードを提出しました！' : 'SNS/클린본/광고코드를 제출했습니다!')
@@ -1229,36 +1397,16 @@ const StepCard = ({
       else if (snsUrl.includes('tiktok.com')) platform = 'tiktok'
       else if (snsUrl.includes('youtube.com') || snsUrl.includes('youtu.be')) platform = 'youtube'
 
-      const updateData = {
+      await saveSubmission({
         sns_platform: platform,
         sns_url: snsUrl,
         ad_code: adCode,
         sns_uploaded_at: new Date().toISOString(),
         workflow_status: 'sns_submitted',
+        video_deadline: videoDeadline,
+        sns_deadline: snsDeadline,
         updated_at: new Date().toISOString()
-      }
-
-      if (!submission?.id || submission.id.startsWith('temp-')) {
-        const { error } = await supabase
-          .from('campaign_submissions')
-          .insert({
-            application_id: application.id,
-            user_id: application.user_id,
-            campaign_id: application.campaign_id,
-            step_number: stepNumber,
-            step_label: getStepLabel(),
-            video_deadline: videoDeadline,
-            sns_deadline: snsDeadline,
-            ...updateData
-          })
-        if (error) throw error
-      } else {
-        const { error } = await supabase
-          .from('campaign_submissions')
-          .update(updateData)
-          .eq('id', submission.id)
-        if (error) throw error
-      }
+      })
       onUpdate?.()
     } catch (error) {
       console.error('SNS submit error:', error)
@@ -1329,6 +1477,21 @@ const StepCard = ({
                     </span>
                   )}
                 </div>
+                {/* 영상 업로드 상태 인디케이터 */}
+                {latestVideo && (
+                  <div className="flex items-center mt-1 text-xs text-gray-500">
+                    <Film className="w-3 h-3 mr-1" />
+                    <span>v{latestVideo.version}</span>
+                    {latestVideo.source === 'admin' && (
+                      <span className="ml-1 text-purple-600">({language === 'ja' ? '管理者' : '관리자'})</span>
+                    )}
+                    {latestVideo.uploadedAt && (
+                      <span className="ml-1.5 text-gray-400">
+                        {new Date(latestVideo.uploadedAt).toLocaleDateString(language === 'ja' ? 'ja-JP' : 'ko-KR', { month: 'short', day: 'numeric' })}
+                      </span>
+                    )}
+                  </div>
+                )}
 
                 {/* 마감일 표시 */}
                 <DeadlineDisplay
@@ -1406,6 +1569,59 @@ const StepCard = ({
                 })
               })()}
             </div>
+
+            {/* 현재 영상 미리보기 - 업로드된 영상이 있을 때 항상 표시 */}
+            {latestVideo && (
+              <div className="mb-4 bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <div className="p-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Play className="w-4 h-4 mr-2 text-blue-600" />
+                    <span className="text-sm font-medium text-gray-700">
+                      {language === 'ja' ? '提出済み動画' : '제출된 영상'}
+                      <span className="ml-2 text-xs text-gray-400">v{latestVideo.version}</span>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {latestVideo.source === 'admin' && (
+                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                        {language === 'ja' ? '管理者' : '관리자'}
+                      </span>
+                    )}
+                    {latestVideo.uploadedAt && (
+                      <span className="text-xs text-gray-400">
+                        {new Date(latestVideo.uploadedAt).toLocaleString(language === 'ja' ? 'ja-JP' : 'ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="p-3">
+                  {/* 영상 재생기 */}
+                  <video
+                    src={latestVideo.url}
+                    controls
+                    preload="metadata"
+                    className="w-full rounded-lg bg-black max-h-[300px]"
+                    style={{ aspectRatio: '16/9', objectFit: 'contain' }}
+                  >
+                    {language === 'ja' ? 'お使いのブラウザは動画再生に対応していません。' : '브라우저가 영상 재생을 지원하지 않습니다.'}
+                  </video>
+                  <div className="mt-2 flex items-center justify-between">
+                    <p className="text-xs text-gray-500 truncate flex-1">
+                      {latestVideo.name || (language === 'ja' ? 'アップロード済み動画' : '업로드된 영상')}
+                    </p>
+                    <a
+                      href={latestVideo.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 hover:underline flex items-center ml-2 flex-shrink-0"
+                    >
+                      <ExternalLink className="w-3 h-3 mr-1" />
+                      {language === 'ja' ? '新しいタブで開く' : '새 탭에서 열기'}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Step 1: 영상 업로드 */}
             {currentStep === 1 && (
@@ -1748,34 +1964,73 @@ const StepCard = ({
             )}
 
             {/* 영상 재업로드 섹션 - 영상 업로드 완료 후 어느 단계에서든 항상 표시 */}
-            {currentStep >= 2 && submission?.video_file_url && (
+            {currentStep >= 2 && (submission?.video_file_url || latestVideo) && (
               <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 {/* 전체 버전 히스토리 */}
                 <div className="mb-3">
-                  <p className="text-xs font-medium text-gray-600 mb-2">{language === 'ja' ? '提出済み動画:' : '제출된 영상:'}</p>
+                  <p className="text-xs font-medium text-gray-600 mb-2">{language === 'ja' ? '動画履歴:' : '영상 히스토리:'}</p>
                   <div className="space-y-1.5">
-                    {(Array.isArray(submission?.video_versions) && submission.video_versions.length > 0
-                      ? [...submission.video_versions].sort((a, b) => (b.version || 0) - (a.version || 0))
-                      : [{ version: getVideoVersion() || 1, file_url: submission.video_file_url, file_name: submission.video_file_name, uploaded_at: submission.video_uploaded_at }]
-                    ).map((ver, idx) => (
-                      <div key={idx} className={`p-2.5 bg-white rounded-lg border ${idx === 0 ? 'border-blue-300 ring-1 ring-blue-100' : 'border-gray-200'}`}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-700 truncate">
-                              v{ver.version} - {ver.file_name || (language === 'ja' ? 'アップロード済み' : '업로드됨')}
-                            </p>
-                            {ver.uploaded_at && (
-                              <p className="text-xs text-gray-400 mt-0.5">
-                                {new Date(ver.uploaded_at).toLocaleString(language === 'ja' ? 'ja-JP' : 'ko-KR')}
-                              </p>
-                            )}
+                    {(() => {
+                      // 전체 버전 목록 구성
+                      const versions = Array.isArray(submission?.video_versions) && submission.video_versions.length > 0
+                        ? [...submission.video_versions]
+                        : submission?.video_file_url
+                          ? [{ version: getVideoVersion() || 1, file_url: submission.video_file_url, file_name: submission.video_file_name, uploaded_at: submission.video_uploaded_at }]
+                          : []
+
+                      // latestVideo가 admin 소스이고 버전 목록에 없으면 추가
+                      if (latestVideo?.source === 'admin') {
+                        const exists = versions.some(v => v.file_url === latestVideo.url)
+                        if (!exists) {
+                          versions.push({
+                            version: latestVideo.version,
+                            file_url: latestVideo.url,
+                            file_name: latestVideo.name || (language === 'ja' ? '管理者アップロード' : '관리자 업로드'),
+                            uploaded_at: latestVideo.uploadedAt,
+                            _source: 'admin'
+                          })
+                        }
+                      }
+
+                      return versions
+                        .sort((a, b) => {
+                          if (a.uploaded_at && b.uploaded_at) return new Date(b.uploaded_at) - new Date(a.uploaded_at)
+                          return (b.version || 0) - (a.version || 0)
+                        })
+                        .map((ver, idx) => (
+                          <div key={idx} className={`p-2.5 bg-white rounded-lg border ${idx === 0 ? 'border-blue-300 ring-1 ring-blue-100' : 'border-gray-200'}`}>
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <p className="text-sm font-medium text-gray-700 truncate">
+                                    v{ver.version} - {ver.file_name || (language === 'ja' ? 'アップロード済み' : '업로드됨')}
+                                  </p>
+                                  {ver._source === 'admin' && (
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-700 flex-shrink-0">
+                                      {language === 'ja' ? '管理者' : '관리자'}
+                                    </span>
+                                  )}
+                                </div>
+                                {ver.uploaded_at && (
+                                  <p className="text-xs text-gray-400 mt-0.5">
+                                    {new Date(ver.uploaded_at).toLocaleString(language === 'ja' ? 'ja-JP' : 'ko-KR')}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                                {ver.file_url && (
+                                  <a href={ver.file_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </a>
+                                )}
+                                <span className={`px-2 py-1 rounded text-xs font-medium ${idx === 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
+                                  {idx === 0 ? (language === 'ja' ? '最新' : '최신') : `v${ver.version}`}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                          <span className={`px-2 py-1 rounded text-xs font-medium flex-shrink-0 ml-2 ${idx === 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
-                            v{ver.version}{idx === 0 ? (language === 'ja' ? ' 最新' : ' 최신') : ''}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                        ))
+                    })()}
                   </div>
                 </div>
 
@@ -1888,7 +2143,7 @@ const CHANNEL_INFO = {
   tiktok: { icon: '🎵', label: 'TikTok', bgClass: 'bg-gray-100 text-gray-700 border-gray-300' }
 }
 
-const CampaignCard = ({ application, campaign, submissions, mainChannel, onUpdate, language }) => {
+const CampaignCard = ({ application, campaign, submissions, mainChannel, onUpdate, language, submissionTable = 'campaign_submissions' }) => {
   const [expanded, setExpanded] = useState(true)
 
   const campaignType = campaign?.campaign_type || 'regular'
@@ -2057,6 +2312,56 @@ const CampaignCard = ({ application, campaign, submissions, mainChannel, onUpdat
       {/* 스텝 목록 */}
       {expanded && (
         <div className="p-4 pt-0 space-y-3">
+          {/* 스텝/주차별 영상 상태 요약 (2스텝 이상일 때) */}
+          {totalSteps > 1 && (
+            <div className="bg-white bg-opacity-70 rounded-lg p-3 border border-gray-200">
+              <p className="text-xs font-medium text-gray-500 mb-2">
+                {language === 'ja'
+                  ? (campaignType === '4week_challenge' ? '📋 週別動画ステータス' : '📋 ステップ別動画ステータス')
+                  : (campaignType === '4week_challenge' ? '📋 주차별 영상 상태' : '📋 스텝별 영상 상태')}
+              </p>
+              <div className={`grid gap-2 ${totalSteps <= 4 ? `grid-cols-${totalSteps}` : 'grid-cols-4'}`}>
+                {Array.from({ length: totalSteps }, (_, i) => i + 1).map(step => {
+                  const sub = submissions?.find(s => s.step_number === step)
+                  const ws = sub?.workflow_status || 'guide_pending'
+                  const hasVideo = !!sub?.video_file_url
+                  const stepLbl = campaignType === '4week_challenge' ? `W${step}` : `${step}`
+                  return (
+                    <div key={step} className={`text-center p-2 rounded-lg border ${
+                      ws === 'points_paid' ? 'bg-green-50 border-green-200' :
+                      ws === 'sns_submitted' ? 'bg-indigo-50 border-indigo-200' :
+                      hasVideo ? 'bg-cyan-50 border-cyan-200' :
+                      'bg-gray-50 border-gray-200'
+                    }`}>
+                      <p className="text-xs font-bold text-gray-600">{stepLbl}</p>
+                      <div className="mt-1">
+                        {ws === 'points_paid' ? (
+                          <CheckCircle className="w-4 h-4 mx-auto text-green-500" />
+                        ) : hasVideo ? (
+                          <Film className="w-4 h-4 mx-auto text-cyan-500" />
+                        ) : (
+                          <Upload className="w-4 h-4 mx-auto text-gray-300" />
+                        )}
+                      </div>
+                      <p className={`text-[10px] mt-0.5 ${
+                        ws === 'points_paid' ? 'text-green-600' :
+                        ws === 'sns_submitted' ? 'text-indigo-600' :
+                        hasVideo ? 'text-cyan-600' :
+                        'text-gray-400'
+                      }`}>
+                        {ws === 'points_paid' ? (language === 'ja' ? '完了' : '완료') :
+                         ws === 'sns_submitted' ? 'SNS' :
+                         (ws === 'revision_required' || ws === 'revision_requested') ? (language === 'ja' ? '修正' : '수정') :
+                         hasVideo ? (language === 'ja' ? '提出済' : '제출') :
+                         (language === 'ja' ? '未提出' : '미제출')}
+                      </p>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           {Array.from({ length: totalSteps }, (_, i) => i + 1).map((stepNumber) => {
             const submission = submissions?.find(s => s.step_number === stepNumber) || {
               id: `temp-${stepNumber}`,
@@ -2080,6 +2385,7 @@ const CampaignCard = ({ application, campaign, submissions, mainChannel, onUpdat
                 language={language}
                 hasVideoUpload={hasVideoUpload}
                 hasSnsUpload={hasSnsUpload}
+                submissionTable={submissionTable}
               />
             )
           })}
@@ -2097,6 +2403,7 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
   const [submissions, setSubmissions] = useState({})
   const [mainChannels, setMainChannels] = useState({})
   const [filter, setFilter] = useState('all')
+  const [submissionTable, setSubmissionTable] = useState('campaign_submissions') // or 'video_submissions' or 'applications'
 
   const loadData = async (silent = false) => {
     if (!silent) setLoading(true)
@@ -2150,7 +2457,9 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
 
       if (applicationIds.length > 0) {
         let submissionsLoaded = false
+        let detectedTable = 'applications' // fallback
 
+        // ── Phase 1: campaign_submissions テーブルを試行 ──
         try {
           const { data: submissionsData, error: submissionsError } = await supabase
             .from('campaign_submissions')
@@ -2158,10 +2467,7 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
             .in('application_id', applicationIds)
             .order('step_number', { ascending: true })
 
-          if (submissionsError) {
-            console.error('Submissions query error:', submissionsError)
-            // campaign_submissions 테이블이 없거나 RLS 오류
-          } else if (submissionsData && submissionsData.length > 0) {
+          if (!submissionsError && submissionsData && submissionsData.length > 0) {
             const submissionsMap = {}
             submissionsData.forEach(s => {
               if (!submissionsMap[s.application_id]) {
@@ -2171,10 +2477,11 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
             })
             setSubmissions(submissionsMap)
             submissionsLoaded = true
+            detectedTable = 'campaign_submissions'
           }
 
-          // submissions가 없는 approved/selected/filming applications에 대해 자동 생성 시도
-          if (!submissionsError) {
+          // campaign_submissions が存在する場合: 未作成分の自動生成
+          if (!submissionsError && detectedTable === 'campaign_submissions') {
             const approvedApps = applications.filter(a =>
               ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed'].includes(a.status)
             )
@@ -2190,7 +2497,6 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
                 for (let step = 1; step <= totalSteps; step++) {
                   const stepLabel = campaignType === '4week_challenge' ? `Week ${step}` :
                     campaignType === 'megawari' ? `Step ${step}` : null
-
                   try {
                     await supabase
                       .from('campaign_submissions')
@@ -2202,37 +2508,212 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
                         step_label: stepLabel,
                         workflow_status: 'guide_pending'
                       }, { onConflict: 'application_id,step_number', ignoreDuplicates: true })
-                  } catch (e) {
-                    console.warn('Auto-create submission failed:', e)
-                  }
+                  } catch (e) { /* ignore */ }
                 }
               }
             }
 
-            // 자동 생성 후 다시 로드
             if (!submissionsLoaded && approvedApps.length > 0) {
               const { data: retryData } = await supabase
                 .from('campaign_submissions')
                 .select('*')
                 .in('application_id', applicationIds)
                 .order('step_number', { ascending: true })
-
               if (retryData && retryData.length > 0) {
                 const submissionsMap = {}
                 retryData.forEach(s => {
-                  if (!submissionsMap[s.application_id]) {
-                    submissionsMap[s.application_id] = []
-                  }
+                  if (!submissionsMap[s.application_id]) submissionsMap[s.application_id] = []
                   submissionsMap[s.application_id].push(s)
                 })
                 setSubmissions(submissionsMap)
+                submissionsLoaded = true
               }
             }
           }
-        } catch (submissionsQueryError) {
-          console.error('Submissions query/create error:', submissionsQueryError)
-          // 테이블이 없어도 UI는 계속 표시 (guide_pending fallback)
+        } catch (e) {
+          console.warn('campaign_submissions not available:', e.message)
         }
+
+        // ── Phase 2: video_submissions テーブルをフォールバック ──
+        if (!submissionsLoaded) {
+          try {
+            const { data: videoSubData, error: videoSubError } = await supabase
+              .from('video_submissions')
+              .select('*')
+              .in('application_id', applicationIds)
+              .order('video_number', { ascending: true })
+
+            if (!videoSubError && videoSubData && videoSubData.length > 0) {
+              const submissionsMap = {}
+              videoSubData.forEach(vs => {
+                const mapped = mapVideoSubToSubmission(vs)
+                if (!submissionsMap[mapped.application_id]) {
+                  submissionsMap[mapped.application_id] = []
+                }
+                submissionsMap[mapped.application_id].push(mapped)
+              })
+              setSubmissions(submissionsMap)
+              submissionsLoaded = true
+              detectedTable = 'video_submissions'
+            }
+          } catch (e) {
+            console.warn('video_submissions not available:', e.message)
+          }
+        }
+
+        // ── Phase 3: applications データからフォールバック構築 ──
+        if (!submissionsLoaded) {
+          const submissionsMap = {}
+          const activeApps = applications.filter(a =>
+            ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed'].includes(a.status)
+          )
+          activeApps.forEach(app => {
+            const campaign = campaignsMap?.[app.campaign_id]
+            const builtSubs = buildSubmissionsFromApplication(app, campaign)
+            if (builtSubs.length > 0) {
+              submissionsMap[app.id] = builtSubs
+            }
+          })
+          if (Object.keys(submissionsMap).length > 0) {
+            setSubmissions(submissionsMap)
+          }
+          detectedTable = 'applications'
+        }
+
+        // ── Phase 4: applications データとマージ ──
+        // 管理者が外部サイトから applications テーブルを直接更新した場合、
+        // video_submissions / campaign_submissions より新しいデータがある可能性がある。
+        // applications の updated_at が新しければ、そのデータで上書きする。
+        if (submissionsLoaded && detectedTable !== 'applications') {
+          setSubmissions(prev => {
+            const merged = { ...prev }
+            applications.forEach(app => {
+              const subs = merged[app.id]
+              if (!subs || subs.length === 0) return
+
+              // applications の方が新しいか確認
+              const appUpdated = app.updated_at ? new Date(app.updated_at).getTime() : 0
+
+              subs.forEach((sub, idx) => {
+                const subUpdated = sub.updated_at ? new Date(sub.updated_at).getTime() : 0
+
+                // applications が新しい場合のみマージ
+                if (appUpdated > subUpdated) {
+                  const campaignType = campaignsMap?.[app.campaign_id]?.campaign_type || 'regular'
+                  const stepNum = sub.step_number || 1
+
+                  // 動画URL: applications の方が新しければ上書き
+                  const appVideoUrl = campaignType === '4week_challenge'
+                    ? app[`week${stepNum}_url`]
+                    : app.video_file_url
+                  if (appVideoUrl && appVideoUrl !== sub.video_file_url) {
+                    merged[app.id] = [...subs]
+                    merged[app.id][idx] = {
+                      ...sub,
+                      video_file_url: appVideoUrl,
+                      video_file_name: app.video_file_name || sub.video_file_name,
+                      video_file_size: app.video_file_size || sub.video_file_size,
+                      video_uploaded_at: app.video_uploaded_at || sub.video_uploaded_at,
+                      video_versions: [
+                        ...(sub.video_versions || []),
+                        ...(appVideoUrl !== sub.video_file_url ? [{
+                          version: (sub.video_versions?.length || 0) + 1,
+                          file_url: appVideoUrl,
+                          file_name: app.video_file_name || 'admin_upload',
+                          uploaded_at: app.video_uploaded_at || app.updated_at
+                        }] : [])
+                      ],
+                      _merged_from_app: true
+                    }
+                  }
+
+                  // クリーンビデオURL
+                  const appCleanUrl = app.clean_video_file_url || app.clean_video_url
+                  if (appCleanUrl && appCleanUrl !== sub.clean_video_file_url) {
+                    if (!merged[app.id][idx]?._merged_from_app) {
+                      merged[app.id] = [...subs]
+                    }
+                    merged[app.id][idx] = {
+                      ...(merged[app.id][idx] || sub),
+                      clean_video_file_url: appCleanUrl,
+                      _merged_from_app: true
+                    }
+                  }
+
+                  // SNS URL
+                  const appSnsUrl = app.sns_upload_url
+                  if (appSnsUrl && appSnsUrl !== sub.sns_url) {
+                    if (!merged[app.id][idx]?._merged_from_app) {
+                      merged[app.id] = [...subs]
+                    }
+                    merged[app.id][idx] = {
+                      ...(merged[app.id][idx] || sub),
+                      sns_url: appSnsUrl,
+                      _merged_from_app: true
+                    }
+                  }
+
+                  // パートナーシップコード
+                  const appCode = app.partnership_code || app.ad_code
+                  if (appCode && appCode !== sub.ad_code) {
+                    if (!merged[app.id][idx]?._merged_from_app) {
+                      merged[app.id] = [...subs]
+                    }
+                    merged[app.id][idx] = {
+                      ...(merged[app.id][idx] || sub),
+                      ad_code: appCode,
+                      _merged_from_app: true
+                    }
+                  }
+
+                  // 修正リクエストのマージ
+                  // applications に revision_requests があり、submission にない場合、マージ
+                  const appRevisions = app.revision_requests
+                  if (Array.isArray(appRevisions) && appRevisions.length > 0) {
+                    const existingRevisions = (merged[app.id]?.[idx] || sub).revision_requests || []
+                    if (existingRevisions.length === 0 || appRevisions.length > existingRevisions.length) {
+                      if (!merged[app.id][idx]?._merged_from_app) {
+                        merged[app.id] = [...subs]
+                      }
+                      merged[app.id][idx] = {
+                        ...(merged[app.id][idx] || sub),
+                        revision_requests: appRevisions,
+                        _merged_from_app: true
+                      }
+                    }
+                  }
+                  // revision_notes も同様
+                  if (app.revision_notes && !(merged[app.id]?.[idx] || sub).revision_notes) {
+                    if (!merged[app.id][idx]?._merged_from_app) {
+                      merged[app.id] = [...subs]
+                    }
+                    merged[app.id][idx] = {
+                      ...(merged[app.id][idx] || sub),
+                      revision_notes: app.revision_notes,
+                      _merged_from_app: true
+                    }
+                  }
+
+                  // ワークフローステータスのマージ
+                  // applications のステータスがより進んでいれば更新
+                  if (merged[app.id][idx]?._merged_from_app) {
+                    const appStatus = app.status
+                    let newWorkflow = (merged[app.id][idx] || sub).workflow_status
+                    if (appStatus === 'completed') newWorkflow = 'points_paid'
+                    else if (appStatus === 'sns_submitted' && ['guide_pending', 'video_uploaded', 'revision_required'].includes(newWorkflow)) newWorkflow = 'sns_submitted'
+                    else if (appStatus === 'video_submitted' && newWorkflow === 'guide_pending') newWorkflow = 'video_uploaded'
+                    // applications で revision_requested ステータスの場合
+                    else if (['revision_requested', 'revision_required'].includes(appStatus)) newWorkflow = 'revision_required'
+                    merged[app.id][idx] = { ...merged[app.id][idx], workflow_status: newWorkflow }
+                  }
+                }
+              })
+            })
+            return merged
+          })
+        }
+
+        setSubmissionTable(detectedTable)
       }
     } catch (error) {
       console.error('Load data error:', error)
@@ -2391,6 +2872,7 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
                 mainChannel={mainChannels[application.campaign_id]}
                 onUpdate={() => loadData(true)}
                 language={language}
+                submissionTable={submissionTable}
               />
             ))}
           </div>

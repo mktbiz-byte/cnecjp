@@ -651,23 +651,12 @@ const CampaignWorkflowCard = ({
       updated_at: new Date().toISOString()
     }
 
-    // video_versions 포함하여 시도, 컬럼 없으면 제외하고 재시도
+    // video_versions はDBカラムに存在しないため除外して更新
     const { error: updateError } = await supabase
       .from('campaign_submissions')
-      .update({ ...updateData, video_versions: updatedVersions })
+      .update(updateData)
       .eq('id', submissionId)
-
-    if (updateError) {
-      if (updateError.message?.includes('video_versions') || updateError.code === 'PGRST204') {
-        const { error: retryError } = await supabase
-          .from('campaign_submissions')
-          .update(updateData)
-          .eq('id', submissionId)
-        if (retryError) throw retryError
-      } else {
-        throw updateError
-      }
-    }
+    if (updateError) throw updateError
 
     onProgress?.(100)
     onRefresh?.()
