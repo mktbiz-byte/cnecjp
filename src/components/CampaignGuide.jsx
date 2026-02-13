@@ -209,7 +209,7 @@ export default function CampaignGuide() {
   // ─── Section 3: Withdrawal Steps ───
   const withdrawalSteps = [
     { icon: <Wallet className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />, title: 'ポイント確認', desc: 'マイページで残高確認' },
-    { icon: <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />, title: '出金申請', desc: 'PayPal情報を入力' },
+    { icon: <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />, title: '出金申請', desc: '銀行口座情報を入力' },
     { icon: <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />, title: '処理完了', desc: '1〜3営業日で送金' },
   ]
 
@@ -441,11 +441,11 @@ export default function CampaignGuide() {
                 <ul className="text-xs sm:text-sm text-gray-600 space-y-1.5">
                   <li className="flex items-center gap-2">
                     <ChevronRight className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                    PayPal経由での送金
+                    銀行振込での送金
                   </li>
                   <li className="flex items-center gap-2">
                     <ChevronRight className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                    PayPalメールアドレスの入力が必要
+                    銀行口座情報の入力が必須（銀行名・支店名・口座番号・名義）
                   </li>
                   <li className="flex items-center gap-2">
                     <ChevronRight className="w-3 h-3 text-gray-400 flex-shrink-0" />
