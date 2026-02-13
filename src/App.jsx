@@ -45,6 +45,7 @@ import SystemSettings from './components/admin/SystemSettings';
 import EmailSettings from './components/admin/EmailSettings';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
+import CampaignGuide from './components/CampaignGuide';
 
 // 테스트용 관리자 로그인 컴포넌트
 import SecretAdminLogin from './components/SecretAdminLogin';
@@ -111,6 +112,9 @@ const AppContent = () => {
 
         {/* 이용약관 */}
         <Route path="/terms" element={<TermsOfService />} />
+
+        {/* 캠페인 가이드 */}
+        <Route path="/guide" element={<CampaignGuide />} />
       </Routes>
     </div>
   );
