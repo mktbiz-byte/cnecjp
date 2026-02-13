@@ -230,20 +230,6 @@ export default function CampaignGuide() {
       ]
     },
     {
-      value: 'oliveyoung',
-      emoji: '🛍️',
-      label: 'オリーブヤング（Olive Young）',
-      color: 'green',
-      steps: 1,
-      stepLabels: ['Step 1'],
-      description: 'オリーブヤングセール連動のキャンペーンです。',
-      details: [
-        'フローは企画型と同じ1ステップ構成',
-        'オリーブヤングの商品ページ・セール情報との連動あり',
-        'セール期間に合わせた投稿スケジュール'
-      ]
-    },
-    {
       value: 'megawari',
       emoji: '🎯',
       label: 'メガ割（Megawari）',
@@ -517,7 +503,7 @@ export default function CampaignGuide() {
               id="campaign-types"
               number={4}
               title="キャンペーンタイプの違い"
-              subtitle="4つのタイプとそれぞれの特徴"
+              subtitle="3つのタイプとそれぞれの特徴"
               icon={<Star className="w-4 h-4 sm:w-5 sm:h-5" />}
               color="amber"
             />
