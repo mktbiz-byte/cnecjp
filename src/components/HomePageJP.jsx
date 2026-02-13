@@ -15,6 +15,7 @@ import {
   Menu, X, TrendingUp, Wallet, FileText, AlertCircle, Sparkles
 } from 'lucide-react'
 import LineRegistrationBanner from './LineRegistrationBanner'
+import HolidayNoticePopup from './HolidayNoticePopup'
 
 const HomePageJP = () => {
   const { user, signOut } = useAuth()
@@ -952,6 +953,9 @@ const HomePageJP = () => {
 
       {/* LINE Registration Floating Banner */}
       <LineRegistrationBanner />
+
+      {/* 休業お知らせポップアップ */}
+      <HolidayNoticePopup />
     </div>
   )
 }
