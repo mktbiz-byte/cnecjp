@@ -449,6 +449,17 @@ const HomePageJP = () => {
                 参加方法を見る
               </a>
             </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-2 border-purple-200 text-purple-600 hover:bg-purple-50 text-base sm:text-lg px-8 sm:px-10 py-6 rounded-full transition-all hover:-translate-y-0.5"
+              asChild
+            >
+              <Link to="/guide" className="flex items-center">
+                <FileText className="h-5 w-5 mr-2" />
+                キャンペーンガイド
+              </Link>
+            </Button>
           </div>
 
           {/* Trust Stats */}
