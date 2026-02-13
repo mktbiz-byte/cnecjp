@@ -3,6 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button'
 import { Clock, PhoneOff, CheckCircle, Mail, X } from 'lucide-react'
 
+const HIDE_24H_KEY = 'holiday_notice_hide_until'
+
 const HolidayNoticePopup = () => {
   const [open, setOpen] = useState(false)
 
@@ -18,6 +20,10 @@ const HolidayNoticePopup = () => {
 
     if (jstTime < startDate || jstTime > endDate) return
 
+    // 24時間非表示チェック
+    const hideUntil = localStorage.getItem(HIDE_24H_KEY)
+    if (hideUntil && now.getTime() < Number(hideUntil)) return
+
     // セッション中に閉じた場合は再表示しない
     const dismissed = sessionStorage.getItem('holiday_notice_dismissed')
     if (dismissed === 'true') return
@@ -28,6 +34,12 @@ const HolidayNoticePopup = () => {
   const handleClose = () => {
     setOpen(false)
     sessionStorage.setItem('holiday_notice_dismissed', 'true')
+  }
+
+  const handleHide24h = () => {
+    setOpen(false)
+    const hideUntil = Date.now() + 24 * 60 * 60 * 1000
+    localStorage.setItem(HIDE_24H_KEY, String(hideUntil))
   }
 
   return (
@@ -111,7 +123,13 @@ const HolidayNoticePopup = () => {
           >
             確認しました
           </Button>
-          <p className="text-[11px] text-slate-400 text-center mt-3">
+          <button
+            onClick={handleHide24h}
+            className="w-full text-xs sm:text-sm text-slate-400 hover:text-slate-600 py-2 mt-2 transition-colors"
+          >
+            24時間表示しない
+          </button>
+          <p className="text-[11px] text-slate-400 text-center mt-1">
             ご不便をおかけし、大変申し訳ございません。
           </p>
         </div>
