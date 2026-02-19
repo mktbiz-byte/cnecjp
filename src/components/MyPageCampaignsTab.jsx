@@ -250,6 +250,7 @@ const buildSubmissionsFromApplication = (app, campaign) => {
 
     let workflowStatus = 'guide_pending'
     if (app.status === 'completed') workflowStatus = 'points_paid'
+    else if (['revision_requested', 'revision_required'].includes(app.status)) workflowStatus = 'revision_required'
     else if (snsUrl && videoUrl) workflowStatus = 'sns_submitted'
     else if (videoUrl) workflowStatus = 'video_uploaded'
     else if (['selected', 'filming', 'approved'].includes(app.status)) workflowStatus = 'guide_pending'
@@ -2483,7 +2484,7 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
           // campaign_submissions が存在する場合: 未作成分の自動生成
           if (!submissionsError && detectedTable === 'campaign_submissions') {
             const approvedApps = applications.filter(a =>
-              ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed'].includes(a.status)
+              ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed', 'revision_requested', 'revision_required'].includes(a.status)
             )
             for (const app of approvedApps) {
               if (!submissionsLoaded || !submissionsData?.some(s => s.application_id === app.id)) {
@@ -2565,7 +2566,7 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
         if (!submissionsLoaded) {
           const submissionsMap = {}
           const activeApps = applications.filter(a =>
-            ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed'].includes(a.status)
+            ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed', 'revision_requested', 'revision_required'].includes(a.status)
           )
           activeApps.forEach(app => {
             const campaign = campaignsMap?.[app.campaign_id]
@@ -2728,7 +2729,7 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
 
   // 상태별 분류
   // cnecbiz.com 관리자 사용 status: selected(선정), filming(촬영중), approved(승인)
-  const approvedStatuses = ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed']
+  const approvedStatuses = ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed', 'revision_requested', 'revision_required']
   const knownStatuses = [...approvedStatuses, 'pending', 'virtual_selected', 'rejected']
   const approvedApplications = applications.filter(a => approvedStatuses.includes(a.status))
   const pendingApplications = applications.filter(a => a.status === 'pending' || a.status === 'virtual_selected')
