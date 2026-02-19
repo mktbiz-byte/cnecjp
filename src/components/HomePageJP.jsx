@@ -15,6 +15,7 @@ import {
   Menu, X, TrendingUp, Wallet, FileText, AlertCircle, Sparkles
 } from 'lucide-react'
 import LineRegistrationBanner from './LineRegistrationBanner'
+import HolidayNoticePopup from './HolidayNoticePopup'
 
 const HomePageJP = () => {
   const { user, signOut } = useAuth()
@@ -302,6 +303,7 @@ const HomePageJP = () => {
             <nav className="hidden md:flex items-center space-x-2">
               <a href="#campaigns" className="text-slate-500 hover:text-blue-600 font-medium px-4 py-2 rounded-full hover:bg-blue-50 transition-all text-sm">キャンペーン</a>
               <a href="#how-it-works" className="text-slate-500 hover:text-blue-600 font-medium px-4 py-2 rounded-full hover:bg-blue-50 transition-all text-sm">参加方法</a>
+              <Link to="/guide" className="text-slate-500 hover:text-blue-600 font-medium px-4 py-2 rounded-full hover:bg-blue-50 transition-all text-sm">ガイド</Link>
               {user ? (
                 <>
                   <Button variant="ghost" className="text-slate-500 hover:text-blue-600 rounded-full hover:bg-blue-50" asChild>
@@ -334,6 +336,7 @@ const HomePageJP = () => {
               <div className="flex flex-col space-y-1 pt-4">
                 <a href="#campaigns" className="text-slate-600 hover:text-blue-600 font-medium py-3 px-4 rounded-2xl hover:bg-blue-50 transition-all">キャンペーン</a>
                 <a href="#how-it-works" className="text-slate-600 hover:text-blue-600 font-medium py-3 px-4 rounded-2xl hover:bg-blue-50 transition-all">参加方法</a>
+                <Link to="/guide" className="text-slate-600 hover:text-blue-600 font-medium py-3 px-4 rounded-2xl hover:bg-blue-50 transition-all">キャンペーンガイド</Link>
                 {user ? (
                   <>
                     <Link to="/mypage" className="text-slate-600 hover:text-blue-600 font-medium py-3 px-4 rounded-2xl hover:bg-blue-50 transition-all">マイページ</Link>
@@ -445,6 +448,17 @@ const HomePageJP = () => {
               <a href="#how-it-works" className="flex items-center">
                 参加方法を見る
               </a>
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-2 border-purple-200 text-purple-600 hover:bg-purple-50 text-base sm:text-lg px-8 sm:px-10 py-6 rounded-full transition-all hover:-translate-y-0.5"
+              asChild
+            >
+              <Link to="/guide" className="flex items-center">
+                <FileText className="h-5 w-5 mr-2" />
+                キャンペーンガイド
+              </Link>
             </Button>
           </div>
 
@@ -843,6 +857,7 @@ const HomePageJP = () => {
             <div>
               <h4 className="font-semibold mb-5 text-slate-200">サポート</h4>
               <ul className="space-y-3 text-sm text-slate-400">
+                <li><Link to="/guide" className="hover:text-white transition-colors">キャンペーンガイド</Link></li>
                 <li><a href="#" className="hover:text-white transition-colors">よくある質問</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">お問い合わせ</a></li>
                 <li><Link to="/terms" className="hover:text-white transition-colors">利用規約</Link></li>
@@ -952,6 +967,9 @@ const HomePageJP = () => {
 
       {/* LINE Registration Floating Banner */}
       <LineRegistrationBanner />
+
+      {/* 休業お知らせポップアップ */}
+      <HolidayNoticePopup />
     </div>
   )
 }
