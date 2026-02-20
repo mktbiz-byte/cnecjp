@@ -213,24 +213,69 @@ const HomePageJP = () => {
     return valid
   }
 
-  const renderCampaignCard = (campaign) => (
-    <div
-      key={campaign.id}
-      className="group bg-white rounded-[24px] border border-slate-100 shadow-lg shadow-slate-100/50 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 cursor-pointer overflow-hidden"
-      onClick={() => handleCampaignClick(campaign)}
-    >
-      {campaign.image_url && (
-        <div className="w-full h-36 sm:h-52 overflow-hidden bg-slate-50">
-          <img
-            src={campaign.image_url}
-            alt={campaign.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
+  const getCampaignTypeLabel = (type) => {
+    switch (type) {
+      case 'megawari': return 'メガ割り'
+      case '4week_challenge': return '4週チャレンジ'
+      case 'oliveyoung': return 'オリーブヤング'
+      default: return '企画型'
+    }
+  }
+
+  const getCampaignTypeColor = (type) => {
+    switch (type) {
+      case 'megawari': return 'bg-orange-500 text-white'
+      case '4week_challenge': return 'bg-blue-500 text-white'
+      case 'oliveyoung': return 'bg-green-500 text-white'
+      default: return 'bg-violet-500 text-white'
+    }
+  }
+
+  const getDeadlineDaysLeft = (deadline) => {
+    if (!deadline) return null
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
+    const deadlineDate = new Date(deadline)
+    deadlineDate.setHours(0, 0, 0, 0)
+    const diffTime = deadlineDate - now
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  }
+
+  const renderCampaignCard = (campaign) => {
+    const daysLeft = getDeadlineDaysLeft(campaign.application_deadline)
+    const isUrgent = daysLeft !== null && daysLeft <= 3
+    const spots = campaign.max_participants || campaign.total_slots
+
+    return (
+      <div
+        key={campaign.id}
+        className="group bg-white rounded-[24px] border border-slate-100 shadow-lg shadow-slate-100/50 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col"
+        onClick={() => handleCampaignClick(campaign)}
+      >
+        {/* Image with campaign type overlay */}
+        <div className="relative w-full h-36 sm:h-48 overflow-hidden bg-slate-50">
+          {campaign.image_url && (
+            <img
+              src={campaign.image_url}
+              alt={campaign.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+          )}
+          <div className="absolute top-2.5 left-2.5 flex gap-1.5 flex-wrap">
+            <span className={`${getCampaignTypeColor(campaign.campaign_type)} px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold shadow-sm`}>
+              {getCampaignTypeLabel(campaign.campaign_type)}
+            </span>
+            {isUrgent && (
+              <span className="bg-red-500 text-white px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold shadow-sm animate-pulse">
+                残り{daysLeft}日
+              </span>
+            )}
+          </div>
         </div>
-      )}
-      <div className="p-4 sm:p-6">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex gap-1.5 flex-wrap">
+
+        <div className="p-3.5 sm:p-5 flex flex-col flex-1">
+          {/* Platform badges */}
+          <div className="flex gap-1.5 flex-wrap mb-2.5">
             {getActivePlatforms(campaign.target_platforms).map((platform) => (
               <span key={platform} className={`${getPlatformColor(platform)} flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium`}>
                 <span className="flex items-center">{getPlatformIcon(platform)}</span>
@@ -238,35 +283,53 @@ const HomePageJP = () => {
               </span>
             ))}
           </div>
-          <span className="bg-emerald-50 text-emerald-600 border border-emerald-200 px-2 sm:px-3 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold inline-flex items-center">
-            <DollarSign className="h-3 w-3 mr-0.5" />
-            {formatCurrency(campaign.reward_amount)}
-          </span>
-        </div>
-        <h3 className="text-sm sm:text-lg font-bold text-slate-800 leading-tight line-clamp-2 mb-1.5">{campaign.title}</h3>
-        <p className="text-slate-400 text-xs sm:text-sm line-clamp-2 hidden sm:block mb-4">{campaign.description}</p>
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center text-xs sm:text-sm text-slate-400">
-            <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 flex-shrink-0 text-slate-300" />
-            <span className="truncate">締切: {formatDate(campaign.application_deadline)}</span>
+
+          {/* Title */}
+          <h3 className="text-sm sm:text-base font-bold text-slate-800 leading-tight line-clamp-2 mb-3">{campaign.title}</h3>
+
+          {/* Key info grid - prominent section */}
+          <div className="bg-slate-50 rounded-2xl p-3 sm:p-3.5 mb-3.5 mt-auto space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center text-xs text-slate-500">
+                <DollarSign className="h-3.5 w-3.5 mr-1 text-emerald-500 flex-shrink-0" />
+                <span>報酬</span>
+              </div>
+              <span className="text-sm sm:text-base font-bold text-emerald-600">{formatCurrency(campaign.reward_amount)}</span>
+            </div>
+            <div className="border-t border-slate-100" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center text-xs text-slate-500">
+                <Calendar className={`h-3.5 w-3.5 mr-1 flex-shrink-0 ${isUrgent ? 'text-red-500' : 'text-blue-500'}`} />
+                <span>締切</span>
+              </div>
+              <span className={`text-xs sm:text-sm font-semibold ${isUrgent ? 'text-red-600' : 'text-slate-700'}`}>
+                {formatDate(campaign.application_deadline)}
+              </span>
+            </div>
+            <div className="border-t border-slate-100" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center text-xs text-slate-500">
+                <Users className="h-3.5 w-3.5 mr-1 text-violet-500 flex-shrink-0" />
+                <span>募集</span>
+              </div>
+              <span className="text-xs sm:text-sm font-semibold text-slate-700">{spots}名</span>
+            </div>
           </div>
-          <div className="flex items-center text-xs sm:text-sm text-slate-400">
-            <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 flex-shrink-0 text-slate-300" />
-            {campaign.max_participants || campaign.total_slots} 名募集
-          </div>
+
+          {/* Apply button */}
+          <button
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold py-2.5 sm:py-3 rounded-full transition-colors shadow-lg shadow-blue-600/20"
+            onClick={(e) => {
+              e.stopPropagation()
+              handleApply(campaign.id)
+            }}
+          >
+            今すぐ応募
+          </button>
         </div>
-        <button
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold py-2.5 sm:py-3 rounded-full transition-colors shadow-lg shadow-blue-600/20"
-          onClick={(e) => {
-            e.stopPropagation()
-            handleApply(campaign.id)
-          }}
-        >
-          今すぐ応募
-        </button>
       </div>
-    </div>
-  )
+    )
+  }
 
   const renderCampaignGrid = (campaignList) => {
     if (campaignList.length === 0) {
