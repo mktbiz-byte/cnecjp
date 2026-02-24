@@ -179,10 +179,11 @@ const WORKFLOW_STEPS = [
 // ── video_submissions ↔ campaign_submissions ステータスマッピング ──
 const mapVideoSubStatusToWorkflow = (status) => {
   const map = {
-    'submitted': 'video_uploaded',
-    'approved': 'sns_pending',
+    'submitted': 'video_uploaded',         // Step 1-2: 동영상 제출 / 수정 확인
+    'approved': 'sns_pending',             // Step 3: SNS/클린 제출 가능
     'revision_requested': 'revision_required',
     'resubmitted': 'video_uploaded',
+    'final_confirmed': 'points_paid',      // Step 4: 포인트 지급
     'completed': 'points_paid'
   }
   return map[status] || 'guide_pending'
@@ -192,14 +193,14 @@ const mapWorkflowToVideoSubStatus = (workflowStatus) => {
   const map = {
     'guide_pending': 'submitted',
     'guide_confirmed': 'submitted',
-    'video_uploaded': 'submitted',
+    'video_uploaded': 'submitted',         // Step 1-2: submitted
     'revision_required': 'revision_requested',
     'revision_requested': 'revision_requested',
-    'sns_pending': 'approved',
-    'sns_submitted': 'completed',
-    'review_pending': 'completed',
-    'points_paid': 'completed',
-    'completed': 'completed'
+    'sns_pending': 'approved',             // Step 3: approved
+    'sns_submitted': 'approved',           // SNS 제출 후에도 approved 유지 (관리자가 final_confirmed로 전환)
+    'review_pending': 'approved',
+    'points_paid': 'final_confirmed',      // Step 4: final_confirmed
+    'completed': 'final_confirmed'
   }
   return map[workflowStatus] || 'submitted'
 }
@@ -252,8 +253,9 @@ const buildSubmissionsFromApplication = (app, campaign) => {
     if (app.status === 'completed') workflowStatus = 'points_paid'
     else if (['revision_requested', 'revision_required'].includes(app.status)) workflowStatus = 'revision_required'
     else if (snsUrl && videoUrl) workflowStatus = 'sns_submitted'
+    else if (app.status === 'approved' && videoUrl) workflowStatus = 'sns_pending'
     else if (videoUrl) workflowStatus = 'video_uploaded'
-    else if (['selected', 'filming', 'approved'].includes(app.status)) workflowStatus = 'guide_pending'
+    else if (['selected', 'filming'].includes(app.status)) workflowStatus = 'guide_pending'
 
     submissions.push({
       id: `app-${app.id}-step-${step}`,
@@ -1113,15 +1115,18 @@ const StepCard = ({
     return null
   }
 
-  // 현재 워크플로우 단계
-  // 영상 있는 스텝: 영상업로드(1) → 수정확인(2) → SNS/클린본/광고코드(3) → 포인트(4)
+  // 현재 워크플로우 단계 (기획형 기준)
+  // Step 1: 동영상 제출 (video_submitted / submitted)
+  // Step 2: 수정 확인 (video_submitted / submitted → 관리자 검수 대기)
+  // Step 3: SNS/클린 (approved / approved → 관리자 승인 후)
+  // Step 4: 포인트 지급 (completed / final_confirmed)
   // SNS only 스텝 (메가와리 3번째): SNS제출(3) → 포인트(4) (영상/수정 스킵)
   const getCurrentStep = () => {
     if (status === 'points_paid' || status === 'completed') return 4
     if (status === 'sns_submitted' || status === 'review_pending') return 4
-    if (status === 'sns_pending') return 3
+    if (status === 'sns_pending') return 3  // 관리자 approved → SNS 제출 단계
     if (!hasVideoUpload) return 3 // SNS only 스텝은 바로 SNS 제출 단계
-    if (status === 'video_uploaded') return 2
+    if (status === 'video_uploaded') return 2  // 수정 확인 (관리자 검수 대기)
     if (status === 'revision_required' || status === 'revision_requested') return 2
     return 1 // 영상 업로드
   }
@@ -1459,6 +1464,7 @@ const StepCard = ({
                     status === 'completed' ? 'bg-blue-100 text-blue-800' :
                     (status === 'revision_required' || status === 'revision_requested') ? 'bg-red-100 text-red-800' :
                     status === 'sns_submitted' ? 'bg-indigo-100 text-indigo-800' :
+                    status === 'sns_pending' ? 'bg-indigo-100 text-indigo-800' :
                     status === 'video_uploaded' ? 'bg-cyan-100 text-cyan-800' :
                     'bg-yellow-100 text-yellow-800'
                   }`}>
@@ -1771,8 +1777,8 @@ const StepCard = ({
                 <p className="text-sm text-green-700 mb-4 bg-green-50 p-3 rounded-lg border border-green-200 flex items-center">
                   <CheckCircle className="w-4 h-4 mr-2 flex-shrink-0" />
                   {language === 'ja'
-                    ? '動画の修正確認が完了しました。SNSにアップロードしてください。'
-                    : '영상 수정 확인이 완료되었습니다. SNS에 업로드해주세요.'}
+                    ? '動画が承認されました。SNSに投稿し、以下の情報を提出してください。'
+                    : '영상이 승인되었습니다. SNS에 게시 후 아래 정보를 제출해주세요.'}
                 </p>
 
                 <div className="space-y-4">
@@ -2697,13 +2703,17 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
 
                   // ワークフローステータスのマージ
                   // applications のステータスがより進んでいれば更新
-                  if (merged[app.id][idx]?._merged_from_app) {
+                  // ※ _merged_from_app がなくても status 変更は常に反映する
+                  {
+                    const currentSub = merged[app.id]?.[idx] || sub
+                    if (!merged[app.id]) merged[app.id] = [...subs]
+                    if (!merged[app.id][idx]) merged[app.id][idx] = sub
                     const appStatus = app.status
-                    let newWorkflow = (merged[app.id][idx] || sub).workflow_status
+                    let newWorkflow = currentSub.workflow_status
                     if (appStatus === 'completed') newWorkflow = 'points_paid'
+                    else if (appStatus === 'approved' && ['guide_pending', 'video_uploaded', 'revision_required'].includes(newWorkflow)) newWorkflow = 'sns_pending'
                     else if (appStatus === 'sns_submitted' && ['guide_pending', 'video_uploaded', 'revision_required'].includes(newWorkflow)) newWorkflow = 'sns_submitted'
                     else if (appStatus === 'video_submitted' && newWorkflow === 'guide_pending') newWorkflow = 'video_uploaded'
-                    // applications で revision_requested ステータスの場合
                     else if (['revision_requested', 'revision_required'].includes(appStatus)) newWorkflow = 'revision_required'
                     merged[app.id][idx] = { ...merged[app.id][idx], workflow_status: newWorkflow }
                   }
