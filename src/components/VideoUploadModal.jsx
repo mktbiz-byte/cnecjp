@@ -139,7 +139,7 @@ const VideoUploadModal = ({ isOpen, onClose, application, onSuccess }) => {
               動画URL <span className="text-red-500">*</span>
             </label>
             <input
-              type="url"
+              type="text"
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
               placeholder="https://drive.google.com/... または YouTube URL"
