@@ -439,7 +439,7 @@ const StepSubmissionCard = ({
                       {language === 'ja' ? 'SNS投稿URL' : 'SNS 게시물 URL'} *
                     </label>
                     <input
-                      type="url"
+                      type="text"
                       value={snsUrl}
                       onChange={(e) => setSnsUrl(e.target.value)}
                       placeholder="https://www.instagram.com/p/..."

@@ -196,6 +196,27 @@ const PrivacyNotice = () => (
 
 // ─── メインコンポーネント ─────────────────────────
 
+// SNS URL 자동 보정 함수
+const normalizeSnsUrl = (url, platform) => {
+  if (!url || !url.trim()) return ''
+  let trimmed = url.trim()
+
+  // @username 형식 처리
+  if (trimmed.startsWith('@')) {
+    const username = trimmed.substring(1)
+    if (platform === 'instagram') return `https://www.instagram.com/${username}`
+    if (platform === 'tiktok') return `https://www.tiktok.com/@${username}`
+    if (platform === 'youtube') return `https://www.youtube.com/@${username}`
+  }
+
+  // 프로토콜 없이 도메인부터 시작하는 경우
+  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+    trimmed = 'https://' + trimmed
+  }
+
+  return trimmed
+}
+
 const ProfileSettingsBeauty = () => {
   const { user, signOut } = useAuth()
   const { language } = useLanguage()
@@ -376,9 +397,9 @@ const ProfileSettingsBeauty = () => {
         bio: profile.bio?.trim() || null,
         profile_image: profile.profile_image || null,
         skin_type: profile.skin_type || null,
-        instagram_url: profile.instagram_url?.trim() || null,
-        youtube_url: profile.youtube_url?.trim() || null,
-        tiktok_url: profile.tiktok_url?.trim() || null,
+        instagram_url: normalizeSnsUrl(profile.instagram_url, 'instagram') || null,
+        youtube_url: normalizeSnsUrl(profile.youtube_url, 'youtube') || null,
+        tiktok_url: normalizeSnsUrl(profile.tiktok_url, 'tiktok') || null,
         updated_at: new Date().toISOString(),
       }
 
@@ -844,17 +865,23 @@ const ProfileSettingsBeauty = () => {
               <div className="space-y-4 pt-4 border-t border-slate-100">
                 <h3 className="text-base font-semibold text-slate-700">SNSアカウント</h3>
                 {[
-                  { field: 'instagram_url', label: 'Instagram', placeholder: 'https://instagram.com/username', followerField: 'instagram_followers', followerLabel: 'フォロワー数' },
-                  { field: 'youtube_url', label: 'YouTube', placeholder: 'https://youtube.com/@channel', followerField: 'youtube_subscribers', followerLabel: '登録者数' },
-                  { field: 'tiktok_url', label: 'TikTok', placeholder: 'https://tiktok.com/@username', followerField: 'tiktok_followers', followerLabel: 'フォロワー数' },
-                  { field: 'blog_url', label: 'その他（ブログ等）', placeholder: 'https://...', followerField: null },
+                  { field: 'instagram_url', label: 'Instagram', placeholder: 'https://instagram.com/username', followerField: 'instagram_followers', followerLabel: 'フォロワー数', platform: 'instagram' },
+                  { field: 'youtube_url', label: 'YouTube', placeholder: 'https://youtube.com/@channel', followerField: 'youtube_subscribers', followerLabel: '登録者数', platform: 'youtube' },
+                  { field: 'tiktok_url', label: 'TikTok', placeholder: 'https://tiktok.com/@username', followerField: 'tiktok_followers', followerLabel: 'フォロワー数', platform: 'tiktok' },
+                  { field: 'blog_url', label: 'その他（ブログ等）', placeholder: 'https://...', followerField: null, platform: 'other' },
                 ].map(sns => (
                   <div key={sns.field} className="space-y-2">
                     <label className="text-xs font-medium text-slate-500">{sns.label}</label>
                     <input
-                      type="url"
+                      type="text"
                       value={profile[sns.field]}
                       onChange={setInput(sns.field)}
+                      onBlur={(e) => {
+                        const normalized = normalizeSnsUrl(e.target.value, sns.platform)
+                        if (normalized !== e.target.value) {
+                          setProfile(prev => ({ ...prev, [sns.field]: normalized }))
+                        }
+                      }}
                       placeholder={sns.placeholder}
                       className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     />

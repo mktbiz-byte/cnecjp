@@ -1700,7 +1700,7 @@ const MyPageWithWithdrawal = () => {
                     <label className="block text-xs font-medium text-slate-500">Instagram</label>
                     {isEditing ? (
                       <input
-                        type="url"
+                        type="text"
                         value={editForm.instagram_url}
                         onChange={(e) => setEditForm({...editForm, instagram_url: e.target.value})}
                         className="mt-1 w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
@@ -1721,7 +1721,7 @@ const MyPageWithWithdrawal = () => {
                     <label className="block text-xs font-medium text-slate-500">TikTok</label>
                     {isEditing ? (
                       <input
-                        type="url"
+                        type="text"
                         value={editForm.tiktok_url}
                         onChange={(e) => setEditForm({...editForm, tiktok_url: e.target.value})}
                         className="mt-1 w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
@@ -1742,7 +1742,7 @@ const MyPageWithWithdrawal = () => {
                     <label className="block text-xs font-medium text-slate-500">YouTube</label>
                     {isEditing ? (
                       <input
-                        type="url"
+                        type="text"
                         value={editForm.youtube_url}
                         onChange={(e) => setEditForm({...editForm, youtube_url: e.target.value})}
                         className="mt-1 w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
@@ -1763,7 +1763,7 @@ const MyPageWithWithdrawal = () => {
                     <label className="block text-xs font-medium text-slate-500">{language === 'ja' ? 'その他のSNS' : '기타 SNS'}</label>
                     {isEditing ? (
                       <input
-                        type="url"
+                        type="text"
                         value={editForm.other_sns_url}
                         onChange={(e) => setEditForm({...editForm, other_sns_url: e.target.value})}
                         className="mt-1 w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
@@ -2791,7 +2791,7 @@ const MyPageWithWithdrawal = () => {
                     <div key={sns.key}>
                       <label className="block text-xs font-medium text-slate-500 mb-1">{sns.label}</label>
                       {isEditing ? (
-                        <input type="url" value={editForm[sns.key]} onChange={(e) => setEditForm({...editForm, [sns.key]: e.target.value})} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder={sns.placeholder} />
+                        <input type="text" value={editForm[sns.key]} onChange={(e) => setEditForm({...editForm, [sns.key]: e.target.value})} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder={sns.placeholder} />
                       ) : (
                         <p className="text-sm text-slate-800 py-1 truncate">
                           {profile?.[sns.key] ? <a href={profile[sns.key]} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{profile[sns.key]}</a> : (language === 'ja' ? '未登録' : '등록되지 않음')}
@@ -3144,7 +3144,7 @@ const MyPageWithWithdrawal = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">{t.snsUploadUrl} *</label>
-                  <input type="url" value={snsUploadForm.sns_upload_url} onChange={(e) => setSnsUploadForm({...snsUploadForm, sns_upload_url: e.target.value})} placeholder={language === 'ja' ? 'https://instagram.com/p/...' : 'https://instagram.com/p/...'} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                  <input type="text" value={snsUploadForm.sns_upload_url} onChange={(e) => setSnsUploadForm({...snsUploadForm, sns_upload_url: e.target.value})} placeholder={language === 'ja' ? 'https://instagram.com/p/...' : 'https://instagram.com/p/...'} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
                   <p className="mt-1 text-xs text-slate-400">{language === 'ja' ? 'Instagram、TikTok、YouTubeなどのSNS投稿URLを入力してください' : 'Instagram, TikTok, YouTube 등의 SNS 게시물 URL을 입력해주세요'}</p>
                 </div>
                 <div>

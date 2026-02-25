@@ -17,6 +17,27 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
+// SNS URL 자동 보정 함수
+const normalizeSnsUrl = (url, platform) => {
+  if (!url || !url.trim()) return ''
+  let trimmed = url.trim()
+
+  // @username 형식 처리
+  if (trimmed.startsWith('@')) {
+    const username = trimmed.substring(1)
+    if (platform === 'instagram') return `https://www.instagram.com/${username}`
+    if (platform === 'tiktok') return `https://www.tiktok.com/@${username}`
+    if (platform === 'youtube') return `https://www.youtube.com/@${username}`
+  }
+
+  // 프로토콜 없이 도메인부터 시작하는 경우
+  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+    trimmed = 'https://' + trimmed
+  }
+
+  return trimmed
+}
+
 const ProfileSettings = () => {
   const { user } = useAuth()
   const { language } = useLanguage()
@@ -171,9 +192,9 @@ const ProfileSettings = () => {
         email: profile.email.trim(),
         age: profile.age ? parseInt(profile.age) : null,
         skin_type: profile.skin_type || null,
-        instagram_url: profile.instagram_url.trim() || null,
-        youtube_url: profile.youtube_url.trim() || null,
-        tiktok_url: profile.tiktok_url.trim() || null,
+        instagram_url: normalizeSnsUrl(profile.instagram_url, 'instagram') || null,
+        youtube_url: normalizeSnsUrl(profile.youtube_url, 'youtube') || null,
+        tiktok_url: normalizeSnsUrl(profile.tiktok_url, 'tiktok') || null,
         bio: profile.bio.trim() || null
       }
 
@@ -380,8 +401,15 @@ const ProfileSettings = () => {
                   </Label>
                   <Input
                     id="instagram_url"
+                    type="text"
                     value={profile.instagram_url}
                     onChange={(e) => setProfile(prev => ({ ...prev, instagram_url: e.target.value }))}
+                    onBlur={(e) => {
+                      const normalized = normalizeSnsUrl(e.target.value, 'instagram')
+                      if (normalized !== e.target.value) {
+                        setProfile(prev => ({ ...prev, instagram_url: normalized }))
+                      }
+                    }}
                     placeholder="https://instagram.com/username"
                   />
                 </div>
@@ -393,8 +421,15 @@ const ProfileSettings = () => {
                   </Label>
                   <Input
                     id="youtube_url"
+                    type="text"
                     value={profile.youtube_url}
                     onChange={(e) => setProfile(prev => ({ ...prev, youtube_url: e.target.value }))}
+                    onBlur={(e) => {
+                      const normalized = normalizeSnsUrl(e.target.value, 'youtube')
+                      if (normalized !== e.target.value) {
+                        setProfile(prev => ({ ...prev, youtube_url: normalized }))
+                      }
+                    }}
                     placeholder="https://youtube.com/@username"
                   />
                 </div>
@@ -406,8 +441,15 @@ const ProfileSettings = () => {
                   </Label>
                   <Input
                     id="tiktok_url"
+                    type="text"
                     value={profile.tiktok_url}
                     onChange={(e) => setProfile(prev => ({ ...prev, tiktok_url: e.target.value }))}
+                    onBlur={(e) => {
+                      const normalized = normalizeSnsUrl(e.target.value, 'tiktok')
+                      if (normalized !== e.target.value) {
+                        setProfile(prev => ({ ...prev, tiktok_url: normalized }))
+                      }
+                    }}
                     placeholder="https://tiktok.com/@username"
                   />
                 </div>
