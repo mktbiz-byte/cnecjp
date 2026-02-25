@@ -567,8 +567,8 @@ const ConfirmedCreatorsReport_multilingual = () => {
                         <span className="font-medium text-blue-800">{t('confirmedCreatorsReport.shippingAddress')}</span>
                       </div>
                       <div className="text-sm text-blue-700">
-                        <p><strong>{t('confirmedCreatorsReport.postalCode')}:</strong> {profile?.postal_code || 'N/A'}</p>
-                        <p><strong>{t('confirmedCreatorsReport.address')}:</strong> {`${profile?.prefecture || ''} ${profile?.city || ''} ${profile?.address || ''}`.trim() || 'N/A'}</p>
+                        <p><strong>{t('confirmedCreatorsReport.postalCode')}:</strong> {application.postal_code || profile?.postcode || 'N/A'}</p>
+                        <p><strong>{t('confirmedCreatorsReport.address')}:</strong> {application.address || `${profile?.prefecture || ''} ${profile?.address || ''} ${profile?.detail_address || ''}`.trim() || 'N/A'}</p>
                         <p><strong>{t('confirmedCreatorsReport.phone')}:</strong> {application.phone_number || profile?.phone || 'N/A'}</p>
                       </div>
                     </div>
