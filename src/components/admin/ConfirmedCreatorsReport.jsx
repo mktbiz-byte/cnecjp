@@ -131,12 +131,12 @@ const ConfirmedCreatorsReport = () => {
     const rows = applications.map(app => {
       const profile = userProfiles[app.user_id]
       return [
-        profile?.name || 'N/A',
-        profile?.instagram_url || 'N/A',
-        profile?.tiktok_url || 'N/A',
-        profile?.youtube_url || 'N/A',
-        profile?.postal_code || 'N/A',
-        `${profile?.prefecture || ''} ${profile?.city || ''} ${profile?.address || ''}`.trim() || 'N/A',
+        app.applicant_name || profile?.name || 'N/A',
+        app.instagram_url || profile?.instagram_url || 'N/A',
+        app.tiktok_url || profile?.tiktok_url || 'N/A',
+        app.youtube_url || profile?.youtube_url || 'N/A',
+        app.postal_code || profile?.postcode || 'N/A',
+        app.address || `${profile?.prefecture || ''} ${profile?.address || ''} ${profile?.detail_address || ''}`.trim() || 'N/A',
         app.tracking_number || '未発送',
         app.tracking_number ? '発送済み' : '未発送',
         app.approved_at ? new Date(app.approved_at).toLocaleDateString('ja-JP') : 'N/A'
@@ -265,19 +265,20 @@ const ConfirmedCreatorsReport = () => {
                         )}
                       </div>
 
-                      {/* 주소 정보 */}
+                      {/* 주소 정보 - 신청서(application)의 주소를 우선 사용 */}
                       <div className="bg-blue-50 p-4 rounded-lg mb-4">
                         <div className="flex items-center space-x-2 mb-2">
                           <MapPin className="h-4 w-4 text-blue-600" />
                           <span className="font-medium text-blue-800">配送先住所</span>
                         </div>
                         <div className="text-sm text-blue-700">
-                          <p><strong>郵便番号:</strong> {profile?.postal_code || 'N/A'}</p>
-                          <p><strong>住所:</strong> {`${profile?.prefecture || ''} ${profile?.city || ''} ${profile?.address || ''}`.trim() || 'N/A'}</p>
+                          <p><strong>郵便番号:</strong> {application.postal_code || profile?.postcode || 'N/A'}</p>
+                          <p><strong>住所:</strong> {application.address || `${profile?.prefecture || ''} ${profile?.address || ''} ${profile?.detail_address || ''}`.trim() || 'N/A'}</p>
+                          <p><strong>電話番号:</strong> {application.phone_number || profile?.phone || 'N/A'}</p>
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="flex flex-col space-y-2">
                       <Button
                         variant="outline"
@@ -334,7 +335,7 @@ const ConfirmedCreatorsReport = () => {
               <Button variant="outline" onClick={() => setTrackingModal(false)}>
                 キャンセル
               </Button>
-              <Button 
+              <Button
                 onClick={() => handleTrackingUpdate(selectedApplication?.id, trackingNumber)}
                 disabled={processing}
               >
@@ -498,16 +499,16 @@ const ConfirmedCreatorsReport = () => {
                       )}
                     </div>
 
-                    {/* 주소 정보 */}
+                    {/* 주소 정보 - 신청서(application)의 주소를 우선 사용 */}
                     <div className="bg-blue-50 p-4 rounded-lg mb-4">
                       <div className="flex items-center space-x-2 mb-2">
                         <MapPin className="h-4 w-4 text-blue-600" />
                         <span className="font-medium text-blue-800">配送先住所</span>
                       </div>
                       <div className="text-sm text-blue-700">
-                        <p><strong>郵便番号:</strong> {profile?.postal_code || 'N/A'}</p>
-                        <p><strong>住所:</strong> {`${profile?.prefecture || ''} ${profile?.city || ''} ${profile?.address || ''}`.trim() || 'N/A'}</p>
-                        <p><strong>電話番号:</strong> {profile?.phone || 'N/A'}</p>
+                        <p><strong>郵便番号:</strong> {application.postal_code || profile?.postcode || 'N/A'}</p>
+                        <p><strong>住所:</strong> {application.address || `${profile?.prefecture || ''} ${profile?.address || ''} ${profile?.detail_address || ''}`.trim() || 'N/A'}</p>
+                        <p><strong>電話番号:</strong> {application.phone_number || profile?.phone || 'N/A'}</p>
                       </div>
                     </div>
 

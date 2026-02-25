@@ -264,31 +264,29 @@ const ConfirmedCreatorsNew = () => {
       setProcessing(true)
       setError('')
 
+      // 신청서(applications) 테이블의 주소를 업데이트 (캠페인별 배송 주소)
       const { error } = await supabase
-        .from('user_profiles')
-        .update({ 
+        .from('applications')
+        .update({
           postal_code: addressForm.postal_code,
           address: addressForm.address,
-          phone: addressForm.phone,
+          phone_number: addressForm.phone,
           updated_at: new Date().toISOString()
         })
-        .eq('id', selectedCreator.user_profiles.id)
+        .eq('id', selectedCreator.id)
 
       if (error) {
         throw new Error(`주소 업데이트 실패: ${error.message}`)
       }
 
-      // 로컬 상태 업데이트
-      setApplications(prev => prev.map(app => 
-        app.id === selectedCreator.id 
-          ? { 
-              ...app, 
-              user_profiles: {
-                ...app.user_profiles,
-                postal_code: addressForm.postal_code,
-                address: addressForm.address,
-                phone: addressForm.phone
-              }
+      // 로컬 상태 업데이트 - application 레벨의 주소 업데이트
+      setApplications(prev => prev.map(app =>
+        app.id === selectedCreator.id
+          ? {
+              ...app,
+              postal_code: addressForm.postal_code,
+              address: addressForm.address,
+              phone_number: addressForm.phone
             }
           : app
       ))
@@ -315,10 +313,11 @@ const ConfirmedCreatorsNew = () => {
 
   const openAddressModal = (creator) => {
     setSelectedCreator(creator)
+    // 신청서(application)의 주소를 우선 사용, 없으면 프로필 주소 폴백
     setAddressForm({
-      postal_code: creator.user_profiles?.postal_code || '',
-      address: creator.user_profiles?.address || '',
-      phone: creator.user_profiles?.phone || ''
+      postal_code: creator.postal_code || creator.user_profiles?.postcode || '',
+      address: creator.address || creator.user_profiles?.address || '',
+      phone: creator.phone_number || creator.user_profiles?.phone || ''
     })
     setAddressModal(true)
   }
@@ -338,11 +337,11 @@ const ConfirmedCreatorsNew = () => {
 
   const exportToExcel = () => {
     const data = applications.map(app => ({
-      '이름': app.user_profiles?.name || '',
+      '이름': app.applicant_name || app.user_profiles?.name || '',
       '이메일': app.user_profiles?.email || '',
-      '전화번호': app.user_profiles?.phone || '',
-      '우편번호': app.user_profiles?.postal_code || '',
-      '주소': app.user_profiles?.address || '',
+      '전화번호': app.phone_number || app.user_profiles?.phone || '',
+      '우편번호': app.postal_code || app.user_profiles?.postcode || '',
+      '주소': app.address || app.user_profiles?.address || '',
       '캠페인': app.campaigns?.title || '',
       '브랜드': app.campaigns?.brand || '',
       '상태': app.status,

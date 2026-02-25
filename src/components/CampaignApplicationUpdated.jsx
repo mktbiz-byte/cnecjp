@@ -234,11 +234,21 @@ const CampaignApplicationUpdated = () => {
         const name = profileData.name || ''
         const isEmailFormat = name && name.includes('@') && name.includes('.')
 
+        // 프로필 주소 조합 (user_profiles의 필드명: postcode, prefecture, address, detail_address)
+        const profileAddress = [profileData.prefecture, profileData.address, profileData.detail_address]
+          .filter(Boolean)
+          .join(' ')
+          .trim()
+
         setApplicationData(prev => ({
           ...prev,
           applicant_name: isEmailFormat ? '' : name,
           age: profileData.age || '',
           skin_type: profileData.skin_type || '',
+          // 프로필에 저장된 주소 정보도 프리필 (새 캠페인 신청 시 편의)
+          postal_code: prev.postal_code || profileData.postcode || '',
+          address: prev.address || profileAddress || '',
+          phone_number: prev.phone_number || profileData.phone || '',
           instagram_url: profileData.instagram_url || '',
           youtube_url: profileData.youtube_url || '',
           tiktok_url: profileData.tiktok_url || ''

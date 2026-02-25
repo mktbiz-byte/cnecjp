@@ -187,12 +187,12 @@ const ConfirmedCreatorsReport_multilingual = () => {
     const rows = applications.map(app => {
       const profile = userProfiles[app.user_id]
       return [
-        profile?.name || 'N/A',
-        profile?.instagram_url || 'N/A',
-        profile?.tiktok_url || 'N/A',
-        profile?.youtube_url || 'N/A',
-        profile?.postal_code || 'N/A',
-        `${profile?.prefecture || ''} ${profile?.city || ''} ${profile?.address || ''}`.trim() || 'N/A',
+        app.applicant_name || profile?.name || 'N/A',
+        app.instagram_url || profile?.instagram_url || 'N/A',
+        app.tiktok_url || profile?.tiktok_url || 'N/A',
+        app.youtube_url || profile?.youtube_url || 'N/A',
+        app.postal_code || profile?.postcode || 'N/A',
+        app.address || `${profile?.prefecture || ''} ${profile?.address || ''} ${profile?.detail_address || ''}`.trim() || 'N/A',
         app.tracking_number || t('confirmedCreatorsReport.notShipped'),
         app.tracking_number ? t('confirmedCreatorsReport.shipped') : t('confirmedCreatorsReport.notShipped'),
         app.approved_at ? formatDate(app.approved_at) : 'N/A'
@@ -327,8 +327,8 @@ const ConfirmedCreatorsReport_multilingual = () => {
                           <span className="font-medium text-blue-800">{t('confirmedCreatorsReport.shippingAddress')}</span>
                         </div>
                         <div className="text-sm text-blue-700">
-                          <p><strong>{t('confirmedCreatorsReport.postalCode')}:</strong> {profile?.postal_code || 'N/A'}</p>
-                          <p><strong>{t('confirmedCreatorsReport.address')}:</strong> {`${profile?.prefecture || ''} ${profile?.city || ''} ${profile?.address || ''}`.trim() || 'N/A'}</p>
+                          <p><strong>{t('confirmedCreatorsReport.postalCode')}:</strong> {application.postal_code || profile?.postcode || 'N/A'}</p>
+                          <p><strong>{t('confirmedCreatorsReport.address')}:</strong> {application.address || `${profile?.prefecture || ''} ${profile?.address || ''} ${profile?.detail_address || ''}`.trim() || 'N/A'}</p>
                         </div>
                       </div>
                     </div>
@@ -569,7 +569,7 @@ const ConfirmedCreatorsReport_multilingual = () => {
                       <div className="text-sm text-blue-700">
                         <p><strong>{t('confirmedCreatorsReport.postalCode')}:</strong> {profile?.postal_code || 'N/A'}</p>
                         <p><strong>{t('confirmedCreatorsReport.address')}:</strong> {`${profile?.prefecture || ''} ${profile?.city || ''} ${profile?.address || ''}`.trim() || 'N/A'}</p>
-                        <p><strong>{t('confirmedCreatorsReport.phone')}:</strong> {profile?.phone || 'N/A'}</p>
+                        <p><strong>{t('confirmedCreatorsReport.phone')}:</strong> {application.phone_number || profile?.phone || 'N/A'}</p>
                       </div>
                     </div>
 
