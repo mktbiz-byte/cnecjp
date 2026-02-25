@@ -87,7 +87,7 @@ cnecjp/
 
 ## 4. 라우팅 구조 (App.jsx)
 
-### 4.1 공개 페이지 (누구나 접근)
+### 4.1 공개 페이지 (ProtectedRoute 없음, 누구나 접근)
 
 | 경로 | 컴포넌트 | 설명 |
 |------|----------|------|
@@ -98,8 +98,11 @@ cnecjp/
 | `/privacy` | `PrivacyPolicy` | 개인정보처리방침 |
 | `/terms` | `TermsOfService` | 이용약관 |
 | `/guide` | `CampaignGuide` | 캠페인 가이드 페이지 |
+| `/secret-admin-login` | `SecretAdminLogin` | 관리자 전용 로그인 (ProtectedRoute 없음, URL 직접 입력으로만 접근) |
 
-### 4.2 사용자 페이지 (로그인 필요)
+### 4.2 사용자 페이지 (ProtectedRoute 없음, 로그인 상태에서 사용)
+
+> 주의: 이 페이지들은 ProtectedRoute로 감싸져 있지 않습니다. 컴포넌트 내부에서 useAuth()로 로그인 여부를 확인합니다.
 
 | 경로 | 컴포넌트 | 설명 |
 |------|----------|------|
@@ -115,7 +118,6 @@ cnecjp/
 
 | 경로 | 컴포넌트 | 설명 |
 |------|----------|------|
-| `/secret-admin-login` | `SecretAdminLogin` | 관리자 전용 로그인 |
 | `/dashboard` | `AdminDashboardSimple` | 관리자 대시보드 (통계) |
 | `/campaigns-manage` | `AdminCampaignsWithQuestions` | 캠페인 관리 (CRUD) |
 | `/campaign-create` | `CampaignCreationWithTranslator` | 캠페인 생성 (번역 기능 포함) |
@@ -199,11 +201,20 @@ VITE_SUPABASE_ANON_KEY # Supabase 익명 키
 ```javascript
 export const supabase = createClient(url, key, {
   auth: {
-    redirectTo: `${현재도메인}/auth/callback`,
+    redirectTo: `${getCurrentSiteUrl()}/auth/callback`,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
     flowType: 'pkce'     // PKCE 인증 플로우 사용
+  },
+  global: {
+    headers: { 'x-my-custom-header': 'cnec-platform' }
+  },
+  realtime: {
+    params: { eventsPerSecond: 10 }
+  },
+  db: {
+    schema: 'public'
   },
   fetch: (url, options) => fetch(url, {
     ...options,
@@ -247,19 +258,22 @@ database.campaigns = {
 
 ### 6.6 database.applications - 신청 API
 
-**중요**: applications와 campaign_applications 두 테이블을 폴백 구조로 사용합니다.
-- 우선순위: `applications` 테이블 → 실패 시 `campaign_applications` 테이블
+**중요**: `applications`와 `campaign_applications` 두 테이블을 폴백 구조로 사용합니다.
+- `getAll()`, `getByUser()`, `create()`, `updateStatus()`, `update()`: `applications` 테이블 우선 → 실패 시 `campaign_applications` 폴백
+- `requestPoints()`: `campaign_applications` 테이블 직접 사용
+
+**주의 (코드 버그)**: `getByCampaign()`이 코드 내에서 **2번 정의**되어 있습니다. 뒤의 정의(line ~626)가 앞(line ~392)을 덮어씁니다. 실제로는 `campaign_applications` 테이블을 직접 조회합니다.
 
 ```javascript
 database.applications = {
-  getAll()                            // 전체 신청 조회 (user_profiles, campaigns 조인)
-  getByUser(userId)                   // 사용자별 신청 조회 (캠페인 정보 포함)
-  getByCampaign(campaignId)           // 캠페인별 신청 조회 (프로필 정보 포함)
-  getByUserAndCampaign(userId, cId)   // 특정 사용자의 특정 캠페인 신청 확인
-  create(data)                        // 신청 생성
-  updateStatus(id, status)            // 상태 업데이트 + 타임스탬프 자동 관리
-  update(id, data)                    // 신청 정보 업데이트
-  requestPoints(id)                   // 포인트 요청 (campaign_applications)
+  getAll()                            // 전체 신청 조회 (applications → user_profiles, campaigns 병합)
+  getByUser(userId)                   // 사용자별 신청 조회 (applications 우선 → campaign_applications 폴백)
+  getByCampaign(campaignId)           // ⚠️ 실제로는 campaign_applications 테이블 직접 조회 (중복정의 덮어쓰기)
+  getByUserAndCampaign(userId, cId)   // 특정 사용자의 특정 캠페인 신청 확인 (applications 테이블)
+  create(data)                        // 신청 생성 (applications 테이블)
+  updateStatus(id, status)            // 상태 업데이트 + 타임스탬프 자동 관리 (applications → campaign_applications 폴백)
+  update(id, data)                    // 신청 정보 업데이트 (applications → campaign_applications 폴백)
+  requestPoints(id)                   // 포인트 요청 (campaign_applications 테이블 직접)
 }
 ```
 
@@ -287,7 +301,15 @@ database.userProfiles = {
 }
 ```
 
-### 6.8 database.emailTemplates - 이메일 템플릿 API
+### 6.8 database.users - 사용자 별칭 API
+
+```javascript
+database.users = {
+  getAll()  // database.userProfiles.getAll()의 별칭 (단순 래퍼)
+}
+```
+
+### 6.9 database.emailTemplates - 이메일 템플릿 API
 
 ```javascript
 database.emailTemplates = {
@@ -301,7 +323,7 @@ database.emailTemplates = {
 }
 ```
 
-### 6.9 database.withdrawals - 출금 API
+### 6.10 database.withdrawals - 출금 API
 
 ```javascript
 database.withdrawals = {
@@ -318,7 +340,7 @@ pending → completed (승인/입금완료)
        → rejected  (거부)
 ```
 
-### 6.10 database.userPoints - 포인트 API
+### 6.11 database.userPoints - 포인트 API
 
 ```javascript
 database.userPoints = {
@@ -333,7 +355,7 @@ database.userPoints = {
 - 양수(+) = 적립, 음수(-) = 차감
 - 총 포인트 = 모든 트랜잭션 amount의 합계
 
-### 6.11 storage - 파일 업로드 API
+### 6.12 storage - 파일 업로드 API
 
 ```javascript
 export const storage = {
@@ -764,8 +786,8 @@ created_at        TIMESTAMP
 
 ### 13.3 UI 컴포넌트 (`components/ui/`)
 
-shadcn/ui 기반 공통 컴포넌트 (Radix UI 원시 컴포넌트 래핑):
-- accordion, alert, alert-dialog, avatar, badge, breadcrumb
+shadcn/ui 기반 공통 컴포넌트 (Radix UI 원시 컴포넌트 래핑, 총 46개):
+- accordion, alert, alert-dialog, aspect-ratio, avatar, badge, breadcrumb
 - button, calendar, card, carousel, chart, checkbox
 - collapsible, command, context-menu, dialog, drawer
 - dropdown-menu, form, hover-card, input, input-otp
@@ -861,42 +883,37 @@ pnpm lint       # ESLint 실행
 
 ---
 
-## 16. 신청 상태(Application Status) 전체 매핑
+## 16. 상태 관리 시스템
 
-이 플랫폼에서 가장 중요한 상태 관리입니다.
+이 플랫폼에서는 **2가지 별도의 상태 시스템**이 존재합니다.
+
+### 16.1 applications.status - 신청/선정 상태 (관리자 관리)
+
+`applications` 테이블의 `status` 컬럼. 관리자가 신청자를 선정하는 과정에서 사용됩니다.
+`supabase.js`의 `updateStatus()` 함수에서 관리합니다.
 
 ```
 ┌─────────────┐
-│   pending    │  신청 접수 (初期状態)
+│   pending    │  신청 접수 (審査中)
 └──────┬──────┘
        │
        ▼
 ┌─────────────────┐
-│ virtual_selected │  가선정 (仮選定)
+│ virtual_selected │  가선정 (仮選定) → virtual_selected_at 타임스탬프
 └──────┬──────────┘
        │
-       ▼
+       ├──────────────────┐
+       ▼                  ▼
 ┌─────────────┐     ┌──────────┐
-│   approved   │     │ rejected │  거부 (拒否)
-│  (확정/承認) │     └──────────┘
+│   approved   │     │ rejected │  거부 (拒否) → rejected_at
+│ (확정/承認)  │     └──────────┘
+│ → approved_at│
 └──────┬──────┘
        │
        ▼
-┌─────────────────────┐
-│ guide_sent /         │  가이드 전달
-│ materials_shared     │
-└──────┬──────────────┘
-       │
-       ▼
-┌─────────────────┐
-│ product_shipped  │  상품 발송
-└──────┬──────────┘
-       │
-       ▼
-┌─────────────────────┐
-│ video_uploaded /     │  영상 업로드 완료
-│ content_submitted    │
-└──────┬──────────────┘
+┌──────────────────┐
+│ video_submitted   │  영상 제출
+└──────┬───────────┘
        │
        ▼
 ┌─────────────────┐
@@ -904,24 +921,58 @@ pnpm lint       # ESLint 실행
 └──────┬──────────┘
        │
        ▼
-┌─────────────────────┐
-│ revision_requested   │  수정 요청 (필요 시)
-└──────┬──────────────┘
-       │
-       ▼
-┌─────────────────┐
-│ sns_confirmed    │  SNS 확인 완료
-└──────┬──────────┘
-       │
-       ▼
-┌─────────────────────┐
-│ points_requested     │  포인트 요청
-└──────┬──────────────┘
-       │
-       ▼
 ┌─────────────────┐
 │   completed      │  최종 완료
 └─────────────────┘
+```
+
+**MyPageWithWithdrawal.jsx에서 사용하는 추가 상태값:**
+- `selected` (= approved와 동의어)
+- `filming` (촬영중)
+
+### 16.2 workflow_status - 워크플로우 진행 상태 (CampaignWorkflowCard)
+
+`CampaignWorkflowCard.jsx`에서 사용하는 **UI 워크플로우 상태**입니다.
+승인(approved) 이후 크리에이터의 작업 진행 단계를 세분화합니다.
+
+```
+┌──────────────┐
+│ guide_pending │  ガイド確認 (가이드 확인 대기) ← 기본값
+└──────┬───────┘
+       ▼
+┌────────────────┐
+│ guide_confirmed │  ガイド確認済 (가이드 확인 완료)
+└──────┬─────────┘
+       ▼
+┌─────────────────┐
+│ video_uploading  │  動画アップロード中 (업로드 중)
+└──────┬──────────┘
+       ▼
+┌────────────────┐
+│ video_uploaded  │  動画アップロード済 (업로드 완료)
+└──────┬─────────┘
+       ▼
+┌──────────────┐
+│ sns_pending   │  SNS投稿待ち (SNS 공유 대기)
+└──────┬───────┘
+       ▼
+┌────────────────┐
+│ sns_submitted   │  SNS提出済み (SNS 제출 완료)
+└──────┬─────────┘
+       ▼
+┌────────────────┐
+│ review_pending  │  レビュー待ち (검토 대기)
+└──────┬─────────┘
+       │
+       ├──────────────────────┐
+       ▼                      ▼
+┌────────────────────┐  ┌─────────────┐
+│ revision_required   │  │  completed   │  完了
+│ (修正必要 - 수정)  │  └──────┬──────┘
+└─────────┬──────────┘         ▼
+          │               ┌─────────────┐
+          └──→ (재제출) → │ points_paid  │  ポイント支給済み
+                          └─────────────┘
 ```
 
 ---
@@ -929,10 +980,12 @@ pnpm lint       # ESLint 실행
 ## 17. 알려진 이슈 및 기술 부채
 
 1. **중복 테이블**: `applications`와 `campaign_applications` 두 테이블이 혼재 → 폴백 로직으로 처리 중
-2. **백업 파일 다수**: `_backup`, `_fixed`, `_old` 등 사용하지 않는 파일이 많음
-3. **출금 방식 변경**: PayPal → 일본 은행 송금으로 전환 중이나 레거시 코드 잔존
-4. **이메일 발송**: 클라이언트 사이드에서 처리 (보안 개선 필요)
-5. **emailScheduler**: 브라우저 기반 스케줄러 → 서버사이드(Edge Function)로 이전 권장
+2. **getByCampaign 중복 정의**: `database.applications.getByCampaign()`이 supabase.js에서 2번 정의됨. 뒤의 정의가 앞을 덮어써서, 의도와 달리 `campaign_applications`를 직접 조회
+3. **백업 파일 다수**: `_backup`, `_fixed`, `_old` 등 사용하지 않는 파일이 컴포넌트 폴더에 다수 존재 (64개 사용자 컴포넌트 중 절반 이상이 레거시)
+4. **출금 방식 변경**: PayPal → 일본 은행 송금으로 전환했으나, `withdrawals.create()` 함수 내 `withdrawal_method: 'paypal'` 하드코딩 잔존
+5. **이메일 발송**: 클라이언트 사이드에서 처리 (보안 개선 필요)
+6. **emailScheduler**: 브라우저 기반 스케줄러 (24시간 간격) → 서버사이드(Edge Function)로 이전 권장
+7. **사용자 라우트 보호 미비**: `/mypage`, `/profile`, `/campaign-application` 등이 ProtectedRoute로 감싸져 있지 않음 (컴포넌트 내부에서만 인증 확인)
 
 ---
 
