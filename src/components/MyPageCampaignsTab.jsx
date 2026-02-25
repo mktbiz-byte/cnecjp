@@ -1372,7 +1372,7 @@ const StepCard = ({
       await saveSubmission({
         workflow_status: 'sns_submitted',
         sns_url: snsUrl,
-        sns_submitted_at: new Date().toISOString(),
+        sns_uploaded_at: new Date().toISOString(),
         clean_video_file_url: uploadedCleanUrl,
         clean_video_file_name: cleanVideoFile?.name || null,
         ad_code: partnershipCode || null,
@@ -1383,7 +1383,8 @@ const StepCard = ({
       alert(language === 'ja' ? 'SNS・クリーン動画・広告コードを提出しました！' : 'SNS/클린본/광고코드를 제출했습니다!')
     } catch (error) {
       console.error('Video URL submit error:', error)
-      alert(language === 'ja' ? '提出に失敗しました' : '제출에 실패했습니다')
+      const detail = error?.message || ''
+      alert(language === 'ja' ? `提出に失敗しました: ${detail}` : `제출에 실패했습니다: ${detail}`)
     } finally {
       setSubmitting(false)
     }
@@ -1788,7 +1789,7 @@ const StepCard = ({
                       {language === 'ja' ? 'SNS投稿URL' : 'SNS 게시물 URL'} *
                     </label>
                     <input
-                      type="url"
+                      type="text"
                       value={snsUrl}
                       onChange={(e) => setSnsUrl(e.target.value)}
                       placeholder="https://www.instagram.com/reel/... or https://www.tiktok.com/..."

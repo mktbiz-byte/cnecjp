@@ -5,6 +5,27 @@ import { useLanguage } from '../contexts/LanguageContext'
 import { database } from '../lib/supabase'
 
 
+// SNS URL 자동 보정 함수
+const normalizeSnsUrl = (url, platform) => {
+  if (!url || !url.trim()) return ''
+  let trimmed = url.trim()
+
+  // @username 형식 처리
+  if (trimmed.startsWith('@')) {
+    const username = trimmed.substring(1)
+    if (platform === 'instagram') return `https://www.instagram.com/${username}`
+    if (platform === 'tiktok') return `https://www.tiktok.com/@${username}`
+    if (platform === 'youtube') return `https://www.youtube.com/@${username}`
+  }
+
+  // 프로토콜 없이 도메인부터 시작하는 경우
+  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+    trimmed = 'https://' + trimmed
+  }
+
+  return trimmed
+}
+
 const CampaignApplicationUpdated = () => {
   const { id } = useParams()
   const [searchParams] = useSearchParams()
@@ -50,7 +71,10 @@ const CampaignApplicationUpdated = () => {
     
     // 오프라인 방문 관련
     offline_visit_available: false,
-    offline_visit_notes: ''
+    offline_visit_notes: '',
+
+    // 초상권 동의
+    portrait_rights_consent: false
   })
 
   // 다국어 텍스트
@@ -375,6 +399,11 @@ const CampaignApplicationUpdated = () => {
       setError('')
 
       // 申請データの準備 - applicationsテーブル用の構造に合わせる
+      // SNS URL を正規化してから送信
+      const normalizedInstagram = normalizeSnsUrl(applicationData.instagram_url, 'instagram')
+      const normalizedYoutube = normalizeSnsUrl(applicationData.youtube_url, 'youtube')
+      const normalizedTiktok = normalizeSnsUrl(applicationData.tiktok_url, 'tiktok')
+
       const submissionData = {
         user_id: user.id,
         campaign_id: campaignId,
@@ -384,9 +413,9 @@ const CampaignApplicationUpdated = () => {
         postal_code: applicationData.postal_code,
         address: applicationData.address,
         phone_number: applicationData.phone_number,
-        instagram_url: applicationData.instagram_url,
-        youtube_url: applicationData.youtube_url || null,
-        tiktok_url: applicationData.tiktok_url || null,
+        instagram_url: normalizedInstagram,
+        youtube_url: normalizedYoutube || null,
+        tiktok_url: normalizedTiktok || null,
         answer_1: applicationData.answer_1 || null,
         answer_2: applicationData.answer_2 || null,
         answer_3: applicationData.answer_3 || null,
@@ -845,9 +874,15 @@ const CampaignApplicationUpdated = () => {
                       {t.instagramUrl} <span className="text-red-500">*</span>
                     </label>
                     <input
-                      type="url"
+                      type="text"
                       value={applicationData.instagram_url}
                       onChange={(e) => setApplicationData(prev => ({ ...prev, instagram_url: e.target.value }))}
+                      onBlur={(e) => {
+                        const normalized = normalizeSnsUrl(e.target.value, 'instagram')
+                        if (normalized !== e.target.value) {
+                          setApplicationData(prev => ({ ...prev, instagram_url: normalized }))
+                        }
+                      }}
                       placeholder={t.instagramPlaceholder}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                       required
@@ -860,9 +895,15 @@ const CampaignApplicationUpdated = () => {
                         {t.youtubeUrl}
                       </label>
                       <input
-                        type="url"
+                        type="text"
                         value={applicationData.youtube_url}
                         onChange={(e) => setApplicationData(prev => ({ ...prev, youtube_url: e.target.value }))}
+                        onBlur={(e) => {
+                          const normalized = normalizeSnsUrl(e.target.value, 'youtube')
+                          if (normalized !== e.target.value) {
+                            setApplicationData(prev => ({ ...prev, youtube_url: normalized }))
+                          }
+                        }}
                         placeholder={t.youtubePlaceholder}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                       />
@@ -873,9 +914,15 @@ const CampaignApplicationUpdated = () => {
                         {t.tiktokUrl}
                       </label>
                       <input
-                        type="url"
+                        type="text"
                         value={applicationData.tiktok_url}
                         onChange={(e) => setApplicationData(prev => ({ ...prev, tiktok_url: e.target.value }))}
+                        onBlur={(e) => {
+                          const normalized = normalizeSnsUrl(e.target.value, 'tiktok')
+                          if (normalized !== e.target.value) {
+                            setApplicationData(prev => ({ ...prev, tiktok_url: normalized }))
+                          }
+                        }}
                         placeholder={t.tiktokPlaceholder}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                       />
