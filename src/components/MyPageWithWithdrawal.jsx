@@ -985,10 +985,14 @@ const MyPageWithWithdrawal = () => {
   const getTransactionTypeColor = (type) => {
     const colors = {
       earn: 'text-green-600',
+      campaign_reward: 'text-green-600',
       bonus: 'text-blue-600',
       admin_add: 'text-purple-600',
       spend: 'text-red-600',
-      admin_subtract: 'text-red-600'
+      spent: 'text-red-600',
+      admin_subtract: 'text-red-600',
+      pending: 'text-yellow-600',
+      pending_reward: 'text-yellow-600'
     }
     return colors[type] || 'text-gray-600'
   }
@@ -997,12 +1001,14 @@ const MyPageWithWithdrawal = () => {
     const types = {
       earn: t.earned,
       earned: t.earned,
+      campaign_reward: language === 'ja' ? 'キャンペーン報酬' : '캠페인 보상',
       bonus: t.bonus,
       admin_add: t.bonus,
       spend: t.spent,
       spent: t.spent,
       admin_subtract: t.spent,
       pending: language === 'ja' ? '申請中' : '신청중',
+      pending_reward: language === 'ja' ? '報酬申請中' : '보상 신청중',
       approved: language === 'ja' ? '承認済み' : '승인됨',
       rejected: language === 'ja' ? '拒否済み' : '거부됨',
       completed: language === 'ja' ? '完了' : '완료',
@@ -2133,8 +2139,8 @@ const MyPageWithWithdrawal = () => {
                                 {/* SNS 업로드 및 포인트 신청 버튼 */}
                                 <div className="mt-2">
                                   {/* video_links가 있고 point_transactions에 승인된 기록이 있으면 완료 상태 */}
-                                  {application.video_links && pointTransactions.some(pt => 
-                                    pt.application_id === application.id && pt.transaction_type === 'reward'
+                                  {application.video_links && pointTransactions.some(pt =>
+                                    pt.application_id === application.id && (pt.transaction_type === 'reward' || pt.transaction_type === 'campaign_reward')
                                   ) ? (
                                     <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
                                       ✅ {t.pointRequestApproved}
