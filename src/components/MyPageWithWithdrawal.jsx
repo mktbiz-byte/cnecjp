@@ -442,9 +442,37 @@ const MyPageWithWithdrawal = () => {
         setPointTransactions([])
       }
       
-      // 프로필의 points 컬럼을 그대로 사용 (이미 profileData에 포함됨)
-      // 별도의 포인트 계산 없이 데이터베이스의 points 값을 신뢰
-      
+      // point_transactions 합계와 비교하여 포인트 보정
+      if (profileData) {
+        const profilePoints = profileData.points || 0
+
+        try {
+          const { data: txData, error: txError } = await supabase
+            .from('point_transactions')
+            .select('amount')
+            .eq('user_id', user.id)
+
+          if (!txError && txData) {
+            const txTotal = txData.reduce((sum, tx) => sum + (tx.amount || 0), 0)
+
+            // user_profiles.points가 0인데 point_transactions 합계가 양수이면 보정
+            if (profilePoints === 0 && txTotal > 0) {
+              console.log(`[loadUserData] points 불일치 보정: profile=${profilePoints}, transactions=${txTotal}`)
+              profileData.points = txTotal
+              setProfile({ ...profileData })
+
+              // user_profiles.points도 동기화 시도
+              await supabase
+                .from('user_profiles')
+                .update({ points: txTotal })
+                .eq('user_id', user.id)
+            }
+          }
+        } catch (e) {
+          console.warn('[loadUserData] point_transactions 조회 실패:', e)
+        }
+      }
+
     } catch (error) {
       console.error('사용자 데이터 로드 오류')
       // 프로필 데이터가 없어도 페이지는 표시되도록 함
@@ -705,10 +733,20 @@ const MyPageWithWithdrawal = () => {
 
       // 실제 사용자 프로필의 포인트 차감
       const newPoints = currentPoints - requestAmount
-      const { error: profileUpdateError } = await supabase
+      let profileUpdateError = null
+      const { error: err1 } = await supabase
         .from('user_profiles')
         .update({ points: newPoints })
         .eq('user_id', user.id)
+
+      if (err1) {
+        console.warn('user_id로 포인트 업데이트 실패, id로 재시도:', err1.message)
+        const { error: err2 } = await supabase
+          .from('user_profiles')
+          .update({ points: newPoints })
+          .eq('id', user.id)
+        profileUpdateError = err2
+      }
 
       if (profileUpdateError) {
         console.error('프로필 포인트 업데이트 오류:', profileUpdateError)
@@ -1036,8 +1074,8 @@ const MyPageWithWithdrawal = () => {
   // Dashboard helper: calculate performance
   const getPerformance = () => {
     const total = applications.length
-    const approved = applications.filter(a => ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed'].includes(a.status)).length
-    const completed = applications.filter(a => a.status === 'completed' || a.submission_status === 'submitted').length
+    const approved = applications.filter(a => ['approved', 'selected', 'filming', 'video_submitted', 'revision_requested', 'sns_uploaded', 'sns_submitted', 'completed'].includes(a.status)).length
+    const completed = applications.filter(a => a.status === 'completed').length
     return {
       successRate: total > 0 ? Math.round((approved / total) * 100) : 0,
       completionRate: approved > 0 ? Math.round((completed / approved) * 100) : 0,
@@ -1309,14 +1347,14 @@ const MyPageWithWithdrawal = () => {
                         {language === 'ja' ? 'すべて表示' : '전체 보기'}
                       </button>
                     </div>
-                    {applications.filter(a => ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'pending'].includes(a.status)).length === 0 ? (
+                    {applications.filter(a => ['approved', 'selected', 'filming', 'video_submitted', 'revision_requested', 'sns_uploaded', 'sns_submitted', 'pending'].includes(a.status)).length === 0 ? (
                       <div className="text-center py-8 text-slate-400">
                         <Award className="w-10 h-10 mx-auto mb-2 text-slate-300" />
                         <p className="text-sm">{language === 'ja' ? '参加中のキャンペーンはありません' : '참여중인 캠페인이 없습니다'}</p>
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        {applications.filter(a => ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'pending'].includes(a.status)).slice(0, 5).map((app) => (
+                        {applications.filter(a => ['approved', 'selected', 'filming', 'video_submitted', 'revision_requested', 'sns_uploaded', 'sns_submitted', 'pending'].includes(a.status)).slice(0, 5).map((app) => (
                           <div key={app.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100/80 transition-all">
                             <div className="flex items-center gap-3 min-w-0">
                               <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -1329,7 +1367,10 @@ const MyPageWithWithdrawal = () => {
                                    app.status === 'approved' || app.status === 'selected' ? (language === 'ja' ? '進行中' : '진행중') :
                                    app.status === 'filming' ? (language === 'ja' ? '撮影中' : '촬영중') :
                                    app.status === 'video_submitted' ? (language === 'ja' ? '動画提出済み' : '영상 제출') :
+                                   app.status === 'revision_requested' ? (language === 'ja' ? '修正リクエスト' : '수정 요청') :
+                                   app.status === 'sns_uploaded' ? (language === 'ja' ? 'SNS投稿完了' : 'SNS 업로드 완료') :
                                    app.status === 'sns_submitted' ? (language === 'ja' ? 'SNS投稿済み' : 'SNS 제출') :
+                                   app.status === 'completed' ? (language === 'ja' ? '完了' : '완료') :
                                    app.status}
                                 </div>
                               </div>
@@ -1683,7 +1724,7 @@ const MyPageWithWithdrawal = () => {
                     <label className="block text-xs font-medium text-slate-500">{t.currentPoints}</label>
                     <div className="flex items-center justify-between mt-1 flex-wrap gap-2">
                       <p className="text-lg font-bold text-blue-600">
-                        {profile?.points?.toLocaleString() || 0}P
+                        ¥{(profile?.points || 0).toLocaleString()}
                       </p>
                       <button
                         onClick={() => setShowWithdrawModal(true)}
@@ -1916,7 +1957,7 @@ const MyPageWithWithdrawal = () => {
                     <div className="ml-4">
                       <p className="text-sm font-medium text-gray-500">{t.approvedApplications}</p>
                       <p className="text-2xl font-bold text-gray-900">
-                        {applications.filter(a => ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed'].includes(a.status)).length}
+                        {applications.filter(a => ['approved', 'selected', 'filming', 'video_submitted', 'revision_requested', 'sns_uploaded', 'sns_submitted', 'completed'].includes(a.status)).length}
                       </p>
                     </div>
                   </div>
@@ -1974,11 +2015,14 @@ const MyPageWithWithdrawal = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed'].includes(application.status) ? 'bg-green-100 text-green-800' :
+                              ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'sns_uploaded', 'completed'].includes(application.status) ? 'bg-green-100 text-green-800' :
+                              application.status === 'revision_requested' ? 'bg-orange-100 text-orange-800' :
                               application.status === 'rejected' ? 'bg-red-100 text-red-800' :
                               'bg-yellow-100 text-yellow-800'
                             }`}>
                               {application.status === 'video_submitted' ? (language === 'ko' ? '영상 제출' : '動画提出済み') :
+                               application.status === 'revision_requested' ? (language === 'ko' ? '수정 요청' : '修正リクエスト') :
+                               application.status === 'sns_uploaded' ? (language === 'ko' ? 'SNS 업로드 완료' : 'SNS投稿完了') :
                                application.status === 'sns_submitted' ? (language === 'ko' ? 'SNS 제출' : 'SNS提出済み') :
                                application.status === 'completed' ? (language === 'ko' ? '완료' : '完了') :
                                application.status === 'selected' ? (language === 'ko' ? '선정됨' : '選定済み') :
@@ -1993,7 +2037,7 @@ const MyPageWithWithdrawal = () => {
                           </td>
                           {/* 가이드 열 */}
                           <td className="px-6 py-4 whitespace-nowrap">
-                            {['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed'].includes(application.status) && application.campaign_guide_type === 'pdf' && application.campaign_guide_pdf_url ? (
+                            {['approved', 'selected', 'filming', 'video_submitted', 'revision_requested', 'sns_uploaded', 'sns_submitted', 'completed'].includes(application.status) && application.campaign_guide_type === 'pdf' && application.campaign_guide_pdf_url ? (
                               <div className="space-y-2">
                                 {/* 외부 가이드 (PDF/Google Slides) */}
                                 <ExternalGuideViewer
@@ -2021,7 +2065,7 @@ const MyPageWithWithdrawal = () => {
                                   </span>
                                 )}
                               </div>
-                            ) : ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed'].includes(application.status) && application.personalized_guide ? (
+                            ) : ['approved', 'selected', 'filming', 'video_submitted', 'revision_requested', 'sns_uploaded', 'sns_submitted', 'completed'].includes(application.status) && application.personalized_guide ? (
                               <div className="space-y-2">
                                 {/* AI 가이드 보기 버튼 */}
                                 <button
@@ -2066,7 +2110,7 @@ const MyPageWithWithdrawal = () => {
                                   </div>
                                 )}
                               </div>
-                            ) : ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed'].includes(application.status) ? (
+                            ) : ['approved', 'selected', 'filming', 'video_submitted', 'revision_requested', 'sns_uploaded', 'sns_submitted', 'completed'].includes(application.status) ? (
                               <span className="text-xs text-gray-400">
                                 {language === 'ko' ? '가이드 준비중' : 'ガイド準備中'}
                               </span>
@@ -2075,7 +2119,7 @@ const MyPageWithWithdrawal = () => {
                             )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            {['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed'].includes(application.status) ? (
+                            {['approved', 'selected', 'filming', 'video_submitted', 'revision_requested', 'sns_uploaded', 'sns_submitted', 'completed'].includes(application.status) ? (
                               <div className="space-y-2">
                                 {/* 송장번호 및 가이드 URL */}
                                 {(application.tracking_number || application.guide_url) && (
@@ -2611,14 +2655,14 @@ const MyPageWithWithdrawal = () => {
                   <h3 className="text-sm font-bold text-slate-800">{language === 'ja' ? '参加中のキャンペーン' : '참여중인 캠페인'}</h3>
                   <button onClick={() => setActiveTab('applications')} className="text-blue-600 text-[10px] font-semibold">{language === 'ja' ? 'すべて表示' : '전체 보기'}</button>
                 </div>
-                {applications.filter(a => ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'pending'].includes(a.status)).length === 0 ? (
+                {applications.filter(a => ['approved', 'selected', 'filming', 'video_submitted', 'revision_requested', 'sns_uploaded', 'sns_submitted', 'pending'].includes(a.status)).length === 0 ? (
                   <div className="text-center py-6 text-slate-400">
                     <Award className="w-8 h-8 mx-auto mb-1.5 text-slate-300" />
                     <p className="text-xs">{language === 'ja' ? 'キャンペーンなし' : '캠페인 없음'}</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {applications.filter(a => ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'pending'].includes(a.status)).slice(0, 4).map((app) => (
+                    {applications.filter(a => ['approved', 'selected', 'filming', 'video_submitted', 'revision_requested', 'sns_uploaded', 'sns_submitted', 'pending'].includes(a.status)).slice(0, 4).map((app) => (
                       <div key={app.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -3008,7 +3052,7 @@ const MyPageWithWithdrawal = () => {
                       max={profile?.points || 0}
                     />
                     <p className="text-sm text-gray-500 mt-1">
-                      {language === 'ja' ? '保有ポイント' : '보유 포인트'}: {profile?.points?.toLocaleString() || 0}P
+                      {language === 'ja' ? '保有ポイント' : '보유 포인트'}: ¥{(profile?.points || 0).toLocaleString()}
                       {withdrawForm.amount && (
                         <span className="ml-2 text-green-600 font-medium">
                           (≈ ¥{parseInt(withdrawForm.amount || 0).toLocaleString()})

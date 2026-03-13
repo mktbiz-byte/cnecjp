@@ -252,9 +252,10 @@ const buildSubmissionsFromApplication = (app, campaign) => {
     let workflowStatus = 'guide_pending'
     if (app.status === 'completed') workflowStatus = 'points_paid'
     else if (['revision_requested', 'revision_required'].includes(app.status)) workflowStatus = 'revision_required'
+    else if (app.status === 'sns_uploaded') workflowStatus = 'sns_submitted'
     else if (snsUrl && videoUrl) workflowStatus = 'sns_submitted'
     else if (app.status === 'approved' && videoUrl) workflowStatus = 'sns_pending'
-    else if (videoUrl) workflowStatus = 'video_uploaded'
+    else if (app.status === 'video_submitted' || videoUrl) workflowStatus = 'video_uploaded'
     else if (['selected', 'filming'].includes(app.status)) workflowStatus = 'guide_pending'
 
     submissions.push({
@@ -2740,7 +2741,7 @@ const MyPageCampaignsTab = ({ applications = [], user }) => {
 
   // 상태별 분류
   // cnecbiz.com 관리자 사용 status: selected(선정), filming(촬영중), approved(승인)
-  const approvedStatuses = ['approved', 'selected', 'filming', 'video_submitted', 'sns_submitted', 'completed', 'revision_requested', 'revision_required']
+  const approvedStatuses = ['approved', 'selected', 'filming', 'video_submitted', 'sns_uploaded', 'sns_submitted', 'completed', 'revision_requested', 'revision_required']
   const knownStatuses = [...approvedStatuses, 'pending', 'virtual_selected', 'rejected']
   const approvedApplications = applications.filter(a => approvedStatuses.includes(a.status))
   const pendingApplications = applications.filter(a => a.status === 'pending' || a.status === 'virtual_selected')
