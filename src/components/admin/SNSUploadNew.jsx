@@ -307,7 +307,7 @@ const SNSUploadNew = () => {
         throw new Error(`포인트 지급 실패: ${pointError.message}`)
       }
 
-      // 2. 기존 pending_reward 상태 업데이트 (있는 경우)
+      // 2. 기존 pending_reward/pending 상태 업데이트 (있는 경우)
       const { error: updatePendingError } = await supabase
         .from('point_transactions')
         .update({
@@ -316,19 +316,50 @@ const SNSUploadNew = () => {
           updated_at: new Date().toISOString()
         })
         .eq('application_id', application.id)
-        .eq('transaction_type', 'pending_reward')
+        .in('transaction_type', ['pending_reward', 'pending'])
 
       if (updatePendingError) {
         console.warn('기존 거래 상태 업데이트 실패:', updatePendingError)
       }
 
+      // 3. applications 상태를 completed로 업데이트
+      const { error: appUpdateError } = await supabase
+        .from('applications')
+        .update({
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', application.id)
+
+      if (appUpdateError) {
+        console.warn('신청서 상태 업데이트 실패:', appUpdateError)
+      }
+
+      // 4. campaign_submissions workflow_status를 points_paid로 업데이트
+      const { error: submissionUpdateError } = await supabase
+        .from('campaign_submissions')
+        .update({
+          workflow_status: 'points_paid',
+          points_amount: application.campaigns.reward_amount,
+          points_paid_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('application_id', application.id)
+
+      if (submissionUpdateError) {
+        console.warn('캠페인 서브미션 상태 업데이트 실패:', submissionUpdateError)
+      }
+
       // 로컬 상태 업데이트
-      setApplications(prev => prev.map(app => 
-        app.id === application.id 
-          ? { 
-              ...app, 
+      setApplications(prev => prev.map(app =>
+        app.id === application.id
+          ? {
+              ...app,
+              status: 'completed',
               point_request_status: 'approved',
-              points_awarded_at: new Date().toISOString()
+              points_awarded_at: new Date().toISOString(),
+              completed_at: new Date().toISOString()
             }
           : app
       ))
@@ -622,7 +653,12 @@ const SNSUploadNew = () => {
                         </Button>
                         
                         {/* 포인트 승인 버튼 */}
-                        {application.point_request_status === 'pending' && application.sns_upload_url && (
+                        {application.status === 'completed' || application.point_request_status === 'approved' ? (
+                          <div className="flex items-center space-x-2 text-green-600 text-sm">
+                            <CheckCircle className="h-4 w-4" />
+                            <span>{t.pointsApproved}</span>
+                          </div>
+                        ) : application.video_links && (
                           <Button
                             size="sm"
                             onClick={() => handleApprovePoints(application)}
@@ -632,13 +668,6 @@ const SNSUploadNew = () => {
                             <DollarSign className="h-4 w-4 mr-2" />
                             {t.approvePoints}
                           </Button>
-                        )}
-                        
-                        {application.point_request_status === 'approved' && (
-                          <div className="flex items-center space-x-2 text-green-600 text-sm">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>{t.pointsApproved}</span>
-                          </div>
                         )}
                       </div>
                     </div>

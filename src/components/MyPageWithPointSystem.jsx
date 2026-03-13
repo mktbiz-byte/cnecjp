@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
-import { database } from '../lib/supabase'
+import { database, supabase } from '../lib/supabase'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -72,23 +72,40 @@ const MyPageWithPointSystem = () => {
         console.log('User applications loaded:', userApplications)
         setApplications(userApplications || [])
         
-        // 포인트 잔액 계산
-        const completedApps = userApplications?.filter(app => app.status === 'completed') || []
-        const totalPoints = completedApps.reduce((sum, app) => {
-          return sum + (app.campaigns?.reward_amount || app.campaign?.reward_amount || 0)
-        }, 0)
-        
-        // 출금 요청된 포인트 차감
+        // 포인트 잔액 계산: point_transactions 테이블에서 직접 계산 (가장 정확)
         try {
-          const withdrawalRequests = await database.withdrawals.getByUser(user.id)
-          const withdrawnPoints = withdrawalRequests?.reduce((sum, withdrawal) => {
-            return sum + (withdrawal.status === 'completed' ? withdrawal.amount : 0)
-          }, 0) || 0
-          
-          setPointBalance(totalPoints - withdrawnPoints)
-        } catch (withdrawalError) {
-          console.error('Withdrawal loading error:', withdrawalError)
-          setPointBalance(totalPoints) // 출금 정보 없이도 포인트 표시
+          const { data: pointData, error: pointError } = await supabase
+            .from('point_transactions')
+            .select('amount, transaction_type, status')
+            .eq('user_id', user.id)
+
+          if (!pointError && pointData) {
+            // 모든 완료된 거래의 합산 (양수=지급, 음수=차감/출금)
+            const totalPoints = pointData
+              .filter(pt => pt.status === 'completed' || pt.status === 'approved')
+              .reduce((sum, pt) => sum + (pt.amount || 0), 0)
+            setPointBalance(totalPoints)
+          } else {
+            // fallback: 기존 방식 (완료된 앱 기반)
+            const completedApps = userApplications?.filter(app => app.status === 'completed') || []
+            const totalPoints = completedApps.reduce((sum, app) => {
+              return sum + (app.campaigns?.reward_amount || app.campaign?.reward_amount || 0)
+            }, 0)
+
+            try {
+              const withdrawalRequests = await database.withdrawals.getByUser(user.id)
+              const withdrawnPoints = withdrawalRequests?.reduce((sum, withdrawal) => {
+                return sum + (withdrawal.status === 'completed' ? withdrawal.amount : 0)
+              }, 0) || 0
+              setPointBalance(totalPoints - withdrawnPoints)
+            } catch (withdrawalError) {
+              console.error('Withdrawal loading error:', withdrawalError)
+              setPointBalance(totalPoints)
+            }
+          }
+        } catch (pointCalcError) {
+          console.error('Point calculation error:', pointCalcError)
+          setPointBalance(0)
         }
         
       } catch (applicationError) {
