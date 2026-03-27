@@ -714,6 +714,49 @@ const EMAIL_TEMPLATES = {
 </body>
 </html>
     `
+  },
+
+  // 7. 영상 제출 관리자 알림
+  VIDEO_SUBMITTED: {
+    subject: '【CNEC Japan】動画が提出されました',
+    template: (data) => `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>CNEC Japan - 動画提出通知</title>
+    <style>
+        body { font-family: 'Hiragino Sans', 'Yu Gothic', sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: white; padding: 30px; border: 1px solid #e0e0e0; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; }
+        .highlight { background: #f0f8ff; padding: 15px; border-left: 4px solid #667eea; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 動画提出通知</h1>
+            <p>クリエイターが動画を提出しました</p>
+        </div>
+        <div class="content">
+            <h2>動画提出のお知らせ</h2>
+            <div class="highlight">
+                <p><strong>クリエイター:</strong> ${data.creatorName}</p>
+                <p><strong>キャンペーン:</strong> ${data.campaignTitle}</p>
+                <p><strong>提出日時:</strong> ${data.submittedAt}</p>
+                ${data.videoUrl ? '<p><strong>動画URL:</strong> <a href="' + data.videoUrl + '">' + data.videoUrl + '</a></p>' : ''}
+            </div>
+            <p>管理画面で確認し、レビューを行ってください。</p>
+        </div>
+        <div class="footer">
+            <p>🎬 CNEC Japan - K-Beauty × ショート動画専門プラットフォーム</p>
+        </div>
+    </div>
+</body>
+</html>
+    `
   }
 }
 
@@ -987,6 +1030,34 @@ export const emailTriggers = {
       platform: transfer.platform || 'Instagram',
       postDate: new Date(transfer.post_date).toLocaleDateString('ja-JP')
     })
+  },
+
+  // 영상 제출 관리자 알림
+  onVideoSubmitted: async (application, campaignTitle, creatorName) => {
+    try {
+      // email_settings에서 관리자 이메일 가져오기
+      const { data: settings } = await supabase
+        .from('email_settings')
+        .select('gmail_email')
+        .limit(1)
+        .single()
+
+      const adminEmail = settings?.gmail_email
+      if (!adminEmail) {
+        console.warn('Admin email not found in email_settings, skipping video submit notification')
+        return
+      }
+
+      await sendEmail('VIDEO_SUBMITTED', adminEmail, {
+        creatorName: creatorName || '不明',
+        campaignTitle: campaignTitle || '不明',
+        applicationId: application.id,
+        videoUrl: application.video_file_url || '',
+        submittedAt: new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+      })
+    } catch (err) {
+      console.warn('Video submit admin notification error:', err.message)
+    }
   }
 }
 

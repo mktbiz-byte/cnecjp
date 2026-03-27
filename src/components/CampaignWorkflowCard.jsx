@@ -658,6 +658,26 @@ const CampaignWorkflowCard = ({
       .eq('id', submissionId)
     if (updateError) throw updateError
 
+    // applications テーブルも同期
+    try {
+      const appUpdate = {
+        video_file_url: videoUrl,
+        video_file_name: videoFile.name,
+        video_file_size: videoFile.size,
+        video_uploaded_at: new Date().toISOString(),
+        video_submitted: true,
+        status: 'video_submitted',
+        revision_requested: false,
+        updated_at: new Date().toISOString()
+      }
+      if (cleanVideoUrl) {
+        appUpdate.clean_video_file_url = cleanVideoUrl
+      }
+      await supabase.from('applications').update(appUpdate).eq('id', application.id)
+    } catch (syncErr) {
+      console.warn('Applications sync warning:', syncErr.message)
+    }
+
     onProgress?.(100)
     onRefresh?.()
   }
