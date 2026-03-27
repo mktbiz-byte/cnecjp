@@ -86,7 +86,8 @@ const MyPageWithVideoUpload = () => {
       await database.applications.update(applicationId, {
         video_links: links,
         video_uploaded_at: new Date().toISOString(),
-        status: 'completed' // 영상 업로드 완료 시 상태를 완료로 변경
+        status: 'completed',
+        video_submitted: true
       })
       
       setSuccess('動画リンクを更新しました。')

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import ExternalGuideViewer from './ExternalGuideViewer'
 import ShootingGuideModal from './ShootingGuideModal'
+import { emailTriggers } from '../lib/emailService'
 
 // personalized_guide 파싱 헬퍼
 // 3가지 형태:
@@ -1043,10 +1044,21 @@ const StepCard = ({
       }
       if (data.workflow_status === 'video_uploaded') {
         appUpdate.status = 'video_submitted'
+        appUpdate.video_submitted = true
+        appUpdate.revision_requested = false
       } else if (data.workflow_status === 'sns_submitted') {
         appUpdate.submission_status = 'sns_submitted'
       }
       await supabase.from('applications').update(appUpdate).eq('id', application.id)
+
+      // 영상 제출 시 관리자 알림 발송
+      if (data.workflow_status === 'video_uploaded') {
+        emailTriggers.onVideoSubmitted(
+          { id: application.id, video_file_url: data.video_file_url },
+          campaign?.title || campaign?.name,
+          application?.applicant_name
+        ).catch(err => console.warn('Video submit notification error:', err.message))
+      }
     } catch (syncErr) {
       console.warn('Applications sync warning:', syncErr.message)
     }
@@ -1298,6 +1310,7 @@ const StepCard = ({
       }
       const updatedVersions = [...existingVersions, newVersionEntry]
 
+      const isRevisionResubmit = ['revision_required', 'revision_requested'].includes(status)
       const preserveStatus = ['sns_pending', 'sns_submitted', 'review_pending'].includes(status)
       const newStatus = preserveStatus ? status : 'video_uploaded'
 
@@ -1315,6 +1328,28 @@ const StepCard = ({
         sns_deadline: snsDeadline,
         updated_at: new Date().toISOString()
       })
+
+      // 수정 요청 상태에서 재업로드 시 마지막 revision_request를 resolved로 마킹
+      if (isRevisionResubmit) {
+        try {
+          const revisionRequests = [...(submission?.revision_requests || application?.revision_requests || [])]
+          if (revisionRequests.length > 0) {
+            revisionRequests[revisionRequests.length - 1] = {
+              ...revisionRequests[revisionRequests.length - 1],
+              resolved: true,
+              resolved_at: new Date().toISOString()
+            }
+            const subId = submission?.id
+            const isRealId = subId && !subId.startsWith('temp-') && !subId.startsWith('app-')
+            if (isRealId) {
+              await supabase.from(submissionTable).update({ revision_requests: revisionRequests }).eq('id', subId)
+            }
+            await supabase.from('applications').update({ revision_requests: revisionRequests }).eq('id', application.id)
+          }
+        } catch (revErr) {
+          console.warn('Revision resolve warning:', revErr.message)
+        }
+      }
 
       setUploadProgress(100)
       setVideoFile(null)

@@ -52,7 +52,9 @@ const VideoUploadModal = ({ isOpen, onClose, application, onSuccess }) => {
           submission_notes: notes,
           submission_status: 'submitted',
           submitted_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          video_submitted: true,
+          status: 'video_submitted'
         })
         .eq('id', application.id)
 
